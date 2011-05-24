@@ -1,0 +1,437 @@
+/***************************************************************************
+ *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************
+ *   Name: QHash                                                           *
+ ***************************************************************************/
+
+#ifndef _QHASH_H_
+#define _QHASH_H_
+
+#include <KOOFCore>
+#include <core/printk.h>
+
+#define QHASH_DEFAULT_CAPACITY 2
+
+template <typename Key, typename T> class QHash
+{
+    private:
+        class Node
+        {
+            public:
+                Node *next;
+                Key key;
+                T body;
+      
+                Node(const Key &k, const T &value)
+                {
+                    CHECK_THIS_OBJECT();
+
+                    next = 0;
+                    key = k;
+                    body = value;
+                }
+        };
+
+        int m_size;
+        int m_capacity;
+        Node **m_array;
+
+        void init(int capacity = QHASH_DEFAULT_CAPACITY)
+        {
+            m_size = 0;
+            m_capacity = capacity;
+            m_array = new Node*[capacity];
+    
+            if (m_array){
+                for (int i = 0; i < capacity; i++){
+                    m_array[i] = 0;
+                }
+            }      
+        }
+
+        inline int toArrayIndex(const Key &key) const
+        {
+            return qHash(key) % m_capacity;
+        }
+
+        inline int toArrayIndex(const Key &key, int capacity) const
+        {
+            return qHash(key) % capacity;
+        }
+
+        Node *node(const Key &key) const
+        {
+            int i = toArrayIndex(key);
+      
+            Node *tmpNode = m_array[i];
+      
+            if (tmpNode){
+                do{
+                    if (tmpNode->key == key){
+                        return tmpNode;
+                    }
+
+                    tmpNode = tmpNode->next;
+                }while (tmpNode != 0);
+            }
+
+            return 0;
+        }
+    
+        void rehash(Node **array, int capacity)
+        {
+            for (int i = 0; i < m_capacity; i++){
+                Node *tmpNode = m_array[i];
+
+                if (tmpNode){
+                    Node *nextNode;
+                    do{
+                        nextNode = tmpNode->next;
+                        tmpNode->next = 0;
+
+                        int newIndex = toArrayIndex(tmpNode->key, capacity);
+
+                        if (array[newIndex] == 0){
+                            array[newIndex] = tmpNode;
+
+                        }else{
+                            Node *node = array[newIndex];
+ 
+                            while (node->next != 0){
+                                node = node->next;
+                            }
+
+                            node->next = tmpNode;
+                        }
+                    }while ((nextNode != 0) && (tmpNode = nextNode));
+                }
+            }
+        }
+
+        Node *removeFromTable(const Key &key)
+        {
+            int i = toArrayIndex(key);
+
+            Node *tmpNode = m_array[i];
+            Node *prevNode = 0;
+
+            if (tmpNode){
+                do{
+                    if (tmpNode->key == key){
+                        if (prevNode){
+                            prevNode->next = tmpNode->next;
+                        }else{
+                            m_array[i] = tmpNode->next;
+                        }
+
+                        return tmpNode;
+                    }
+
+                    prevNode = tmpNode;
+                    tmpNode = tmpNode->next;
+                }while (tmpNode != 0);
+            }
+
+            return 0;
+        }
+
+    public:
+        inline QHash()
+        {
+            CHECK_THIS_OBJECT()
+
+            init(QHASH_DEFAULT_CAPACITY);
+        }
+
+        inline QHash(int capacity)
+        {
+            CHECK_THIS_OBJECT()
+
+            init(capacity);
+        }
+
+        inline ~QHash()
+        {
+            delete m_array;
+        }
+
+        //TODO
+        QHash(const QHash<Key, T> &q)
+        {
+            printk("QHash copy constructor not implemented\n");
+            while(1);
+        }
+
+        //TODO
+        QHash<Key, T> &operator=(const QHash<Key, T> &other)
+        {
+            if (other.isEmpty()){
+                init(other.m_capacity);
+            }else{
+                printk("Part of the = operator is not implemented\n");
+                while(1);
+            }
+
+            return *this;
+        }
+
+        inline bool isValid() const
+        {
+             return ((this != 0) && ((m_array != 0) ||
+             ((m_array == 0) && (m_size != 0) && (m_capacity != 0))));
+        }
+
+        inline bool isEmpty() const
+        {
+            return m_size == 0;
+        }
+
+        inline int size() const
+        {
+            return m_size;
+        }
+
+        inline int capacity() const
+        {
+            return m_capacity;
+        }
+
+        void reserve(int newCapacity)
+        {
+            Node **tmpArray = new Node*[newCapacity];
+      
+            for (int i = 0; i < newCapacity; i++){
+                tmpArray[i] = 0;
+            }
+
+            rehash(tmpArray, newCapacity);
+      
+            m_capacity = newCapacity;
+      
+            delete m_array;
+            m_array = tmpArray;
+        }
+
+        inline void squeeze()
+        {
+            reserve(m_size);
+        }
+
+        const T value(const Key &key, T &defaultValue) const
+        {
+            Node *tmpNode = node(key);
+      
+            if (tmpNode){
+                return tmpNode->body;
+
+            }else{
+                return defaultValue;
+            }
+        }
+
+        const T value(const Key &key) const
+        {
+            Node *tmpNode = node(key);
+      
+            if (tmpNode){
+                return tmpNode->body;
+
+            }else{
+                return T();
+            }
+        }
+
+        inline T &operator[](const Key &key)
+        {
+            Node *tmpNode = node(key);
+      
+            if (tmpNode){
+                return tmpNode->body;
+
+            }else{
+                insert(key, T());
+
+                return (*this)[key];
+            }
+        }
+
+        inline const T operator[](const Key &key) const
+        {
+            return value(key);
+        }
+
+        bool insert(const Key &key, const T &value)
+        {
+            if (m_size == m_capacity){
+                reserve(m_capacity * 2);
+            }
+      
+            int i = toArrayIndex(key);
+
+            if (m_array[i] == 0){
+                m_array[i] = new Node(key, value);
+                if (m_array[i] == 0){
+                    return false;
+                }
+            }else{
+                Node *tmpNode = m_array[i];
+
+                do{
+                    if (tmpNode->key == key){
+                       tmpNode->body = value;
+
+                       return true;
+                    }
+                }while ((tmpNode->next != 0) && (tmpNode = tmpNode->next));
+
+                Node *newNode = new Node(key, value);
+                if (newNode == 0){
+                    return false;
+                }
+
+                tmpNode->next = newNode;
+            }
+     
+            m_size++;
+     
+            return true;
+        }
+
+        T take(const Key &key)
+        {
+            Node *node = removeFromTable(key);
+            if (node){
+                T retValue = node->body;
+                delete node;
+                return retValue;
+
+            }else{
+                return T();
+            }
+        }
+
+        int remove(const Key &key)
+        {
+            Node *node = removeFromTable(key);
+            delete node;
+            return node != 0;
+        }
+
+        bool clear(int newCapacity = QHASH_DEFAULT_CAPACITY)
+        {
+            for (int i = 0; i < m_capacity; i++)
+            {
+                if (m_array[i]){
+                    Node *node;
+                    Node *nextNode = m_array[i];
+                    do{
+                        node = nextNode;
+                        nextNode = node->next;
+                        delete node;
+                    }while (nextNode);
+
+                    m_array[i] = 0;
+                }
+            }
+            delete m_array;
+            init(newCapacity);
+
+            return m_array != 0;
+        }
+
+        class const_iterator
+        {
+            public:
+                const QHash *m_hash;
+                int currentHashArrayIndex;
+                Node *currentNode;
+
+            public:
+                void operator++()
+                {
+                    if (currentNode->next != 0){
+                        currentNode = currentNode->next;
+
+                    }else{
+                        do{
+                            if (currentHashArrayIndex < m_hash->m_capacity){
+                                currentHashArrayIndex++;
+                            }else{
+                                currentNode = 0;
+                                return;
+                            }
+                        }while (m_hash->m_array[currentHashArrayIndex] == 0);
+
+                        currentNode = m_hash->m_array[currentHashArrayIndex];
+                    }
+                }
+
+                inline const_iterator &operator++(int)
+                {
+                    const_iterator oldIterator;
+                    oldIterator.m_hash = m_hash;
+                    oldIterator.currentHashArrayIndex = currentHashArrayIndex;
+                    oldIterator.currentNode = currentNode;
+
+                    ++(*this);
+
+                    return oldIterator;
+                }
+
+                inline bool operator!=(const const_iterator &other) const
+                {
+                    return this->currentNode != other.currentNode;
+                }
+
+                inline const Key &key() const
+                {
+                    return currentNode->key;
+                }
+ 
+                inline const T &value() const
+                {
+                    return currentNode->body;
+                }
+        };
+
+        const_iterator constBegin() const
+        {
+            const_iterator iterator;
+            iterator.m_hash = this;
+
+            for (int i = 0; i < m_capacity; i++){
+              if (m_array[i]){
+                  iterator.currentHashArrayIndex = i;
+                  iterator.currentNode = m_array[i];
+                  return iterator;
+              }
+            }
+
+            iterator.currentNode = 0;
+            return iterator;
+        }
+
+        inline const_iterator constEnd() const
+        {
+            const_iterator iterator;
+            iterator.currentNode = 0;
+            return iterator;
+        }
+};
+
+#endif

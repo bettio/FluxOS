@@ -1,0 +1,80 @@
+/***************************************************************************
+ *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************
+ *   Name: listwithholes.h                                                 *
+ ***************************************************************************/
+
+#include <QList>
+
+template <typename T> class ListWithHoles
+{
+    private:
+        QList<T> *m_list;
+
+    public:
+        inline ListWithHoles()
+        {
+            CHECK_THIS_OBJECT();
+          
+            m_list = new QList<T>();
+        }
+      
+        inline ~ListWithHoles()
+        {
+            delete m_list; 
+        }
+        
+        inline bool isValid()
+        {
+            return m_list->isValid(); 
+        }
+      
+        inline int add(const T &value)
+        {
+            for (int i = 0; i < m_list->size(); i++){
+                if (m_list->at(i) == T()){
+                    (*m_list)[i] = value;
+                    return i;
+                }
+            }
+            
+            //I don't like this
+            m_list->append(value);
+            return m_list->size() - 1;
+        }
+
+        inline void remove(int i)
+        {
+            (*m_list)[i] = 0;
+        }
+
+        inline T &operator[](int i)
+        {
+            return (*m_list)[i];
+        }
+
+        inline const T &operator[](int i) const
+        {
+            return (*m_list)[i];
+        }
+  
+        inline const T &at(int i) const
+        {
+            return m_list->at(i);
+        }
+};

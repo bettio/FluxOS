@@ -1,0 +1,225 @@
+/***************************************************************************
+ *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************
+ *   Name: QLinkedList                                                     *
+ ***************************************************************************/
+
+#ifndef _QLINKEDLIST_H_
+#define _QLINKEDLIST_H_
+
+template <typename T> class QLinkedList
+{
+    private:
+        class Node
+        {
+            public:
+                Node *next;
+                Node *prev;
+                T body;
+      
+                Node(const T &value)
+                {
+                    next = 0;
+                    prev = 0;
+                    body = value;
+                }
+        };
+    
+    Node *m_head;
+    Node *m_tail;
+    int m_size;
+
+    Node *node(int i)
+    {
+    Node *tmpNode = m_head;
+      
+    for (int j = 0; j < i; j++){
+      tmpNode = tmpNode->next;
+    }
+    
+    return tmpNode;      
+    }
+
+  public:
+    QLinkedList()
+    {
+      m_head = 0;
+      m_tail = 0;
+      m_size = 0;
+    }
+    
+    inline int size() const
+    {
+      return m_size;
+    }
+    
+    bool append(const T &value)
+    {
+      Node *tmpNode = new Node(value);
+      
+      if (m_size == 0){
+        m_head = tmpNode;
+        m_tail = tmpNode;
+
+      }else{
+        m_tail->next = tmpNode;
+        tmpNode->prev = m_tail;
+      }
+
+      m_tail = tmpNode;
+      m_size++;
+    }
+    
+    bool prepend(const T &value)
+    {
+      Node *tmpNode = new Node(value);
+      
+      if (m_size != 0){
+    m_head->prev = tmpNode;
+        tmpNode->next = m_head;
+      }
+
+      m_head = tmpNode;
+      m_size++;
+    }
+
+    bool insert(int before, const T &value)
+    {
+      if (before == 0){
+    return prepend(value);
+
+      }else{
+    Node *newNode = new Node(value);
+    
+        Node *prevNode = node(before);
+    prevNode->prev->next = newNode;
+    newNode->prev = prevNode->prev;
+    prevNode->prev = newNode;
+    newNode->next = prevNode;
+    
+    m_size++;
+      }
+    }
+    
+    void remove(int i)
+    {
+        if (i == 0){
+            Node *tmpNode = m_head;
+            m_head = m_head->next;
+            if (m_head){
+                m_head->prev = 0;
+            }
+            delete tmpNode;
+
+        }else if (i == m_size - 1){
+            Node *tmpNode = m_tail;
+            m_tail = m_tail->prev;
+            m_tail->next = 0;
+            delete tmpNode;
+
+      }else{
+            Node *tmpNode = node(i);
+            tmpNode->prev->next = tmpNode->next;
+            tmpNode->next->prev = tmpNode->prev;
+            delete tmpNode;
+      }
+      
+      m_size--;
+    }
+
+    inline T &operator[](int i)
+    {
+      return node(i)->body;
+    }
+
+    inline const T &operator[](int i) const
+    {
+      return node(i)->body;
+    }
+    
+    inline void removeFirst()
+    {
+      remove(0);
+    }
+    
+    inline T takeFirst()
+    {
+      T tmp = m_head->body;
+      remove(0);
+      
+      return tmp;
+    }
+    
+    inline void removeLast()
+    {
+      remove(m_size - 1);
+    }
+    
+    inline T takeLast()
+    {
+      T tmp = m_tail->body;
+      remove(m_size - 1);
+      
+      return tmp;      
+    }
+    
+    inline T &first()
+    {
+      return m_head->body;
+    }
+    
+    inline T &last()
+    {
+      return m_tail->body;
+    }
+    
+    inline bool startsWith(const T &value) const
+    {
+      return (m_head->body == value);
+    }
+    
+    bool contains(const T &value) const
+    {
+      Node *tmpNode = m_head;
+
+      for (int i = 0; i < m_size; i++){
+    if (tmpNode->body == value){
+      return true;
+    }
+    tmpNode = tmpNode->next;
+      }
+      
+      return false;
+    }
+    
+    int count(const T &value) const
+    {
+      int counter = 0;
+      
+      Node *tmpNode = m_head;
+
+      for (int i = 0; i < m_size; i++){
+    counter += (tmpNode->body == value);
+    tmpNode = tmpNode->next;
+      }
+      
+      return counter;
+    }
+};
+
+#endif

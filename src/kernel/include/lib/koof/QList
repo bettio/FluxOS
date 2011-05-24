@@ -1,0 +1,300 @@
+/***************************************************************************
+ *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
+ ***************************************************************************
+ *   Name: QList                                                           *
+ ***************************************************************************/
+
+#ifndef _QLIST_H_
+#define _QLIST_H_
+
+#include <KOOFCore>
+
+#define QLIST_DEFAULT_CAPACITY 2
+
+template <typename T> class QList
+{
+    private:
+        int m_size;
+        int m_capacity;
+        T *m_array;
+
+        void init(int size, int capacity = 2)
+        {
+            m_size = size;
+            m_capacity = capacity;
+            m_array = new T[m_capacity];
+        }
+
+        void copyToThis(const QList<T> &other)
+        {
+            init(other.m_size, other.m_capacity);
+
+            if (!other.isEmpty() && other.isValid()){
+                for (int i = 0; i < other.m_size; i++){
+                    m_array[i] = other.m_array[i];
+                }
+            }
+        }
+
+    public:
+        inline QList()
+        {
+            init(0, QLIST_DEFAULT_CAPACITY);
+        }
+
+        QList(int size)
+        {
+            init(size, size);
+    
+            if (m_array){
+                for (int i = 0; i < size; i++){
+                    m_array[i] = T();
+                }
+            }
+        }
+
+        QList(int size, const T &value)
+        {
+            init(size, size);
+    
+            if (m_array){
+                for (int i = 0; i < size; i++){
+                    m_array[i] = value;
+                }
+            }
+        }
+
+        inline ~QList()
+        {
+            delete m_array;
+        }
+
+        QList(const QList<T> &q)
+        {
+            copyToThis(q);
+        }
+
+        QList<T> &operator=(const QList<T> &other)
+        {
+            copyToThis(other);
+
+            return *this;
+        }
+
+  inline bool isValid() const
+  {
+    return ((m_array != 0) ||
+      ((m_array == 0) && (m_size != 0) && (m_capacity != 0)));
+  }
+
+  inline bool isEmpty() const
+  {
+    return m_size == 0;
+  }
+
+  inline int size() const
+  {
+    return m_size;
+  }
+
+  inline int capacity() const
+  {
+    return m_capacity;
+  }
+
+  inline int count() const
+  {
+    return m_size;
+  }
+
+  bool reserve(int newCapacity)
+  {
+    T *tmpArray = (T *) new T[newCapacity];
+    if (tmpArray == 0){
+        return false;
+    }
+
+    int newSize = (m_size < newCapacity) ? m_size : newCapacity;
+    for (int i = 0; i < newSize; i++){
+      tmpArray[i] = m_array[i];
+    }
+    
+    m_capacity = newCapacity;
+    m_size = newSize;
+    
+    delete m_array;
+    m_array = tmpArray;
+
+    return true;
+  }
+
+  void resize(int size)
+  {
+    reserve(size);
+
+    for (int i = m_size; i < size; i++){
+      m_array[i] = T();
+    }
+    
+    m_size = size;
+  }
+
+  void clear()
+  {
+    m_size = 0;
+    m_capacity = 0;
+    delete m_array;
+  }
+
+  inline void squeeze()
+  {
+    reserve(m_size);
+  }
+
+  /* TODO: cambiare in int */
+  bool append(const T &value)
+  {
+    if (m_size == m_capacity){
+      if (!reserve(m_capacity * 2)){
+        return false;
+      }
+    }
+    
+    m_array[m_size] = value;
+    m_size++;
+
+    return true;
+  }
+
+  inline T *data()
+  {
+    return m_array;    
+  }
+
+  inline const T *data() const
+  {
+    return m_array;
+  }
+
+  inline const T *constData() const
+  {
+    return m_array;    
+  }
+
+  inline const T &at(int i) const
+  {
+    return m_array[i];
+  }
+
+  const T value(int i, T &defaultValue) const
+  {
+    if (i < m_size){
+      return m_array[i];
+      
+    }else{
+      return defaultValue;
+    }
+  }
+
+  const T value(int i) const
+  {
+    if (i < m_size){
+      return m_array[i];
+      
+    }else{
+      return T();
+    }
+  }
+
+  inline T &operator[](int i)
+  {
+    return m_array[i];
+  }
+
+  inline const T &operator[](int i) const
+  {
+    return m_array[i];
+  }
+  
+  inline T &last()
+  {
+    return m_array[m_size - 1];
+  }
+
+  inline const T &last() const
+  {
+    return m_array[m_size - 1];
+  }
+  
+  int indexOf(const T &value, int from = 0) const
+  {
+    for (int i = from; i < m_size; i++){
+      if (m_array[i] == value){
+        return i;
+      }
+    }  
+    return -1;
+  }
+  
+  bool insert(int i, int count, const T &value)
+  {
+    if (m_capacity < m_size + count){
+      if (!reserve(m_capacity * 2 + count)){
+        return false;
+      }
+    }
+    
+    for (int j = m_size + count - 1; j >= i; j--){
+      m_array[j] = m_array[j - count];
+    }
+    
+    for (int j = i; j < i + count; j++){
+      m_array[j] = value;
+    }
+    
+    m_size += count;
+
+    return true;
+  }
+  
+  inline bool insert(int i, const T &value)
+  {
+    return insert(i, 1, value);
+  }
+
+  inline bool prepend(const T &value)
+  {
+    return insert(0, 1, value);
+  }
+
+  void remove(int i, int count)
+  {
+    for (; i < m_size - count; i++){
+      m_array[i] = m_array[i + count];
+    }
+    
+    m_size -= count;
+  }
+
+  inline void remove(int i)
+  {
+    remove(i, 1);
+  }
+};
+
+#endif
