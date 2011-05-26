@@ -1,5 +1,6 @@
 include(filesystem/devfs/devfs.cmake)
 include(filesystem/ext2/ext2.cmake)
+include(filesystem/fat/fat.cmake)
 include(filesystem/procfs/procfs.cmake)
 include(filesystem/tmpfs/tmpfs.cmake)
 
