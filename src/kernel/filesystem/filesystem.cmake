@@ -1,3 +1,4 @@
+include(filesystem/bfs/bfs.cmake)
 include(filesystem/devfs/devfs.cmake)
 include(filesystem/ext2/ext2.cmake)
 include(filesystem/procfs/procfs.cmake)

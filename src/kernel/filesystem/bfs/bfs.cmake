@@ -1,0 +1,3 @@
+set(KERNEL_SRCS ${KERNEL_SRCS}
+    filesystem/bfs/bfs.cpp
+)
