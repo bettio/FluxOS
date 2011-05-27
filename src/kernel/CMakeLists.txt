@@ -4,7 +4,7 @@ project (kernel)
 SET(UMF_LINUX_X86_64 ON)
 SET(UMF ON)
 
-SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
+SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g" )
 SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
 
 include_directories(include/)
