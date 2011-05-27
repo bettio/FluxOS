@@ -525,6 +525,34 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define DLMALLOC_EXPORT extern
 #endif
 
+#include <arch.h>
+#ifdef ARCH_UMM_BRK
+#define HAVE_MMAP 0
+#else
+#define HAVE_MREMAP 0
+#define HAVE_MORECORE 0
+#define MAP_ANONYMOUS  0x20
+#define PROT_READ   0x1
+#define PROT_WRITE  0x2
+#define MAP_PRIVATE 0x02
+#define O_RDONLY    00
+#define O_WRONLY    01
+#define O_RDWR      02
+#endif
+#define LACKS_UNISTD_H 1
+#define LACKS_FCNTL_H 1
+#define LACKS_SYS_PARAM_H 1
+#define LACKS_SYS_MMAN_H 1
+#define LACKS_SYS_TYPES_H 1
+#define LACKS_STDLIB_H 1
+#define LACKS_ERRNO_H 1
+#define LACKS_SCHED_H 1
+#define LACKS_TIME_H 1
+#include <filesystem/errors.h>
+#include <cstring.h>
+#define MALLOC_FAILURE_ACTION ;
+#define NO_MALLOC_STATS 1
+
 #ifndef WIN32
 #ifdef _WIN32
 #define WIN32 1
@@ -831,6 +859,9 @@ extern "C" {
 #define dlindependent_comalloc independent_comalloc
 #define dlbulk_free            bulk_free
 #endif /* USE_DL_PREFIX */
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, long offset);
+int munmap(void *addr, size_t length);
 
 /*
   malloc(size_t n)
