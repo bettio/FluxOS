@@ -25,7 +25,7 @@
 
 #include <gccattributes.h>
 
-typedef unsigned int size_t;
+typedef unsigned long size_t;
 
 #if __cplusplus
 extern "C"
