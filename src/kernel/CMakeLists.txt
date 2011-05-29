@@ -20,6 +20,7 @@ include(core/core.cmake)
 include(drivers/drivers.cmake)
 include(filesystem/filesystem.cmake)
 include(lib/libc/libc.cmake)
+include(mm/mm.cmake)
 include(task/task.cmake)
 
 set(KERNEL_SRCS ${KERNEL_SRCS}
