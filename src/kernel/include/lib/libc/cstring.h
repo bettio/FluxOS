@@ -24,8 +24,7 @@
 #define _CSTRING_H_
 
 #include <gccattributes.h>
-
-typedef unsigned long size_t;
+#include <stddef.h>
 
 #if __cplusplus
 extern "C"

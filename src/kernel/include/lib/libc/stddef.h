@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2008 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,21 +16,15 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: stdint.h                                                        *
+ *   Name: stddef.h                                                        *
+ *   Date: 29/05/2011                                                      *
  ***************************************************************************/
 
-#ifndef _STDINT_H_
-#define _STDINT_H_
+#ifndef _STDDEF_H_
+#define _STDDEF_H_
 
-typedef unsigned char uint8_t;
-typedef unsigned short int uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
-typedef unsigned int uint;
+#define NULL 0
 
-typedef signed char int8_t;
-typedef signed short int int16_t;
-typedef signed int int32_t;
-typedef signed long long int64_t;
+typedef unsigned long size_t;
 
 #endif
