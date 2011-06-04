@@ -32,7 +32,7 @@
 #define EXTENDED_PARTITION_TYPE 5
 #define BR_SIGNATURE 0xAA55
 
-KeyMap<Partition *> *DiskPart::Partitions;
+QHash<QString, Partition *> *DiskPart::Partitions;
 
 struct PartitionDescriptor
 {
@@ -101,7 +101,7 @@ struct GPTEntry
 
 void DiskPart::Init()
 {
-	Partitions = new KeyMap<Partition *>();
+	Partitions = new QHash<QString, Partition *>();
 }
 
 bool DiskPart::CreatePartitionsDevices(BlockDevice *blkdev, const char *namingScheme)
@@ -198,7 +198,7 @@ void DiskPart::RegisterPartition(BlockDevice *parent, const char *namingScheme, 
 	part->FirstSector = partitionStart;
 	part->Length = partitionLength;
 	part->ParentBlockDevice = parent;
-	Partitions->Add(tmpStr, part);
+	Partitions->insert(tmpStr, part);
 
 	BlockDevice *tmpBlkDev = new BlockDevice;
 	//TODO: Warning: unchecked malloc
@@ -212,7 +212,7 @@ void DiskPart::RegisterPartition(BlockDevice *parent, const char *namingScheme, 
 
 void DiskPart::ReadBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer)
 {
-	Partition *p = (*Partitions)[bd->name];
+	Partition *p = Partitions->value(bd->name);
 
 	p->ParentBlockDevice->ReadBlock(p->ParentBlockDevice, p->FirstSector + block, blockn, blockbuffer);
 }

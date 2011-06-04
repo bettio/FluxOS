@@ -25,8 +25,9 @@
 
 #include <drivers/blockdevicemanager.h>
 
-#include <lib/koof/intkeymap.h>
-#include <lib/koof/keymap.h>
+#include <QHash>
+#include <QList>
+#include <QString>
 
 #include <kdef.h>
 
@@ -47,9 +48,9 @@ class DiskPart
 		static void ReadBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer);
 		static bool WriteBlock(int block, int blockn, uint8_t *blockbuffer);
 	private:
-		static IntKeyMap<char *> *BlockCache;
+		static QList<char *> *BlockCache;
 		static void RegisterPartition(BlockDevice *parent, const char *namingScheme, int partitionNum, uint32_t partitionStart, uint32_t partitionLength);
-		static KeyMap<Partition *> *Partitions;
+		static QHash<QString, Partition *> *Partitions;
 };
 
 #endif
