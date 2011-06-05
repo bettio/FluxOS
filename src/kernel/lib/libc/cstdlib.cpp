@@ -27,7 +27,7 @@
 #include <core/printk.h>
 #include <cmath.h>
 
-#define MAX_DIGIT 9
+#define MAX_DIGIT 32
 
 #include <arch.h>
 
@@ -95,9 +95,9 @@ extern "C"{
     /**
      * @author: Marco Pagliaricci
      */
-	void itoaz(const int n, char *s, const unsigned int b)
+	void itoaz(long long n, char *s, const unsigned int b)
 	{
-		int i = 0, l, r, k, j, index = 0, sign = 0;
+		long long i = 0, l, r, k, j, index = 0, sign = 0;
 		char p[MAX_DIGIT] = { 0 };
 
 		if (n < 0){
@@ -137,18 +137,13 @@ extern "C"{
     /**
      * @author: Marco Pagliaricci
      */
-	void uitoaz(const unsigned int n, char s[], const unsigned int b)
+	void uitoaz(unsigned long long n, char s[], const unsigned int b)
 	{
-		int i = 0, l, r, k, j, index = 0, sign = 0;
+		unsigned long long i = 0, l, r, k, j, index = 0;
 		char p[MAX_DIGIT] = { 0 };
 
-		if (n < 0){
-			l = -n;
-			sign = 1;
-		}else{
-			l = n;
-		}
-
+        l = n;
+        
 		while (1){
 			r = l % b;
 			l = l / b;
@@ -162,11 +157,6 @@ extern "C"{
 			++i;
 
 			if (l <= 0) { break; }
-		}
-
-		if (sign == 1){
-			s[index] = '-';
-			++index;
 		}
 
 		for (k = i, j = index; k > 0; --k, ++j){

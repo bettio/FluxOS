@@ -27,7 +27,7 @@
 
 #include <QMutex>
 
-#define MAX_DIGIT 9
+#define MAX_DIGIT 21
 
 CharDevice *Out;
 QMutex printkMutex;
@@ -37,9 +37,7 @@ void printk(const char *s, ...)
 	va_list l;
 	va_start(l,s);
 
-	char *str, num[MAX_DIGIT+1];
-	int n;
-	char p;
+	char num[MAX_DIGIT+1];
 	int len;
 
     printkMutex.lock();
@@ -48,45 +46,108 @@ void printk(const char *s, ...)
 		switch (*s){
 		case '%':
 			switch (*(++s)){
-			case 's':
-				str = va_arg(l, char *);
+			case 's':{
+				char *str = va_arg(l, char *);
 
 				len = strlen(str);
 				Out->Write(Out, str, len);
 
 				break;
+			}
+			case 'c':{
+				char ch = (char) va_arg(l, int);
 
-			case 'c':
-				p = (char) va_arg(l, int);
-
-				Out->Write(Out, &p, 1);
+				Out->Write(Out, &ch, 1);
 
 				break;
-
-			case 'i':
-				n = va_arg(l, int);
+			}
+			case 'i':{
+				int n = va_arg(l, int);
 				itoaz(n,num,10);
 
 				len = strlen(num);
 				Out->Write(Out, num, len);
 
 				break;
-			case 'u':
-				n = va_arg(l,unsigned int);
+			}
+			case 'u':{
+				unsigned int n = va_arg(l,unsigned int);
 				uitoaz(n,num,10);
 
 				len = strlen(num);
 				Out->Write(Out, num, len);
 
 				break;
-			case 'x':
-				n = va_arg(l, int);
+			}
+			case 'x':{
+				unsigned int n = va_arg(l, unsigned int);
 				uitoaz(n,num,16);
 
 				len = strlen(num);
 				Out->Write(Out, num, len);
 
 				break;
+			}
+            case 'l':
+                switch (*(++s)){
+                case 'i':{
+                    long ln = va_arg(l, long);
+                    itoaz(ln,num,10);
+
+                    len = strlen(num);
+                    Out->Write(Out, num, len);
+
+                    break;
+                }
+                case 'u':{
+                    unsigned long uln = va_arg(l,unsigned long);
+                    uitoaz(uln,num,10);
+
+                    len = strlen(num);
+                    Out->Write(Out, num, len);
+
+                    break;
+                }
+                case 'x':{
+                    unsigned long uln = va_arg(l, unsigned long);
+                    uitoaz(uln,num,16);
+
+                    len = strlen(num);
+                    Out->Write(Out, num, len);
+
+                    break;
+                }
+                case 'l':
+                    switch (*(++s)){
+                    case 'i':{
+                        long long lln = va_arg(l, long long);
+                        itoaz(lln,num,10);
+
+                        len = strlen(num);
+                        Out->Write(Out, num, len);
+
+                        break;
+                    }
+                    case 'u':{
+                        unsigned long long ulln = va_arg(l,unsigned long long);
+                        uitoaz(ulln,num,10);
+
+                        len = strlen(num);
+                        Out->Write(Out, num, len);
+
+                        break;
+                    }
+                    case 'x':{
+                        unsigned long long ulln = va_arg(l, unsigned long long);
+                        uitoaz(ulln,num,16);
+
+                        len = strlen(num);
+                        Out->Write(Out, num, len);
+
+                        break;
+                    }
+                    }
+                }
 			}
 			break;
 		default:
@@ -137,7 +198,7 @@ void printk(unsigned int value)
 void printk(long long value)
 {
 	char num[MAX_DIGIT+1];
-	itoaz((int) value, num, 10);
+	itoaz(value, num, 10);
 
 	int len = strlen(num);
 	Out->Write(Out, num, len);
@@ -146,8 +207,9 @@ void printk(long long value)
 void printk(unsigned long long value)
 {
 	char num[MAX_DIGIT+1];
-	itoaz((int) value, num, 10);
+	uitoaz(value, num, 10);
 
 	int len = strlen(num);
 	Out->Write(Out, num, len);
 }
+

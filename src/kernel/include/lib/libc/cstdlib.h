@@ -37,8 +37,8 @@ long abs(long num) CONST_FUNCTION;
 extern "C"
 {
 	int atoi(const char *str);
-	void itoaz (const int, char *, const unsigned int);
-	void uitoaz(const unsigned int n, char s[], const unsigned int b);
+	void itoaz (long long, char *, const unsigned int);
+	void uitoaz(unsigned long long n, char s[], const unsigned int b);
 	long atol(const char *str);
 	long labs(long num) CONST_FUNCTION;
 }
