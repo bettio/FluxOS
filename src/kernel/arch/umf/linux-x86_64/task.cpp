@@ -55,7 +55,7 @@ void SyscallsLoop(pid_t child, const char *name)
 		HostSysCalls::ptrace(PTRACE_SYSCALL, child, NULL, NULL);
 
 		if (orig_eax != 59){
-			printk("Error: Unexpected first syscall: %i. (%s:%s)\n", orig_eax, __FILE__,  __FUNCTION__);
+			printk("Error: Unexpected first syscall: %li. (%s:%s)\n", orig_eax, __FILE__,  __FUNCTION__);
 
 			return;
 		}

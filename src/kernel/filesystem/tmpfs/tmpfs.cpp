@@ -182,7 +182,7 @@ int TmpFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 
     }else{
         vnd = NULL;
-        printk("ENOENT: %s (node addr: %x)\n", name, node);
+        printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
         return -ENOENT;
     }
 }

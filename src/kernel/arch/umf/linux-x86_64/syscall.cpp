@@ -134,7 +134,7 @@ uint64_t setdomainname(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, u
 
 uint64_t uname(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-    printk("Here I am 2: %i, %i, %i, %i, %i\n", ebx, ecx, edx, esi, edi);
+    printk("Here I am 2: %lli, %lli, %lli, %lli, %lli\n", ebx, ecx, edx, esi, edi);
 
 	utsname tmpBuf;
 
@@ -628,9 +628,9 @@ uint64_t mknod(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t, uint64_t)
 uint64_t SysCall::NullSysCallHandler(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
 	printk("Null System Call Handler:\n"
-		" - ebx: 0x%x, ecx: 0x%x\n"
-		" - edx: 0x%x, esi: 0x%x\n"
-		" - edi: 0x%x",
+		" - ebx: 0x%llx, ecx: 0x%llx\n"
+		" - edx: 0x%llx, esi: 0x%llx\n"
+		" - edi: 0x%llx",
 		ebx, ecx, edx, esi, edi);
 	while(1);
 
