@@ -73,10 +73,13 @@ int main()
     #if BOOT == 0
     FileSystem::VFS::Mount("null", "/", "tmpfs", 0, 0);
     VNode *node;
-    FileSystem::VFS::RelativePathToVnode(0, "/", &node);
-    FS_CALL(node, mkdir)(node, "dev", 0);
-    FS_CALL(node, mkdir)(node, "proc", 0);
-    FS_CALL(node, mkdir)(node, "tmp", 0);
+    bool fsError = (FileSystem::VFS::RelativePathToVnode(0, "/", &node) < 0);
+    fsError &= (FS_CALL(node, mkdir)(node, "dev", 0) < 0);
+    fsError &= (FS_CALL(node, mkdir)(node, "proc", 0) < 0);
+    fsError &= (FS_CALL(node, mkdir)(node, "tmp", 0) < 0);
+    if (fsError){
+        printk("Error while creating root fs directories\n");
+    }
     FileSystem::VNodeManager::PutVnode(node);
     #else
 	FileSystem::VFS::Mount("/dev/fd0", "/", "ext2", 0, 0);
