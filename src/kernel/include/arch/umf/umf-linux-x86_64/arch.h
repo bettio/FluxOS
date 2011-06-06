@@ -23,11 +23,11 @@
 #ifndef _ARCH_H_
 #define _ARCH_H_
 
-#define ARCH_IA32_UMM_LINUX
-#define ARCH_IA32_UMM
-#define ARCH_IA32
-#define ARCH_UMM
-#define ARCH_LINUX
+#define ARCH_UMF_X86_64_LINUX
+#define ARCH_UMF_X86_64
+#define ARCH_X86_64_SPECIFIC_CODE
+#define ARCH_UMF
+#define ARCH_UMF_LINUX
 
 #define NEW_DEFAULT_TYPE long unsigned int
 

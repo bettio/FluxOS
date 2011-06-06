@@ -25,7 +25,7 @@
 #include <arch.h>
 #include <core/printk.h>
 
-#ifdef ARCH_UMM
+#ifdef ARCH_UMF
     #include <arch/umf/core/hostsyscalls.h>
 #endif
 
@@ -39,13 +39,13 @@ extern "C"
 {
     void initmem()
     {
-        #ifdef ARCH_UMM_BRK
+        #ifdef ARCH_UMF_BRK
             mem = HostSysCalls::brk((void *) 0);
         #endif
 
         mem += (8 - (mem % 8));
 
-        #ifdef ARCH_UMM_BRK
+        #ifdef ARCH_UMF_BRK
             HostSysCalls::brk((void *) mem);
         #endif
     }
@@ -57,7 +57,7 @@ extern "C"
         tmp = mem + (8 - ((mem + size) % 8));
 
         mem += num*size + (8 - ((mem + size) % 8));
-        #ifdef ARCH_UMM_BRK
+        #ifdef ARCH_UMF_BRK
             HostSysCalls::brk((void *) mem);
         #endif
 
@@ -67,8 +67,8 @@ extern "C"
     void free(void *ptr)
     {
         //printk("free: %x\n", ptr);
-        #ifdef ARCH_UMM
-        #ifndef ARCH_UMM_BRK
+        #ifdef ARCH_UMF
+        #ifndef ARCH_UMF_BRK
             HostSysCalls::munmap(((unsigned long *) ptr) - 1, *(((unsigned long *) ptr) - 1) + sizeof(unsigned long));
         #endif
         #endif
@@ -81,13 +81,13 @@ extern "C"
         tmp = mem;
 
         mem += (1024*1024);//size + (8 - ((mem + size) % 8));
-        #ifdef ARCH_UMM_BRK
+        #ifdef ARCH_UMF_BRK
         
             HostSysCalls::brk((void *) mem);
         #endif
 
-        #ifdef ARCH_UMM
-        #ifndef ARCH_UMM_BRK
+        #ifdef ARCH_UMF
+        #ifndef ARCH_UMF_BRK
             tmp = (unsigned long) HostSysCalls::mmap(0, size + sizeof(unsigned long), PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
             *((unsigned long *) tmp) = size;
             tmp += sizeof(unsigned long);

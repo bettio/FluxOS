@@ -24,7 +24,7 @@
 
 #include <lib/koof/intkeymap.h>
 
-#ifdef ARCH_IA32_UMM_LINUX
+#ifdef ARCH_UMF_LINUX
 #include <arch/umf/core/hostsyscalls.h>
 extern IntKeyMap<int> *Pids;
 #endif
