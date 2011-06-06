@@ -23,11 +23,10 @@
 
 #include <cstring.h>
 #include <cstdlib.h>
+#include <cstring.h>
 
 #include <core/printk.h>
 #include <cmath.h>
-
-#define MAX_DIGIT 32
 
 #include <arch.h>
 
@@ -92,79 +91,54 @@ extern "C"{
 		}
 	}
 
-    /**
-     * @author: Marco Pagliaricci
-     */
-	void itoaz(long long n, char *s, const unsigned int b)
-	{
-		long long i = 0, l, r, k, j, index = 0, sign = 0;
-		char p[MAX_DIGIT] = { 0 };
-
-		if (n < 0){
-			l = -n;
-			sign = 1;
-		}else{
-			l = n;
-		}
-
-		while(true){
-			r = l % b;
-			l = l / b;
-
-			if ((r >= 0) && (r <= 9)){
-				p[i] = '0' + r;
-			}else if (r > 9){
-				p[i] = 'A' + r - 10;
-			}
-
-			++i;
-
-			if (l <= 0) break;
-		}
-
-		if (sign == 1){
-			s[index] = '-';
-			++index;
-		}
-
-		for (k = i, j = index; k > 0; --k, ++j){
-			s[j] = p[k-1];
-		}
-
-		s[j] = '\0';
-	}
-
-    /**
-     * @author: Marco Pagliaricci
-     */
-	void uitoaz(unsigned long long n, char s[], const unsigned int b)
-	{
-		unsigned long long i = 0, l, r, k, j, index = 0;
-		char p[MAX_DIGIT] = { 0 };
-
-        l = n;
+    size_t itoaz(long long n, char *s, unsigned int b)
+    {
+        size_t i = 0;
+        long long num = (n > 0) ? n : -n;
+        do{
+            int digit = num % b;
+            s[i] = (digit < 10) ? ('0' + digit) : ('A' + digit - 10);
+            i++;
+            num /= b;
+        }while (num != 0);
         
-		while (1){
-			r = l % b;
-			l = l / b;
+        if (n < 0){
+            s[i] = '-';
+            i++;
+        }
+        
+        for (int j = 0, k = i - 1; j < k; j++, k--){
+            char tmp = s[k];
+            s[k] = s[j];
+            s[j] = tmp;
+        }
+        
+        s[i] = '\0';
+        
+        return i;
+    }
 
-			if ((r >= 0) && (r <= 9)){
-				p[i] = '0' + r;
-			}else if (r > 9){
-				p[i] = 'A' + r - 10;
-			}
+    size_t uitoaz(unsigned long long n, char *s, unsigned int b)
+    {
+        size_t i = 0;
+        unsigned long long num = n;
+        do{
+            int digit = num % b;
+            s[i] = (digit < 10) ? ('0' + digit) : ('A' + digit - 10);
+            i++;
+            num /= b;
+        }while (num != 0);
 
-			++i;
-
-			if (l <= 0) { break; }
-		}
-
-		for (k = i, j = index; k > 0; --k, ++j){
-			s[j] = p[k-1];
-		}
-
-		s[j] = '\0';
-	}
+        for (int j = 0, k = i - 1; j < k; j++, k--){
+            char tmp = s[k];
+            s[k] = s[j];
+            s[j] = tmp;
+        }
+        
+        s[i] = '\0';
+        
+        return i;
+    }
 
 	long atol(const char *str)
 	{
