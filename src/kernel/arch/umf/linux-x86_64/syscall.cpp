@@ -35,7 +35,7 @@
 #include <cstring.h>
 
 #include <arch/umf/core/kmemcpy.h>
-#include <arch/umf/linux-x86_64/syscall.h>
+#include <syscall.h>
 
 #define TMP_BUF_SIZE 4096
 #define TMP_FAST_BUF_SIZE 256

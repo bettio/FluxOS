@@ -31,7 +31,7 @@
 
 #include <lib/koof/intkeymap.h>
 
-#include <arch/umf/linux-x86_64/syscall.h>
+#include <syscall.h>
 
 int cpid;
 IntKeyMap<int> *Pids;
