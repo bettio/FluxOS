@@ -73,7 +73,7 @@ int isValidUserFileName(const char *name)
 
 //TODO: testare se un file descriptor e` valido
 
-int getcwd(char *buf, int size)
+int getcwd(char *buf, size_t size)
 {
     char *path;
     int retVal = VFS::GetDirPathFromVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, &path);
