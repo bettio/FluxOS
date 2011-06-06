@@ -735,14 +735,14 @@ int dup(int oldfd)
     return Task::CurrentTask()->OpenFiles->add(fdesc);
 }
 
-//TODO
+//TODO: Implement dup2
 int dup2(int oldfd, int newfd)
 {
-    return 0;
+    return -EINVAL;
 }
 
-//TODO
+//TODO: Implement pipe
 int pipe(int pipefd[2])
 {
-
+    return -EINVAL;
 }
