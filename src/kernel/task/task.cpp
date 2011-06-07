@@ -116,10 +116,11 @@ int Task::CreateNewTask(const char *name, bool user)
 	//TODO: Add stdin and stdout
 	TaskDescriptorTable[newTaskPid].OpenFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *node;
-		FileDescriptor *fdesc = new FileDescriptor();
-		TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
-		fdesc = new FileDescriptor();
-		TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
+        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &node, true);
+        FileDescriptor *fdesc = new FileDescriptor(node);
+        TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
+        fdesc = new FileDescriptor(node);
+        TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
 
 	FileSystem::VFS::RelativePathToVnode(0, "/", &node);
 
