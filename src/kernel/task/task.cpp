@@ -82,11 +82,15 @@ int Task::NewPID(){
 
 TaskDescriptor *Task::CurrentTask()
 {
+    #ifndef ARCH_IA32_UMM_LINUX
+        return &TaskDescriptorTable[current_task];
+    #else
         if (Pids != 0){
             return &TaskDescriptorTable[(*Pids)[HostSysCalls::getpid()]];
         }else{
             return &TaskDescriptorTable[current_task];
         }
+    #endif
 }
 
 int Task::MaxUsedTaskPid(){
@@ -100,7 +104,11 @@ void Task::SetCurrentTask(int ctask)
 
 int Task::CurrentTaskPid()
 {
+    #ifndef ARCH_IA32_UMM_LINUX
+        return current_task;
+    #else
         return (*Pids)[HostSysCalls::getpid()];
+    #endif
 }
 
 int Task::CreateNewTask(const char *name, bool user)

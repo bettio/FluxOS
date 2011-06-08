@@ -80,7 +80,7 @@ extern "C"
 
         tmp = mem;
 
-        mem += (1024*1024);//size + (8 - ((mem + size) % 8));
+        mem += size + (8 - ((mem + size) % 8));
         #ifdef ARCH_UMM_BRK
         
             HostSysCalls::brk((void *) mem);
