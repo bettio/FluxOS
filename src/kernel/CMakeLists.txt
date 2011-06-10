@@ -34,7 +34,7 @@ include_directories(include/lib/libc)
 include_directories(include/lib/koof)
 
 if (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
-    include_directories(include/arch/umm/umm-linux-x86_64)
+    include_directories(include/arch/umf/umf-linux-x86_64)
 
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     include_directories(include/arch/arm/versatilearm)
