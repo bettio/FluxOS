@@ -12,6 +12,20 @@ if (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
     SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
     SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
 
+elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
+    SET(NATIVE_IA32 ON)
+
+    SET(CMAKE_ASM_COMPILER "g++" )
+    SET(CMAKE_ASM_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti -c")
+    include(CMakeASMInformation)
+    enable_language(ASM)
+    set(can_use_assembler TRUE)
+    SET(CMAKE_ASM_COMPILER "g++" )
+    SET(CMAKE_ASM_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti -c")
+
+    SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti" )
+    SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti" )
+
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     SET(NATIVE_ARM ON)
     SET(VERSATILE_ARM ON)
@@ -36,6 +50,9 @@ include_directories(include/lib/koof)
 if (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
     include_directories(include/arch/umf/umf-linux-x86_64)
 
+elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
+    include_directories(include/arch/ia32/ia32)
+
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     include_directories(include/arch/arm/versatilearm)
 
@@ -43,6 +60,9 @@ endif (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
 
 if (UMM)
     include(arch/umf/umf.cmake)
+
+elseif (NATIVE_IA32)
+    include(arch/ia32/ia32.cmake)
 
 elseif (VERSATILE_ARM)
     include(arch/arm/arm.cmake)
@@ -61,8 +81,12 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
 
 add_executable(vmflux ${KERNEL_SRCS})
 
-if (VERSATILE_ARM)
+if (NATIVE_IA32)
+    target_link_libraries(vmflux libgcc.a)
+    SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-Ttext=0x100000" )
+
+elseif (VERSATILE_ARM)
     target_link_libraries(vmflux libgcc.a)
     SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-T arch/arm/platforms/versatile/versatile.ld")
-endif (VERSATILE_ARM)
+endif (NATIVE_IA32)
 
