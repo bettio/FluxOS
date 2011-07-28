@@ -74,6 +74,7 @@ include(drivers/drivers.cmake)
 include(filesystem/filesystem.cmake)
 include(lib/libc/libc.cmake)
 include(task/task.cmake)
+include(net/net.cmake)
 
 set(KERNEL_SRCS ${KERNEL_SRCS}
     main.cpp
