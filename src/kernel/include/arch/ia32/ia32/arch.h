@@ -31,5 +31,6 @@
 
 #define NEW_DEFAULT_TYPE unsigned int
 
+#define LITTLE_ENDIAN 1234
 
 #endif

@@ -30,4 +30,6 @@
 #define KERNEL_HEAP_START 0x2800000
 #define USER_START 0x4600000
 
+#define LITTLE_ENDIAN 1234
+
 #endif
