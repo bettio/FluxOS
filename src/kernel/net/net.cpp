@@ -21,30 +21,18 @@
 
 #include <net/net.h>
 
+#include <net/arp.h>
+#include <net/ethernet.h>
+#include <net/icmp.h>
+#include <net/ip.h>
+#include <net/udp.h>
+
 #include <core/printk.h>
 #include <cstdlib.h>
 #include <stdint.h>
 #include <cstring.h>
 
 #include <endian.h>
-
-#define PROTOCOL_ICMP 1
-#define PROTOCOL_TCP 6
-#define PROTOCOL_UDP 17
-
-#define ECHO_REPLY 0
-#define ECHO_REQUEST 8
-
-#define ETHERNETII_TYPE_IP 0x0800
-#define ETHERNETII_TYPE_ARP 0x0806
-#define ETHERNETII_TYPE_IPV6 0x86DD
-
-#define ARP_OPCODE_REQUEST 0x0001
-#define ARP_OPCODE_REPLY 0x0002
-
-#define IP_PROTOCOL_ICMP 0x01
-#define IP_PROTOCOL_UDP 0x11
-
 
 #define IP_ADDRESS_LENGTH 4
 #define MAC_ADDRESS_LENGTH 6
@@ -71,54 +59,6 @@ inline uint16_t ntohs(uint16_t netshort)
 {
     return BIG_TO_HOST_16(netshort);
 }
-
-struct EthernetIIHeader
-{
-  uint8_t destination[6];
-  uint8_t source[6];
-  uint16_t type;
-} __attribute__ ((packed));;
-
-struct ARPPacket
-{
-  uint16_t hardwareType;
-  uint16_t protocolType;
-  uint8_t hardwareSize;
-  uint8_t protocolSize;
-  uint16_t opcode;
-  uint8_t senderMAC[6];
-  uint32_t senderIP;
-  uint8_t targetMAC[6];
-  uint32_t targetIP;
-} __attribute__ ((packed));
-
-struct IPHeader {
-   uint8_t   ihl:4, version:4;
-   uint8_t      tos;
-   uint16_t     tot_len;
-   uint16_t     id;
-   uint16_t     frag_off;
-   uint8_t      ttl;
-   uint8_t      protocol;
-   uint16_t     check;
-   ipaddr       saddr;
-   ipaddr       daddr;
-} __attribute__ ((packed));
-
-struct ICMPHeader
-{
-    uint8_t type;
-    uint8_t code;
-    uint16_t checksum;
-} __attribute__ ((packed));
-
-struct UDPHeader
-{
-    uint16_t sourceport;
-    uint16_t destport;
-    uint16_t length;
-    uint16_t checksum;
-} __attribute__ ((packed));
 
 struct TCPHeader
 {
@@ -155,17 +95,17 @@ void Net::ProcessEthernetIIFrame(uint8_t *frame, int size)
     EthernetIIHeader *header = (EthernetIIHeader *) frame;
 
     switch(ntohs(header->type)){
-        case ETHERNETII_TYPE_ARP:
+        case ETHERTYPE_ARP:
               ProcessARPPacket(frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
               break;
 
-        case ETHERNETII_TYPE_IP:
+        case ETHERTYPE_IP:
               ProcessIPPacket(frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
               break;
 
-        case ETHERNETII_TYPE_IPV6:
+        case ETHERTYPE_IPV6:
               DEBUG_MSG("ProcessEthernetIIFrame: Unsupported IPv6 packet.\n");
 
               break;
@@ -300,7 +240,7 @@ void Net::SendARPReply(const ARPPacket *arpPacket)
 {
     uint8_t newPacket[sizeof(EthernetIIHeader) + sizeof(ARPPacket)];
 
-    BuildEthernetIIHeader(newPacket, arpPacket->senderMAC, ETHERNETII_TYPE_ARP);
+    BuildEthernetIIHeader(newPacket, arpPacket->senderMAC, ETHERTYPE_ARP);
 
     ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
     newArpPacket->hardwareType = htons(1);
@@ -320,7 +260,7 @@ void Net::SendICMPReply(uint8_t *data, ipaddr destIp)
 {
     uint8_t newPacket[sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 56]; //HARDCODED
 
-    BuildEthernetIIHeader(newPacket, dummyMACCache, ETHERNETII_TYPE_IP);
+    BuildEthernetIIHeader(newPacket, dummyMACCache, ETHERTYPE_IP);
     BuildIPHeader(newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,43 +16,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: ethernet.h                                                      *
+ *   Date: 30/07/2011                                                      *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
-
-#include <net/ip.h>
+#ifndef _ETHERNET_H_
+#define _ETHERNET_H_
 
 #include <stdint.h>
 
-struct ARPPacket;
+#define ETHERTYPE_IP 0x0800
+#define ETHERTYPE_ARP 0x0806
+#define ETHERTYPE_IPV6 0x86DD
 
-struct NetIface
+struct EthernetIIHeader
 {
-    uint8_t myMAC[6];
-    ipaddr myIP;
-    void (*send)(const uint8_t *packet, unsigned int size);
-};
-
-class Net
-{
-    public:
-        void setIface(NetIface *i);
-        void ProcessEthernetIIFrame(uint8_t *frame, int size);
-        void ProcessARPPacket(uint8_t *packet, int size);
-        void ProcessIPPacket(uint8_t *packet, int size);
-        void ProcessICMPPacket(uint8_t *packet, int size);
-        void ProcessUDPPacket(uint8_t *packet, int size);
-        void ProcessTCPPacket(uint8_t *packet, int size);
-        void BuildEthernetIIHeader(uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
-        void BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
-        void SendARPReply(const ARPPacket *arpPacket);
-        void SendICMPReply(uint8_t *data, ipaddr destIp);
-        void PrintIPAddr(uint32_t addr);
-        
-    private:
-        NetIface *iface;
-};
+  uint8_t destination[6];
+  uint8_t source[6];
+  uint16_t type;
+} __attribute__ ((packed));;
 
 #endif
