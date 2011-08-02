@@ -127,9 +127,13 @@ void Net::ProcessARPPacket(uint8_t *packet, int size)
 
     memcpy(dummyMACCache, arp->senderMAC, 6);
 
-    if ((arp->opcode == htons(ARP_OPCODE_REQUEST)) && (arp->targetIP == iface->myIP.addr)){
-        DEBUG_MSG("ARP request\n");
-        SendARPReply(arp);
+    if ((arp->opcode == htons(ARP_OPCODE_REQUEST))){
+        if (arp->targetIP == iface->myIP.addr){
+            DEBUG_MSG("ARP request\n");
+            SendARPReply(arp);
+        }else{
+            DEBUG_MSG("ARP request (to other)\n");
+        }
 
     }else if (arp->opcode == htons(ARP_OPCODE_REPLY)){
         DEBUG_MSG("Received ARP reply\n");
