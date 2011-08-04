@@ -70,13 +70,11 @@ bool rtl8139::init(int bus, int slot)
     for (int i = 0; i < 6; i++){
         iface->myMAC[i] = inportb(ioBase + i);
     }
-    iface->myIP.addrbytes[0] = 192;
-    iface->myIP.addrbytes[1] = 168;
-    iface->myIP.addrbytes[2] = 1;
-    iface->myIP.addrbytes[3] = 5;
     iface->send = send;
     newCard->net = new Net;
     newCard->net->setIface(iface);
+
+    newCard->net->SendRARPPacket();
 
     return true;
 }

@@ -137,6 +137,9 @@ void Net::ProcessARPPacket(uint8_t *packet, int size)
     }else if (arp->opcode == htons(ARP_OPCODE_REPLY)){
         DEBUG_MSG("Received ARP reply\n");
 
+    }else if (arp->opcode == htons(RARP_OPCODE_REPLY)){
+        iface->myIP.addr = arp->targetIP;
+        DEBUG_MSG("Received RARP reply\n");
     }else{
         DEBUG_MSG("Unknown ARP opcode: %i\n", arp->opcode);
     }
@@ -274,6 +277,27 @@ void Net::SendICMPReply(uint8_t *data, ipaddr destIp)
     newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, 64);
 
     iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 60);
+}
+
+void Net::SendRARPPacket()
+{
+    uint8_t newPacket[sizeof(EthernetIIHeader) + sizeof(ARPPacket)];
+
+    uint8_t mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    BuildEthernetIIHeader(newPacket, mac, 0x806);
+
+    ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
+    newArpPacket->hardwareType = htons(1);
+    newArpPacket->protocolType = htons(0x0800);
+    newArpPacket->hardwareSize = 6;
+    newArpPacket->protocolSize = 4;
+    newArpPacket->opcode = htons(0x0003);
+    memcpy(newArpPacket->senderMAC, iface->myMAC, 6);
+    newArpPacket->senderIP = 0;
+    memcpy(newArpPacket->targetMAC, mac, 6);
+    newArpPacket->targetIP = 0;
+
+    iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 }
 
 void Net::PrintIPAddr(uint32_t addr)

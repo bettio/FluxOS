@@ -51,7 +51,8 @@ class Net
         void SendARPReply(const ARPPacket *arpPacket);
         void SendICMPReply(uint8_t *data, ipaddr destIp);
         void PrintIPAddr(uint32_t addr);
-        
+        void SendRARPPacket();
+
     private:
         NetIface *iface;        
         uint8_t dummyMACCache[6];
