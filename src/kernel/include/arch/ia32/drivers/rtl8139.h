@@ -24,13 +24,21 @@
 #define _RTL8139_H_
 
 #include <stdint.h>
+#include <net/net.h>
 
 class rtl8139
 {
     public:
         static bool init(int bus, int slot);
         static void receive();
-        static void send(const uint8_t *buff, unsigned int siz);
+        static void send(NetIface *iface, const uint8_t *buff, unsigned int siz);
+
+    private:
+        uint8_t *rx_buff;
+        uint16_t rxPtr;
+        int ioBase;
+        Net *net;
 };
 
 #endif
+

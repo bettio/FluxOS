@@ -32,7 +32,8 @@ struct NetIface
 {
     uint8_t myMAC[6];
     ipaddr myIP;
-    void (*send)(const uint8_t *packet, unsigned int size);
+    void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);
+    void *card;
 };
 
 class Net
@@ -52,7 +53,9 @@ class Net
         void PrintIPAddr(uint32_t addr);
         
     private:
-        NetIface *iface;
+        NetIface *iface;        
+        uint8_t dummyMACCache[6];
 };
 
 #endif
+

@@ -72,7 +72,6 @@ struct TCPHeader
 } __attribute__ ((packed));
 
 
-uint8_t dummyMACCache[6];
 
 uint16_t checksum(uint16_t *data, int size)
 {
@@ -257,7 +256,7 @@ void Net::SendARPReply(const ARPPacket *arpPacket)
     memcpy(newArpPacket->targetMAC, arpPacket->senderMAC, 6);
     newArpPacket->targetIP = arpPacket->senderIP;
 
-    iface->send(newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
+    iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 }
 
 void Net::SendICMPReply(uint8_t *data, ipaddr destIp)
@@ -274,7 +273,7 @@ void Net::SendICMPReply(uint8_t *data, ipaddr destIp)
     memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader), data, 60);
     newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, 64);
 
-    iface->send((const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 60);
+    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 60);
 }
 
 void Net::PrintIPAddr(uint32_t addr)
