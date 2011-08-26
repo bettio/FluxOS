@@ -40,6 +40,8 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
+#define netBuffMalloc malloc
+
 inline uint32_t htonl(uint32_t hostlong)
 {
     return HOST_TO_BIG_32(hostlong);
@@ -190,7 +192,7 @@ void Net::ProcessICMPPacket(uint8_t *packet, int size)
             DEBUG_MSG("PING REQUEST\n");
 
             if (ipHeader->daddr.addr == iface->myIP.addr){
-                SendICMPReply(packet + sizeof(ICMPHeader), ipHeader->saddr);
+                SendICMPReply(packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr);
             }
 
             break;
@@ -241,7 +243,7 @@ void Net::BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol,
 
 void Net::SendARPReply(const ARPPacket *arpPacket)
 {
-    uint8_t newPacket[sizeof(EthernetIIHeader) + sizeof(ARPPacket)];
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 
     BuildEthernetIIHeader(newPacket, arpPacket->senderMAC, ETHERTYPE_ARP);
 
@@ -259,9 +261,9 @@ void Net::SendARPReply(const ARPPacket *arpPacket)
     iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 }
 
-void Net::SendICMPReply(uint8_t *data, ipaddr destIp)
+void Net::SendICMPReply(uint8_t *data, int size, ipaddr destIp)
 {
-    uint8_t newPacket[sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 56]; //HARDCODED
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 80); //HARDCODED
 
     BuildEthernetIIHeader(newPacket, dummyMACCache, ETHERTYPE_IP);
     BuildIPHeader(newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);

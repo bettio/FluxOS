@@ -49,7 +49,7 @@ class Net
         void BuildEthernetIIHeader(uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
         void BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
         void SendARPReply(const ARPPacket *arpPacket);
-        void SendICMPReply(uint8_t *data, ipaddr destIp);
+        void SendICMPReply(uint8_t *data, int size, ipaddr destIp);
         void PrintIPAddr(uint32_t addr);
         
     private:
