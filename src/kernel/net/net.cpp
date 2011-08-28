@@ -21,6 +21,7 @@
 
 #include <net/net.h>
 
+#include <net/netutils.h>
 #include <net/arp.h>
 #include <net/ethernet.h>
 #include <net/icmp.h>
@@ -32,8 +33,6 @@
 #include <stdint.h>
 #include <cstring.h>
 
-#include <endian.h>
-
 #define IP_ADDRESS_LENGTH 4
 #define MAC_ADDRESS_LENGTH 6
 
@@ -41,26 +40,6 @@
 #include <debugmacros.h>
 
 #define netBuffMalloc malloc
-
-inline uint32_t htonl(uint32_t hostlong)
-{
-    return HOST_TO_BIG_32(hostlong);
-}
-
-inline int16_t htons(uint16_t hostshort)
-{
-    return HOST_TO_BIG_16(hostshort);
-}
-
-inline uint32_t ntohl(uint32_t netlong)
-{
-    return BIG_TO_HOST_32(netlong);
-}
-
-inline uint16_t ntohs(uint16_t netshort)
-{
-    return BIG_TO_HOST_16(netshort);
-}
 
 uint16_t checksum(uint16_t *data, int size)
 {
