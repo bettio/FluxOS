@@ -62,19 +62,6 @@ inline uint16_t ntohs(uint16_t netshort)
     return BIG_TO_HOST_16(netshort);
 }
 
-struct TCPHeader
-{
-    uint16_t sourceport;
-    uint16_t destport;
-    uint32_t seqnumber;
-    uint32_t acknumber;
-    uint16_t flags;
-    uint16_t window;
-    uint32_t misc[2];
-} __attribute__ ((packed));
-
-
-
 uint16_t checksum(uint16_t *data, int size)
 {
     uint32_t sum = 0;
