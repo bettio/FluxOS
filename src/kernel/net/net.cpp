@@ -264,11 +264,3 @@ void Net::SendICMPReply(uint8_t *data, int size, ipaddr destIp)
 
     iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 60);
 }
-
-void Net::PrintIPAddr(uint32_t addr)
-{
-    ipaddr address;
-    address.addr = addr;
-
-    DEBUG_MSG("%d.%d.%d.%d", address.addrbytes[0], address.addrbytes[1], address.addrbytes[2], address.addrbytes[3]);
-}
