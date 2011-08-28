@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,38 +16,23 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: netiface.h                                                      *
+ *   Date: 28/08/2011                                                      *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#ifndef _NETIFACE_H_
+#define _NETIFACE_H_
 
 #include <net/ip.h>
-#include <net/netiface.h>
 
 #include <stdint.h>
 
-struct ARPPacket;
-
-class Net
+struct NetIface
 {
-    public:
-        void setIface(NetIface *i);
-        void ProcessEthernetIIFrame(uint8_t *frame, int size);
-        void ProcessARPPacket(uint8_t *packet, int size);
-        void ProcessIPPacket(uint8_t *packet, int size);
-        void ProcessICMPPacket(uint8_t *packet, int size);
-        void ProcessUDPPacket(uint8_t *packet, int size);
-        void ProcessTCPPacket(uint8_t *packet, int size);
-        void BuildEthernetIIHeader(uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
-        void BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
-        void SendARPReply(const ARPPacket *arpPacket);
-        void SendICMPReply(uint8_t *data, int size, ipaddr destIp);
-        
-    private:
-        NetIface *iface;        
-        uint8_t dummyMACCache[6];
+    uint8_t myMAC[6];
+    ipaddr myIP;
+    void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);
+    void *card;
 };
 
 #endif
-
