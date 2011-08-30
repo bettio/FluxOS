@@ -43,10 +43,9 @@ class Net
         void BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
         void SendARPReply(const ARPPacket *arpPacket);
         void SendICMPReply(uint8_t *data, int size, ipaddr destIp);
-        
+ 
     private:
-        NetIface *iface;        
-        uint8_t dummyMACCache[6];
+        NetIface *iface;
 };
 
 #endif

@@ -26,10 +26,17 @@
 #include <net/ip.h>
 
 #include <stdint.h>
+#include <QHash>
+
+inline int qHash(uint32_t v)
+{
+    return (int) v;
+} 
 
 struct NetIface
 {
     uint8_t myMAC[6];
+    QHash<uint32_t, uint64_t> macCache;
     ipaddr myIP;
     void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);
     void *card;

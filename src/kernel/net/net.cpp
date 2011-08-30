@@ -92,8 +92,10 @@ void Net::ProcessARPPacket(uint8_t *packet, int size)
         DEBUG_MSG("Unsupported address size: hardware: %i, protocol: %i\n", arp->hardwareSize, arp->protocolSize); 
     }
 
-    memcpy(dummyMACCache, arp->senderMAC, 6);
-
+    uint64_t macAddr = 0;
+    memcpy(&macAddr, arp->senderMAC, 6);
+    iface->macCache.insert(arp->senderIP, macAddr);
+    
     if ((arp->opcode == htons(ARP_OPCODE_REQUEST))){
         if (arp->targetIP == iface->myIP.addr){
             DEBUG_MSG("ARP request\n");
@@ -231,7 +233,8 @@ void Net::SendICMPReply(uint8_t *data, int size, ipaddr destIp)
 {
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 80); //HARDCODED
 
-    BuildEthernetIIHeader(newPacket, dummyMACCache, ETHERTYPE_IP);
+    uint64_t macAddr = iface->macCache.value(destIp.addr);
+    BuildEthernetIIHeader(newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
     BuildIPHeader(newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
