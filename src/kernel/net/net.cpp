@@ -26,7 +26,3 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-void Net::setIface(NetIface *i)
-{
-    iface = i;
-}

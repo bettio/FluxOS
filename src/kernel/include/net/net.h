@@ -32,20 +32,7 @@ struct ARPPacket;
 class Net
 {
     public:
-        void setIface(NetIface *i);
-        void ProcessEthernetIIFrame(uint8_t *frame, int size);
-        void ProcessARPPacket(uint8_t *packet, int size);
-        void ProcessIPPacket(uint8_t *packet, int size);
-        void ProcessICMPPacket(uint8_t *packet, int size);
-        void ProcessUDPPacket(uint8_t *packet, int size);
-        void ProcessTCPPacket(uint8_t *packet, int size);
-        void BuildEthernetIIHeader(uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
-        void BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
-        void SendARPReply(const ARPPacket *arpPacket);
-        void SendICMPReply(uint8_t *data, int size, ipaddr destIp);
- 
-    private:
-        NetIface *iface;
+
 };
 
 #endif

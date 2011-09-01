@@ -41,4 +41,13 @@ struct ARPPacket
   uint32_t targetIP;
 } __attribute__ ((packed));
 
+struct NetIface;
+
+class ARP
+{
+    public:
+        static void processARPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void sendARPReply(NetIface *iface, const ARPPacket *arpPacket);
+};
+
 #endif

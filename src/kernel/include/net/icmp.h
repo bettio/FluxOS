@@ -35,4 +35,13 @@ struct ICMPHeader
     uint16_t checksum;
 } __attribute__ ((packed));
 
+struct NetIface;
+
+class ICMP
+{
+    public:
+        static void processICMPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp);
+};
+
 #endif

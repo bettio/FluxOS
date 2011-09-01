@@ -36,18 +36,18 @@
 #include <net/ethernet.h>
 #include <net/netutils.h>
 
-void Net::ProcessEthernetIIFrame(uint8_t *frame, int size)
+void Ethernet::processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size)
 {
     EthernetIIHeader *header = (EthernetIIHeader *) frame;
 
     switch(ntohs(header->type)){
         case ETHERTYPE_ARP:
-              ProcessARPPacket(frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
+              ARP::processARPPacket(iface, frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
               break;
 
         case ETHERTYPE_IP:
-              ProcessIPPacket(frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
+              IP::processIPPacket(iface, frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
               break;
 
@@ -63,7 +63,7 @@ void Net::ProcessEthernetIIFrame(uint8_t *frame, int size)
     }
 }
 
-void Net::BuildEthernetIIHeader(uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type)
+void Ethernet::buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type)
 {
     EthernetIIHeader *newEth = (EthernetIIHeader *) buffer;
     memcpy(newEth->destination, destinationMAC, 6);

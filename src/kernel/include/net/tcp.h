@@ -36,4 +36,13 @@ struct TCPHeader
     uint32_t misc[2];
 } __attribute__ ((packed));
 
+struct NetIface;
+
+class TCP
+{
+    public:
+        static void processTCPPacket(NetIface *iface, uint8_t *packet, int size);
+};
+
+
 #endif

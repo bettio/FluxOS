@@ -19,17 +19,20 @@
  *   Name: ip.cpp                                                          *
  ***************************************************************************/
 
-#include <net/net.h>
-
-#include <net/netutils.h>
 #include <net/ip.h>
+
+#include <net/icmp.h>
+#include <net/net.h>
+#include <net/netutils.h>
+#include <net/tcp.h>
+#include <net/udp.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
 #define netBuffMalloc malloc
 
-void Net::ProcessIPPacket(uint8_t *packet, int size)
+void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     IPHeader *header = (IPHeader *) packet;
 
@@ -41,19 +44,19 @@ void Net::ProcessIPPacket(uint8_t *packet, int size)
     switch(header->protocol){
         case PROTOCOL_ICMP:
             DEBUG_MSG("Net: ICMP packet\n");
-            ProcessICMPPacket(packet + header->ihl*4, size - header->ihl*4); //security
+            ICMP::processICMPPacket(iface, packet + header->ihl*4, size - header->ihl*4); //security
 
             break;
 
         case PROTOCOL_TCP:
             DEBUG_MSG("Net: TCP packet\n");
-            ProcessTCPPacket(packet + header->ihl*4, size - header->ihl*4);
+            TCP::processTCPPacket(iface, packet + header->ihl*4, size - header->ihl*4);
 
             break;
 
         case PROTOCOL_UDP:
             DEBUG_MSG("Net: UDP packet\n");
-            ProcessUDPPacket(packet + header->ihl*4, size - header->ihl*4); //security
+            UDP::processUDPPacket(iface, packet + header->ihl*4, size - header->ihl*4); //security
 
             break;
 
@@ -64,7 +67,7 @@ void Net::ProcessIPPacket(uint8_t *packet, int size)
     }
 }
 
-void Net::BuildIPHeader(uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen)
+void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen)
 {
     IPHeader *newIPHeader = (IPHeader *) buffer;
     newIPHeader->version = 4;

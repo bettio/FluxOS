@@ -32,7 +32,7 @@
 
 #define netBuffMalloc malloc
 
-void Net::ProcessICMPPacket(uint8_t *packet, int size)
+void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     ICMPHeader *header = (ICMPHeader *) packet;
     IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
@@ -45,7 +45,7 @@ void Net::ProcessICMPPacket(uint8_t *packet, int size)
             DEBUG_MSG("PING REQUEST\n");
 
             if (ipHeader->daddr.addr == iface->myIP.addr){
-                SendICMPReply(packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr);
+                ICMP::sendICMPReply(iface, packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr);
             }
 
             break;
@@ -57,13 +57,13 @@ void Net::ProcessICMPPacket(uint8_t *packet, int size)
     }
 }
 
-void Net::SendICMPReply(uint8_t *data, int size, ipaddr destIp)
+void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp)
 {
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 80); //HARDCODED
 
     uint64_t macAddr = iface->macCache.value(destIp.addr);
-    BuildEthernetIIHeader(newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
-    BuildIPHeader(newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);
+    Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
+    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
     newICMPHeader->type = 0;

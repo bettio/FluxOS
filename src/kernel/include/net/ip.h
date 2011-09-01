@@ -47,4 +47,13 @@ struct IPHeader {
    ipaddr       daddr;
 } __attribute__ ((packed));
 
+struct NetIface;
+
+class IP
+{
+    public:
+        static void processIPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
+};
+
 #endif

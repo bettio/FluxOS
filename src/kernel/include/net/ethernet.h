@@ -23,8 +23,6 @@
 #ifndef _ETHERNET_H_
 #define _ETHERNET_H_
 
-#include <net/netiface.h>
-
 #include <stdint.h>
 
 #define ETHERTYPE_IP 0x0800
@@ -38,10 +36,13 @@ struct EthernetIIHeader
   uint16_t type;
 } __attribute__ ((packed));;
 
+struct NetIface;
+
 class Ethernet
 {
     public:
         static void processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size);
+        static void buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
 };
 
 #endif

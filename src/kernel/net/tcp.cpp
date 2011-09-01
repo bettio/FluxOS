@@ -19,14 +19,15 @@
  *   Name: tcp.cpp                                                         *
  ***************************************************************************/
 
-#include <net/net.h>
+#include <net/tcp.h>
 
+#include <net/net.h>
 #include <net/netutils.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-void Net::ProcessTCPPacket(uint8_t *packet, int size)
+void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size)
 {
 
 }

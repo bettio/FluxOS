@@ -35,7 +35,7 @@
 
 #define netBuffMalloc malloc
 
-void Net::ProcessARPPacket(uint8_t *packet, int size)
+void ARP::processARPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     ARPPacket *arp = (ARPPacket *) packet;
 
@@ -50,7 +50,7 @@ void Net::ProcessARPPacket(uint8_t *packet, int size)
     if ((arp->opcode == htons(ARP_OPCODE_REQUEST))){
         if (arp->targetIP == iface->myIP.addr){
             DEBUG_MSG("ARP request\n");
-            SendARPReply(arp);
+            sendARPReply(iface, arp);
         }else{
             DEBUG_MSG("ARP request (to other)\n");
         }
@@ -64,11 +64,11 @@ void Net::ProcessARPPacket(uint8_t *packet, int size)
 }
 
 
-void Net::SendARPReply(const ARPPacket *arpPacket)
+void ARP::sendARPReply(NetIface *iface, const ARPPacket *arpPacket)
 {
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 
-    BuildEthernetIIHeader(newPacket, arpPacket->senderMAC, ETHERTYPE_ARP);
+    Ethernet::buildEthernetIIHeader(iface, newPacket, arpPacket->senderMAC, ETHERTYPE_ARP);
 
     ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
     newArpPacket->hardwareType = htons(1);

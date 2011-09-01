@@ -24,7 +24,8 @@
 #define _RTL8139_H_
 
 #include <stdint.h>
-#include <net/net.h>
+
+struct NetIface;
 
 class rtl8139
 {
@@ -37,7 +38,7 @@ class rtl8139
         uint8_t *rx_buff;
         uint16_t rxPtr;
         int ioBase;
-        Net *net;
+        NetIface *iface;
 };
 
 #endif

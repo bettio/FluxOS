@@ -26,6 +26,8 @@
 #include <arch/ia32/core/pci.h>
 #include <arch/ia32/core/irq.h>
 #include <net/net.h>
+#include <net/netiface.h>
+#include <net/ethernet.h>
 #include <cstring.h>
 #include <cstdlib.h>
 
@@ -65,18 +67,16 @@ bool rtl8139::init(int bus, int slot)
     outport32(ioBase + 0x44, 0xF | (1 << 7));
     outportb(ioBase + 0x37, 0x0C);
 
-    NetIface *iface = new NetIface;
-    iface->card = newCard;
+    newCard->iface = new NetIface;
+    newCard->iface->card = newCard;
     for (int i = 0; i < 6; i++){
-        iface->myMAC[i] = inportb(ioBase + i);
+        newCard->iface->myMAC[i] = inportb(ioBase + i);
     }
-    iface->myIP.addrbytes[0] = 192;
-    iface->myIP.addrbytes[1] = 168;
-    iface->myIP.addrbytes[2] = 1;
-    iface->myIP.addrbytes[3] = 5;
-    iface->send = send;
-    newCard->net = new Net;
-    newCard->net->setIface(iface);
+    newCard->iface->myIP.addrbytes[0] = 192;
+    newCard->iface->myIP.addrbytes[1] = 168;
+    newCard->iface->myIP.addrbytes[2] = 1;
+    newCard->iface->myIP.addrbytes[3] = 5;
+    newCard->iface->send = send;
 
     return true;
 }
@@ -92,7 +92,7 @@ void rtl8139::receive()
 
             outport16(ioBase + RTL8139_INTRSTATUS, 1);
 
-            card->net->ProcessEthernetIIFrame(card->rx_buff + card->rxPtr + 4, *((uint16_t *) card->rx_buff + card->rxPtr + 2));
+            Ethernet::processEthernetIIFrame(card->iface, card->rx_buff + card->rxPtr + 4, *((uint16_t *) card->rx_buff + card->rxPtr + 2));
 
             card->rxPtr = nextRxPtr;
             outport16(ioBase + 0x38, card->rxPtr - 0x10);

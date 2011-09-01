@@ -9,4 +9,12 @@ struct UDPHeader
     uint16_t checksum;
 } __attribute__ ((packed));
 
+struct NetIface;
+
+class UDP
+{
+    public:
+        static void processUDPPacket(NetIface *iface, uint8_t *packet, int size);
+};
+
 #endif

@@ -27,7 +27,7 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-void Net::ProcessUDPPacket(uint8_t *packet, int size)
+void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     UDPHeader *header = (UDPHeader *) packet;
 
