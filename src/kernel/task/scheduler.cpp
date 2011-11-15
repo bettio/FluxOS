@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,53 +16,30 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
- *   Date: 05/09/2006                                                      *
+ *   Name: scheduler.cpp                                                   *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#include <core/printk.h>
-#include <core/archmanager.h>
-#include <drivers/vt.h>
-#include <arch/ia32/core/idt.h>
-#include <arch/ia32/drivers/timer.h>
-#include <arch/ia32/drivers/video.h>
-#include <arch/ia32/core/irq.h>
-#include <arch/ia32/core/gdt.h>
-#include <arch/ia32/core/pci.h>
+#include <task/scheduler.h>
 
-void ArchManager::Init()
+#include <stdint.h>
+#include <cstdlib.h>
+
+QList<ThreadControlBlock *> *Scheduler::threads;
+int Scheduler::s_currentThread = 0;
+
+void Scheduler::init()
 {
-    GDT::init();
-
-    Video::init();
-    Out = Vt::Device();
+    threads = new QList<ThreadControlBlock *>();
 }
 
-void ArchManager::InitArch()
-{
-    IDT::init();
-    IRQ::init();
-
-    PCI::init();
-    
-    asm("sti");
-    
-    Timer::init();
+ThreadControlBlock *Scheduler::nextThread()
+{    
+    s_currentThread = (s_currentThread + 1) % threads->size();
+    return threads->at(s_currentThread);
 }
 
-void ArchManager::InitMemoryManagment()
-{
+ThreadControlBlock *Scheduler::currentThread()
+{    
+    return threads->at(s_currentThread);
 }
-
-void ArchManager::InitMultitasking()
-{
-}
-
-void ArchManager::InitHardware()
-{
-}
-
-void ArchManager::StartInit()
-{
-}
-

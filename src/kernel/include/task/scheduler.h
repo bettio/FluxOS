@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,53 +16,31 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
- *   Date: 05/09/2006                                                      *
+ *   Name: scheduler.h                                                     *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#include <core/printk.h>
-#include <core/archmanager.h>
-#include <drivers/vt.h>
-#include <arch/ia32/core/idt.h>
-#include <arch/ia32/drivers/timer.h>
-#include <arch/ia32/drivers/video.h>
-#include <arch/ia32/core/irq.h>
-#include <arch/ia32/core/gdt.h>
-#include <arch/ia32/core/pci.h>
+#ifndef _SCHEDULER_H_
+#define _SCHEDULER_H_
 
-void ArchManager::Init()
+#include <QList>
+
+struct ThreadControlBlock
 {
-    GDT::init();
+    void *stack;
+    void *currentStackPtr;
+};
 
-    Video::init();
-    Out = Vt::Device();
-}
-
-void ArchManager::InitArch()
+class Scheduler
 {
-    IDT::init();
-    IRQ::init();
+    public:
+        static void init();
+        static ThreadControlBlock *nextThread();
+        static ThreadControlBlock *currentThread();
+        static QList<ThreadControlBlock *> *threads;
 
-    PCI::init();
-    
-    asm("sti");
-    
-    Timer::init();
-}
+    private:
+        static int s_currentThread;
+};
 
-void ArchManager::InitMemoryManagment()
-{
-}
-
-void ArchManager::InitMultitasking()
-{
-}
-
-void ArchManager::InitHardware()
-{
-}
-
-void ArchManager::StartInit()
-{
-}
-
+#endif
