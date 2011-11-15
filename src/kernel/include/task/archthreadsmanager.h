@@ -16,26 +16,23 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.h                                                     *
+ *   Name: archthreadsmanager.h                                            *
  *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _SCHEDULER_H_
-#define _SCHEDULER_H_
+#ifndef _ARCHTHREADSMANAGER_H
+#define _ARCHTHREADSMANAGER_H
 
-#include <QList>
 #include <task/threadcontrolblock.h>
 
-class Scheduler
+#define DEFAULT_KERNEL_SIZE 8192
+
+class ArchThreadsManager
 {
     public:
-        static void init();
-        static ThreadControlBlock *nextThread();
-        static ThreadControlBlock *currentThread();
-        static QList<ThreadControlBlock *> *threads;
-
-    private:
-        static int s_currentThread;
+        static void *allocateKernelStack(void **stackAddr, int size = DEFAULT_KERNEL_SIZE);
+        static ThreadControlBlock *createKernelThread(void (*fn)(), int flags = 0, void *args = 0);
 };
 
 #endif
+ 

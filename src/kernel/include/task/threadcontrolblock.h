@@ -16,26 +16,26 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.h                                                     *
+ *   Name: threadcontrolblock.h                                            *
  *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _SCHEDULER_H_
-#define _SCHEDULER_H_
+#ifndef _THREADCONTROLBLOCK_H_
+#define _THREADCONTROLBLOCK_H_
 
-#include <QList>
-#include <task/threadcontrolblock.h>
-
-class Scheduler
+enum ThreadStatus
 {
-    public:
-        static void init();
-        static ThreadControlBlock *nextThread();
-        static ThreadControlBlock *currentThread();
-        static QList<ThreadControlBlock *> *threads;
+    Running, /* R */
+    UWaiting, /* D */
+    IWaiting, /* S */
+    Defunct /* Z */
+};
 
-    private:
-        static int s_currentThread;
+struct ThreadControlBlock
+{
+    ThreadStatus status;
+    void *stack;
+    void *currentStackPtr;
 };
 
 #endif

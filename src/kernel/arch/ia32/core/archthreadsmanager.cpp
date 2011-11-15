@@ -16,26 +16,46 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.h                                                     *
+ *   Name: archthreadsmanager.cpp                                          *
  *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _SCHEDULER_H_
-#define _SCHEDULER_H_
+#include <task/archthreadsmanager.h>
+#include <cstdlib.h>
+#include <stdint.h>
 
-#include <QList>
-#include <task/threadcontrolblock.h>
-
-class Scheduler
+struct RegistersFrame
 {
-    public:
-        static void init();
-        static ThreadControlBlock *nextThread();
-        static ThreadControlBlock *currentThread();
-        static QList<ThreadControlBlock *> *threads;
-
-    private:
-        static int s_currentThread;
+    uint32_t edi;
+    uint32_t esi;
+    uint32_t ebp;
+    uint32_t null;
+    uint32_t ebx;
+    uint32_t edx;
+    uint32_t ecx;
+    uint32_t eax;
+    uint32_t eip;
+    uint32_t cs;
+    uint32_t eflags;
 };
 
-#endif
+void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
+{
+    //size + stack overflow guards (4096 * 2)
+    void *stack = malloc(size + 4096*2);
+    *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
+    return stack;
+}
+
+ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
+{
+    ThreadControlBlock *tmpCB = new ThreadControlBlock;
+    RegistersFrame *tmpStack;
+    tmpCB->stack = allocateKernelStack((void **) &tmpStack);
+    tmpCB->currentStackPtr = tmpStack;
+    tmpStack->eip = (uint32_t) fn;
+    tmpStack->cs = 8;
+    tmpStack->eflags = 0x202;
+
+    return tmpCB;
+}

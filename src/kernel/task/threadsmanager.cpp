@@ -16,26 +16,17 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.h                                                     *
+ *   Name: threadsmanager.cpp                                              *
  *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _SCHEDULER_H_
-#define _SCHEDULER_H_
+#include <task/threadsmanager.h>
 
-#include <QList>
-#include <task/threadcontrolblock.h>
+#include <task/scheduler.h>
+#include <task/archthreadsmanager.h>
 
-class Scheduler
+void ThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
 {
-    public:
-        static void init();
-        static ThreadControlBlock *nextThread();
-        static ThreadControlBlock *currentThread();
-        static QList<ThreadControlBlock *> *threads;
-
-    private:
-        static int s_currentThread;
-};
-
-#endif
+    ThreadControlBlock *tCB = ArchThreadsManager::createKernelThread(fn, flags, args);
+    Scheduler::threads->append(tCB);  
+}

@@ -25,54 +25,6 @@
 #include <task/scheduler.h>
 #include <cstdlib.h>
 
-struct RegistersFrame
-{
-    uint32_t edi;
-    uint32_t esi;
-    uint32_t ebp;
-    uint32_t null;
-    uint32_t ebx;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t eax;
-    uint32_t eip;
-    uint32_t cs;
-    uint32_t eflags;
-    uint32_t fine;
-};
-
-void *kernelStackAlloc(void **stackAddr, int size = 8129);
-
-void *kernelStackAlloc(void **stackAddr, int size)
-{
-    //size + stack overflow guards (4096 * 2)
-    void *stack = malloc(size + 4096*2);
-    *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
-    return stack;
-}
-
-void createKernelThread(void *functionPtr)
-{
-    ThreadControlBlock *tmpCB = new ThreadControlBlock;
-    RegistersFrame *tmpStack;
-    tmpCB->stack = kernelStackAlloc((void **) &tmpStack);
-    tmpCB->currentStackPtr = tmpStack;
-    tmpStack->eip = (uint32_t) functionPtr;
-    tmpStack->cs = 8;
-    tmpStack->eflags = 0x202;
-    Scheduler::threads->append(tmpCB);  
-}
-
-void testA()
-{
-    while(1) *((unsigned char *) 0xB8000) = 'A';   
-}
-
-void testB()
-{
-    while(1) *((unsigned char *) 0xB8000) = 'B';   
-}
-
 void ContextSwitcher::init()
 {
     Scheduler::init();
@@ -83,9 +35,6 @@ void ContextSwitcher::init()
     currentThread->stack = 0;
     currentThread->currentStackPtr = 0;
     Scheduler::threads->append(currentThread);
-    
-    createKernelThread((void *) testA);
-    createKernelThread((void *) testB);
 }
 
 
