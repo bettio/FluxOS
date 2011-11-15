@@ -34,9 +34,13 @@ void Scheduler::init()
 }
 
 ThreadControlBlock *Scheduler::nextThread()
-{    
-    s_currentThread = (s_currentThread + 1) % threads->size();
-    return threads->at(s_currentThread);
+{
+    ThreadControlBlock *tB;
+    do {
+        s_currentThread = (s_currentThread + 1) % threads->size();
+        tB = threads->at(s_currentThread);
+    } while (tB->status != Running);
+    return tB;
 }
 
 ThreadControlBlock *Scheduler::currentThread()

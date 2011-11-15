@@ -25,8 +25,17 @@
 
 #include <QList>
 
+enum ThreadStatus
+{
+    Running, /* R */
+    UWaiting, /* D */
+    IWaiting, /* S */
+    Defunct /* Z */
+};
+
 struct ThreadControlBlock
 {
+    ThreadStatus status;
     void *stack;
     void *currentStackPtr;
 };
