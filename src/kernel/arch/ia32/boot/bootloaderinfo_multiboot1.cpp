@@ -16,19 +16,33 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: ia32start.cpp                                                   *
- *   Date: 02/01/2006                                                      *
+ *   Name: bootloaderinfo_multiboot1.cpp                                   *
+ *   Date: 18/11/2011                                                      *
  ***************************************************************************/
 
 #include <arch/ia32/boot/multibootinfo.h>
-#include <main.h>
+#include <boot/bootloaderinfo.h>
+#include <arch/ia32/boot/multiboot.h>
 
-extern "C"
+multiboot_info *MultiBootInfo::infoBlock;
+
+bool MultiBootInfo::init(unsigned long magic, multiboot_info *info)
 {
-    void ia32_start(unsigned long magic, multiboot_info *info)
-    {
-        if (MultiBootInfo::init(magic, info)){
-            main();
-        }
+    if (magic != MULTIBOOT_BOOTLOADER_MAGIC){
+        return false;
     }
+
+    infoBlock = info;
+    
+    return true;
+}
+
+void *BootLoaderInfo::module(int i)
+{
+    return (void *) (((module_t *) MultiBootInfo::infoBlock->mods_addr)[i].mod_start);
+}
+
+int BootLoaderInfo::modulesCount()
+{
+    return MultiBootInfo::infoBlock->mods_count;
 }

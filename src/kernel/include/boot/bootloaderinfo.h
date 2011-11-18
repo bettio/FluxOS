@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,19 +16,19 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: ia32start.cpp                                                   *
- *   Date: 02/01/2006                                                      *
+ *   Name: bootloaderinfo.h                                                *
+ *   Date: 18/11/2011                                                      *
  ***************************************************************************/
 
-#include <arch/ia32/boot/multibootinfo.h>
-#include <main.h>
+#ifndef _BOOTLOADERINFO_H_
+#define _BOOTLOADERINFO_H_
 
-extern "C"
+class BootLoaderInfo
 {
-    void ia32_start(unsigned long magic, multiboot_info *info)
-    {
-        if (MultiBootInfo::init(magic, info)){
-            main();
-        }
-    }
-}
+    public:
+        static void *module(int i);
+        static int modulesCount();
+
+};
+
+#endif
