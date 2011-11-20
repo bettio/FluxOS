@@ -44,16 +44,28 @@ void ElfLoader::load(void *elfBinary)
 
         //BSS
         if (section->shType == NoBits){
-            printk("Warning: Unimplemented BSS support\n");
+            printk("Warning: ElfLoader: Unimplemented BSS support\n");
 
         //REL
         }else if (section->shType == Rel){
             ElfSymbol *syms = symbols();
             long text = textOffset();
+            ElfRel *relocations = (ElfRel *) offsetToPtr(section->offset);
 
             for (unsigned int j = 0; j < section->size / sizeof(ElfRel); j++){
-                int val = syms[((ElfRel *) offsetToPtr(section->offset))->info >> 8].sectionIndex;
-                *((uint32_t *) offsetToPtr(text + ((ElfRel *) offsetToPtr(section->offset))[j].addr)) += offsetToAddr(sectionHeader(val)->offset);
+                int val = syms[relocations[j].info >> 8].sectionIndex;
+                switch (relocations[j].info & 0xFF){
+                    case R_386_32:
+                        *((uint32_t *) offsetToPtr(text + relocations[j].offset)) += offsetToAddr(sectionHeader(val)->offset + syms[relocations[j].info >> 8].value);
+                        break;
+                        
+                    case R_386_PC32:
+                        *((int32_t *) offsetToPtr(text + relocations[j].offset)) += (sectionHeader(val)->offset + syms[relocations[j].info >> 8].value) - (text + relocations[j].offset);
+                        break;
+                       
+                    default:
+                        printk("Warning: ElfLoader: Unimplemented relocation type %i\n", relocations->info & 0xFF);
+                    }
             }
         }else{
             continue;

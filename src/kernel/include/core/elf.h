@@ -79,9 +79,12 @@ struct ElfShdr
 
 struct ElfRel
 {
-    uint32_t addr;
+    uint32_t offset;
     uint32_t info;
 };
+
+#define R_386_32 1
+#define R_386_PC32 2
 
 struct ElfSymbol
 {
