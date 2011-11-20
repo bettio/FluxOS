@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,17 +16,35 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: timer.h                                                         *
- *   Date: 27/09/2010                                                      *
+ *   Name: systemtimer.h                                                   *
+ *   Date: 19/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _TIMER_H_
-#define _TIMER_H_
+#ifndef _SYSTEMTIMER_H_
+#define _SYSTEMTIMER_H_
 
-class Timer
+#include <stdint.h>
+#include <QList>
+#include <task/threadcontrolblock.h>
+
+struct ThreadTimer
+{
+    ThreadControlBlock *parentThread;
+    unsigned long expiralSystemTime; //should I use ticks_t
+};
+
+
+class SystemTimer
 {
     public:
-        static void init();
+        static void init(int frequency);
+        static void timerTickISR();
+        static void sleep(int millis, ThreadControlBlock *thread);
+        
+    private:
+        static uint64_t systemTicks;
+        static QList<ThreadTimer> *timers;
+        static int tickFrequency;
 };
 
 #endif

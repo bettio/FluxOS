@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,17 +16,46 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: timer.h                                                         *
- *   Date: 27/09/2010                                                      *
+ *   Name: systemtimer.cpp                                                 *
+ *   Date: 19/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _TIMER_H_
-#define _TIMER_H_
+#include <core/systemtimer.h>
 
-class Timer
+uint64_t SystemTimer::systemTicks;
+QList<ThreadTimer> *SystemTimer::timers;
+int SystemTimer::tickFrequency;
+
+struct ThreadControlBlock;
+
+void SystemTimer::init(int frequency)
 {
-    public:
-        static void init();
-};
+    timers = new QList<ThreadTimer>();
+    tickFrequency = frequency;
+}
 
-#endif
+void SystemTimer::sleep(int millis, ThreadControlBlock *thread)
+{
+    thread->status = IWaiting;
+    
+    ThreadTimer timer;
+    timer.parentThread = thread;
+    timer.expiralSystemTime = (millis * tickFrequency) / 1000;
+    timers->append(timer);
+    
+    //TODO: schedule the thread, please
+}
+
+void SystemTimer::timerTickISR()
+{
+    systemTicks++;
+    
+    //TODO: replace this with a priority queue, use the lowest expiralSystemTime value
+    for (int i = 0; i < timers->count(); i++){
+        if (timers->at(i).expiralSystemTime < systemTicks){
+            timers->at(i).parentThread->status = Running;
+            timers->remove(i);
+            //TODO: schedule the thread, please
+        }
+    }
+}

@@ -22,6 +22,7 @@
 
 #include <arch/ia32/drivers/timer.h>
 
+#include <core/systemtimer.h>
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/io.h>
 
@@ -29,6 +30,7 @@
 #define PIT_CONTROL 0x43
 #define PIT_FREQ 1193182
 #define DIVIDER 11932
+#define TICK_FREQ 100
 
 void Timer::init()
 {
@@ -40,10 +42,7 @@ void Timer::init()
     ///outportb_p(0x40, DIVIDER & 0xFF);
     ///outportb_p(0x40, DIVIDER >> 8);
 
-    IRQ::setHandler(interruptHandler, 0);
+    SystemTimer::init(TICK_FREQ);
+    IRQ::setHandler(SystemTimer::timerTickISR, 0);
     IRQ::enableIRQ(0);
-}
-
-void Timer::interruptHandler()
-{
 }
