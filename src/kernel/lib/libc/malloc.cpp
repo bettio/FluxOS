@@ -43,7 +43,7 @@ extern "C"
             mem = HostSysCalls::brk((void *) 0);
         #endif
 
-        mem += (8 - (mem % 8));
+        mem = KERNEL_HEAP_START;
 
         #ifdef ARCH_UMM_BRK
             HostSysCalls::brk((void *) mem);

@@ -23,9 +23,14 @@
 #include <arch/ia32/boot/multibootinfo.h>
 #include <boot/bootloaderinfo.h>
 #include <arch/ia32/boot/multiboot.h>
+#include <defs.h>
+#include <core/elf.h>
 
 multiboot_info *MultiBootInfo::infoBlock;
 
+unsigned long kernel_heap_start;
+unsigned long kernel_heap_end;
+    
 bool MultiBootInfo::init(unsigned long magic, multiboot_info *info)
 {
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC){
@@ -33,7 +38,48 @@ bool MultiBootInfo::init(unsigned long magic, multiboot_info *info)
     }
 
     infoBlock = info;
-    
+
+    //Calculate the address where free mem start
+    unsigned long maxAddr = 0;
+    maxAddr = MAX(maxAddr, (unsigned long) infoBlock);
+    if (infoBlock->flags & (1 << 2)){
+        maxAddr = MAX(maxAddr, infoBlock->cmdline);
+    }
+
+    if (infoBlock->flags & (1 << 3)){
+        maxAddr = MAX(maxAddr, infoBlock->mods_addr + sizeof(module_t) * infoBlock->mods_count);
+        module_t *modules = (module_t *) infoBlock->mods_addr;
+        for (unsigned long i = 0; i < infoBlock->mods_count; i++){
+            maxAddr = MAX(maxAddr, modules[i].mod_end);
+        }
+    }
+
+    if (infoBlock->flags & (1 << 5)){
+        maxAddr = MAX(maxAddr, infoBlock->u.elf_sec.addr + infoBlock->u.elf_sec.num * infoBlock->u.elf_sec.size);
+        ElfShdr *sections = (ElfShdr *) infoBlock->u.elf_sec.addr;
+        for (unsigned long i = 0; i < infoBlock->u.elf_sec.num; i++){
+            maxAddr = MAX(maxAddr, sections[i].addr + sections[i].size);
+        }
+    }
+
+    if (infoBlock->flags & (1 << 6)){
+        maxAddr = MAX(maxAddr, infoBlock->mmap_addr);
+        memory_map *mm = (memory_map *) infoBlock->mmap_addr;
+        
+        unsigned long maxAvailAreaSize = 0;
+        unsigned long maxAvailAreaIndex = 0;
+        for (unsigned long i = 0; i < infoBlock->mmap_length / sizeof(memory_map); i++){
+            if ((mm[i].type == 1) && (maxAvailAreaSize < mm[i].length_low)){
+                maxAvailAreaIndex = i;
+                kernel_heap_end = mm[maxAvailAreaIndex].base_addr_low + mm[i].length_low;
+            }
+        }
+        maxAddr = MAX(maxAddr, mm[maxAvailAreaIndex].base_addr_low);
+    }
+
+    //Round up to page boundary
+    kernel_heap_start = alignToBound(maxAddr, 4096);
+
     return true;
 }
 
@@ -44,5 +90,5 @@ void *BootLoaderInfo::module(int i)
 
 int BootLoaderInfo::modulesCount()
 {
-    return MultiBootInfo::infoBlock->mods_count;
+    return (MultiBootInfo::infoBlock->flags & (1 << 3)) ? MultiBootInfo::infoBlock->mods_count : 0;
 }

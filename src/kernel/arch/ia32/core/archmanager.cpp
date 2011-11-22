@@ -30,9 +30,13 @@
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/core/gdt.h>
 #include <arch/ia32/core/pci.h>
+#include <boot/bootloaderinfo.h>
+
+#include <core/elfloader.h>
 
 void ArchManager::Init()
 {
+    initmem();
     GDT::init();
 
     Video::init();
@@ -67,4 +71,3 @@ void ArchManager::InitHardware()
 void ArchManager::StartInit()
 {
 }
-

@@ -35,4 +35,6 @@
 #define ABS(a) \
           ((a < 0) ? -a : a)
 
+inline unsigned long alignToBound(unsigned long a, unsigned long alignTo) {return ((a + alignTo) / alignTo) * alignTo;}
+          
 #endif
