@@ -34,6 +34,7 @@ extern "C"
 	void free(void *ptr) NON_NULL_ARGS;
 	void *malloc(size_t size) MUST_CHECK ALLOC_FUNCTION ALLOC_SIZE(1);
 	void *realloc(void *ptr, size_t size) MUST_CHECK ALLOC_SIZE(2) NON_NULL_ARGS;
+    int posix_memalign(void **memptr, size_t alignment, size_t size) NON_NULL_ARGS;
 #if __cplusplus
 }
 #endif
