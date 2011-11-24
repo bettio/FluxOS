@@ -24,11 +24,21 @@
 
 #include <gccattributes.h>
 
+#if __cplusplus
 struct CharDevice;
 extern CharDevice *Out;
+#endif
 
+#if __cplusplus
+extern "C"
+{
+#endif
 void printk(const char *str, ...) NON_NULL_ARG(1) FORMAT_STRING(printf, 1, 2);
+#if __cplusplus
+}
+#endif
 
+#if __cplusplus
 void printk(bool value);
 
 void printk(char c);
@@ -42,5 +52,6 @@ void printk(unsigned int value, int base);
 void printk(long long value);
 void printk(unsigned long long value);
 void printk(unsigned long long value, int base);
+#endif
 
 #endif
