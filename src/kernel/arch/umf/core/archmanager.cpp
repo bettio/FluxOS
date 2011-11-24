@@ -42,7 +42,6 @@ void ArchManager::InitArch()
 
 void ArchManager::InitMemoryManagment()
 {
-	initmem();
 }
 
 void ArchManager::InitMultitasking()

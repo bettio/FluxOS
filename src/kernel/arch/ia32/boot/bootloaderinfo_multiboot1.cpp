@@ -30,7 +30,8 @@ multiboot_info *MultiBootInfo::infoBlock;
 
 unsigned long kernel_heap_start;
 unsigned long kernel_heap_end;
-    
+unsigned long kernel_heap_free_pos;
+
 bool MultiBootInfo::init(unsigned long magic, multiboot_info *info)
 {
     if (magic != MULTIBOOT_BOOTLOADER_MAGIC){
@@ -79,6 +80,7 @@ bool MultiBootInfo::init(unsigned long magic, multiboot_info *info)
 
     //Round up to page boundary
     kernel_heap_start = alignToBound(maxAddr, 4096);
+    kernel_heap_free_pos = kernel_heap_start;
 
     return true;
 }

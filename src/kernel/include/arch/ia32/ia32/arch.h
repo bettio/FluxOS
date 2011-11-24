@@ -28,9 +28,10 @@
 
 extern unsigned long kernel_heap_start;
 extern unsigned long kernel_heap_end;
-
+extern unsigned long kernel_heap_free_pos;
 #define KERNEL_HEAP_START kernel_heap_start
 #define KERNEL_HEAP_END kernel_heap_end
+#define KERNEL_HEAP_FREE_POS kernel_heap_free_pos
 
 #define NEW_DEFAULT_TYPE unsigned int
 

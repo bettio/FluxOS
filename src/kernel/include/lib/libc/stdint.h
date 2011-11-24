@@ -33,6 +33,4 @@ typedef signed short int int16_t;
 typedef signed int int32_t;
 typedef signed long long int64_t;
 
-#define NULL 0
-
 #endif

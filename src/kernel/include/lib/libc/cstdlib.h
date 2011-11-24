@@ -20,25 +20,40 @@
  *   Date: 05/02/2006                                                      *
  ***************************************************************************/
 
+#ifndef _CSTDLIB_H
+#define _CSTDLIB_H
+
 #include <cstring.h>
 
+#if __cplusplus
 extern "C"
 {
+#endif
 	void initmem();
 	void *calloc(size_t num, size_t size) MUST_CHECK ALLOC_FUNCTION ALLOC_SIZES(1, 2);
 	void free(void *ptr) NON_NULL_ARGS;
 	void *malloc(size_t size) MUST_CHECK ALLOC_FUNCTION ALLOC_SIZE(1);
 	void *realloc(void *ptr, size_t size) MUST_CHECK ALLOC_SIZE(2) NON_NULL_ARGS;
+#if __cplusplus
 }
+#endif
 
 int abs(int num) CONST_FUNCTION;
+#if __cplusplus
 long abs(long num) CONST_FUNCTION;
+#endif
 
+#if __cplusplus
 extern "C"
 {
+#endif
 	int atoi(const char *str);
 	size_t itoaz(long long n, char *s, unsigned int b);
 	size_t uitoaz(unsigned long long n, char *s, unsigned int b);
 	long atol(const char *str);
 	long labs(long num) CONST_FUNCTION;
+#if __cplusplus
 }
+#endif
+
+#endif

@@ -9,7 +9,7 @@ if (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
     SET(UMM ON)
 
 
-    SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
+    SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g" )
     SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
 
 elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
@@ -23,7 +23,7 @@ elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
     SET(CMAKE_ASM_COMPILER "g++" )
     SET(CMAKE_ASM_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti -c")
 
-    SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti" )
+    SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin" )
     SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti" )
 
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
@@ -35,7 +35,7 @@ elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     enable_language(ASM)
     set(can_use_assembler TRUE)
 
-    SET(CMAKE_C_FLAGS "-mcpu=arm926ej-s -g -fomit-frame-pointer -nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -g" )
+    SET(CMAKE_C_FLAGS "-mcpu=arm926ej-s -g -fomit-frame-pointer -nostdlib -nostdinc -Wall -fno-builtin -g" )
     SET(CMAKE_CXX_FLAGS "-mcpu=arm926ej-s -g -fomit-frame-pointer -nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
     SET(CMAKE_ASM_FLAGS "-mcpu=arm926ej-s -g  -nostdlib -nostdinc -fomit-frame-pointer -Wall  -fno-builtin -fno-exceptions -fno-rtti -c")
 
@@ -73,6 +73,7 @@ include(core/core.cmake)
 include(drivers/drivers.cmake)
 include(filesystem/filesystem.cmake)
 include(lib/libc/libc.cmake)
+include(mm/mm.cmake)
 include(task/task.cmake)
 include(net/net.cmake)
 
