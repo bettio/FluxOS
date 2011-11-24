@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2005 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,60 +16,48 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
- *   Date: 05/09/2006                                                      *
+ *   Name: physicalmm.h                                                    *
+ *   Date: 23/09/2005                                                      *
  ***************************************************************************/
 
+#include <arch/ia32/mm/physicalmm.h>
+
 #include <core/printk.h>
-#include <core/archmanager.h>
-#include <drivers/vt.h>
-#include <arch/ia32/core/idt.h>
-#include <arch/ia32/core/syscallsmanager.h>
-#include <arch/ia32/drivers/timer.h>
-#include <arch/ia32/drivers/video.h>
-#include <arch/ia32/core/irq.h>
-#include <arch/ia32/core/gdt.h>
-#include <arch/ia32/core/pci.h>
-#include <boot/bootloaderinfo.h>
-#include <arch/ia32/mm/pagingmanager.h>
+#include <cstring.h>
+#include <cstdlib.h>
 
-#include <core/elfloader.h>
+uint32_t *pageBitmap;
 
-void ArchManager::Init()
+void PhysicalMM::init()
 {
-    //initmem();
-    GDT::init();
-
-    Video::init();
-    Out = Vt::Device();
+    //TODO: use a smaller bitmap, this bitmap covers all the possible 32 bit physical address space
+    pageBitmap = (uint32_t *) malloc(0x20000);
+    memset(pageBitmap, 0, 0x20000);
 }
 
-void ArchManager::InitArch()
+void PhysicalMM::setAllocatedPage(uint32_t addr)
 {
-    IDT::init();
-    PagingManager::init();
-    IRQ::init();
-    SyscallsManager::init();
+    pageBitmap[addr / 4096 / 32] |= (1 << ((addr / 4096) % 32));
+}
+
+uint32_t PhysicalMM::allocPage()
+{
+    for (int i = 0; i < 0x20000 / 4; i++){
+        if (pageBitmap[i] != 0xFFFFFFFF){
+            for (int j = 0; j < 32; j++){
+                if (!(pageBitmap[i] & (1 << j))){
+                    pageBitmap[i] |= (1 << j);
+                    return (i*32 + j)*4096;
+                }
+            }
+        }
+    }
     
-    PCI::init();
+    return (uint32_t) -1;
+}
 
-    asm("sti");
+//TODO: Implement me
+void PhysicalMM::freePage(uint32_t physAddr)
+{
     
-    Timer::init();
-}
-
-void ArchManager::InitMemoryManagment()
-{
-}
-
-void ArchManager::InitMultitasking()
-{
-}
-
-void ArchManager::InitHardware()
-{
-}
-
-void ArchManager::StartInit()
-{
 }

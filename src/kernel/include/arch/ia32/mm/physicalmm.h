@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2005 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,60 +16,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
- *   Date: 05/09/2006                                                      *
+ *   Name: physicalmm.h                                                    *
+ *   Date: 23/09/2005                                                      *
  ***************************************************************************/
 
-#include <core/printk.h>
-#include <core/archmanager.h>
-#include <drivers/vt.h>
-#include <arch/ia32/core/idt.h>
-#include <arch/ia32/core/syscallsmanager.h>
-#include <arch/ia32/drivers/timer.h>
-#include <arch/ia32/drivers/video.h>
-#include <arch/ia32/core/irq.h>
-#include <arch/ia32/core/gdt.h>
-#include <arch/ia32/core/pci.h>
-#include <boot/bootloaderinfo.h>
-#include <arch/ia32/mm/pagingmanager.h>
+#include <stdint.h>
 
-#include <core/elfloader.h>
+#ifndef _PHYSICALMM_H_
+#define _PHYSICALMM_H_
 
-void ArchManager::Init()
+class PhysicalMM
 {
-    //initmem();
-    GDT::init();
+    public:
+        static void init();
+        static uint32_t allocPage();
+        static void freePage(uint32_t addr);
+        static void setAllocatedPage(uint32_t addr);
+        
+    private:
+};
 
-    Video::init();
-    Out = Vt::Device();
-}
-
-void ArchManager::InitArch()
-{
-    IDT::init();
-    PagingManager::init();
-    IRQ::init();
-    SyscallsManager::init();
-    
-    PCI::init();
-
-    asm("sti");
-    
-    Timer::init();
-}
-
-void ArchManager::InitMemoryManagment()
-{
-}
-
-void ArchManager::InitMultitasking()
-{
-}
-
-void ArchManager::InitHardware()
-{
-}
-
-void ArchManager::StartInit()
-{
-}
+#endif
