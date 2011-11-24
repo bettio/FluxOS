@@ -1,2 +1,8 @@
 src/kernel/include/lib/libc/cstdarg from "GNU ISO C++ Library"
+src/kernel/include/lib/libc/stdarg.h from "GNU C Library"
 src/kernel/drivers/fbconsole_font.h  from "Linux Kernel" /drivers/video/console/ GPLv2
+src/libc/syserrmsg.c from "uClibc" LGPLv2.1
+src/libc/getopt-susv3.c from "uClibc" LGPLv2.1
+src/libc/libgen.c from "uClibc" LGPLv2.1
+src/libc/include/sys/mman.h "GNU C Library" LGPLv2.1
+src/libc/include/stdarg.h from "GNU C Library"
