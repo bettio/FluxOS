@@ -5293,7 +5293,7 @@ int dlposix_memalign(void** pp, size_t alignment, size_t bytes) {
     size_t r = alignment % sizeof(void*);
     if (r != 0 || d == 0 || (d & (d-SIZE_T_ONE)) != 0)
       return EINVAL;
-    else if (bytes >= MAX_REQUEST - alignment) {
+    else if (bytes <= MAX_REQUEST - alignment) {
       if (alignment <  MIN_CHUNK_SIZE)
         alignment = MIN_CHUNK_SIZE;
       mem = internal_memalign(gm, alignment, bytes);
