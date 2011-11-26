@@ -97,10 +97,26 @@ void PagingManager::enable()
     asm volatile("movl %0, %%cr0\n": :"r"(cr0reg));
 }
 
+#define hasMemoryPermissions(a, b) (1)
+#define isMissingPageError(errorCode) ( !(errorCode & 1) )
+
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
-    printk("Page Fault at 0x%x (error: %x)", faultAddress, errorCode);
-    while (1);
+    printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
+
+    if (isMissingPageError(errorCode)){
+        if (hasMemoryPermissions(faultAddress, errorCode)){
+	    PagingManager::mapMemoryRegion((volatile uint32_t *) 0xFFFFF000, PhysicalMM::allocPage(), faultAddress & 0xFFFFF000, PAGE_SIZE);  
+	}else{
+            const char *errorString = (errorCode & 2) ? "write" : "read";
+            printk("Segmentation Fault while trying to %s unallocated address 0x%x\n", errorString, faultAddress);
+            while (1);
+	}
+    }else{
+        const char *errorString = (errorCode & 2) ? "write" : "read";
+        printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
+        while (1);
+    }
 }
 
 asm(".globl pageFaultHandler    \n"
