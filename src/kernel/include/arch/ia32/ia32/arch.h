@@ -36,5 +36,6 @@ extern unsigned long kernel_heap_free_pos;
 #define NEW_DEFAULT_TYPE unsigned int
 
 #define LITTLE_ENDIAN 1234
+#define NULL_POINTERS_REGION_SIZE 4096
 
 #endif

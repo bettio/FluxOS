@@ -45,6 +45,12 @@ void PagingManager::init()
 	mapMemoryRegion(pageDir, alignToBound(oldPos, 4096*1024), alignToBound(oldPos, 4096*1024), alignToBound(kernel_heap_free_pos, 4096*1024));
     }
     
+    //Protect the first page against null pointer bugs (NULL_POINTERS_REGION)
+    volatile uint32_t *firstPageTable = (volatile uint32_t *) (pageDir[0] & 0xFFFFF000);
+    for (int i = 0; i < NULL_POINTERS_REGION_SIZE / PAGE_SIZE; i++){
+        firstPageTable[i] = MISSING_PAGE;
+    }
+
     setCR3((uint32_t) pageDir);
     enable();
 }
@@ -106,6 +112,11 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 
     if (isMissingPageError(errorCode)){
         if (hasMemoryPermissions(faultAddress, errorCode)){
+	    if (faultAddress < NULL_POINTERS_REGION_SIZE){
+                const char *errorString = (errorCode & 2) ? "write" : "read";
+                printk("Trying to %s null pointer (addr: 0x%x)\n", errorString, faultAddress);
+		while (1);
+	    }
 	    PagingManager::mapMemoryRegion((volatile uint32_t *) 0xFFFFF000, PhysicalMM::allocPage(), faultAddress & 0xFFFFF000, PAGE_SIZE);  
 	}else{
             const char *errorString = (errorCode & 2) ? "write" : "read";
