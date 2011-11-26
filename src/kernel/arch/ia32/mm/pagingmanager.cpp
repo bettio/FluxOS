@@ -41,8 +41,8 @@ void PagingManager::init()
     unsigned long oldPos = kernel_heap_free_pos;
     mapMemoryRegion(pageDir, 0, 0, alignToBound(kernel_heap_free_pos, 4096*1024)); 
     if (alignToBound(kernel_heap_free_pos, 4096*1024) != alignToBound(oldPos, 4096*1024)){
-        printk("Paging Manager: Error: We didn't map everything");
-        while (1);
+        printk("Warning: We didn't map everything");
+	mapMemoryRegion(pageDir, alignToBound(oldPos, 4096*1024), alignToBound(oldPos, 4096*1024), alignToBound(kernel_heap_free_pos, 4096*1024));
     }
     
     setCR3((uint32_t) pageDir);
