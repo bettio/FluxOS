@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2005 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,26 +16,54 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: arch.h                                                          *
- *   Date: 07/09/2006                                                      *
+ *   Name: physicalmm.h                                                    *
+ *   Date: 23/09/2005                                                      *
  ***************************************************************************/
 
-#ifndef _ARCH_H_
-#define _ARCH_H_
+#include <arch/ia32/mm/physicalmm.h>
 
-#define ARCH_IA32_NATIVE
-#define ARCH_IA32
+#include <core/printk.h>
+#include <cstring.h>
+#include <cstdlib.h>
 
-extern unsigned long kernel_heap_start;
-extern unsigned long kernel_heap_end;
-extern unsigned long kernel_heap_free_pos;
-#define KERNEL_HEAP_START kernel_heap_start
-#define KERNEL_HEAP_END kernel_heap_end
-#define KERNEL_HEAP_FREE_POS kernel_heap_free_pos
+#define BITMAP_SIZE 0x20000
 
-#define NEW_DEFAULT_TYPE unsigned int
+uint32_t *pageBitmap;
+uint32_t freePagesNum = BITMAP_SIZE; //USE A REAL COUNT
 
-#define LITTLE_ENDIAN 1234
-#define NULL_POINTERS_REGION_SIZE 4096
+void PhysicalMM::init()
+{
+    //TODO: use a smaller bitmap, this bitmap covers all the possible 32 bit physical address space
+    pageBitmap = (uint32_t *) malloc(BITMAP_SIZE);
+    memset(pageBitmap, 0, BITMAP_SIZE);
+}
 
-#endif
+void PhysicalMM::setAllocatedPage(uint32_t addr)
+{
+    pageBitmap[addr / 4096 / 32] |= (1 << ((addr / 4096) % 32));
+    freePagesNum--;
+}
+
+uint32_t PhysicalMM::allocPage()
+{
+    for (int i = 0; i < BITMAP_SIZE / 4 /*4 bytes for each item*/; i++){
+        if (pageBitmap[i] != 0xFFFFFFFF){
+            for (int j = 0; j < 32; j++){
+                if (!(pageBitmap[i] & (1 << j))){
+                    pageBitmap[i] |= (1 << j);
+                    freePagesNum--;
+                    return (i*32 + j)*4096;
+                }
+            }
+        }
+    }
+    
+    return (uint32_t) -1;
+}
+
+void PhysicalMM::freePage(uint32_t addr)
+{
+    pageBitmap[addr / 4096 / 32] &= ~(1 << ((addr / 4096) % 32));
+    freePagesNum++;
+}
+

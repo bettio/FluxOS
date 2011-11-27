@@ -31,6 +31,7 @@
 #include <arch/ia32/core/gdt.h>
 #include <arch/ia32/core/pci.h>
 #include <boot/bootloaderinfo.h>
+#include <arch/ia32/mm/pagingmanager.h>
 
 #include <core/elfloader.h>
 
@@ -46,6 +47,7 @@ void ArchManager::Init()
 void ArchManager::InitArch()
 {
     IDT::init();
+    PagingManager::init();
     IRQ::init();
     SyscallsManager::init();
     

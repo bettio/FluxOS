@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2005 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,26 +16,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: arch.h                                                          *
- *   Date: 07/09/2006                                                      *
+ *   Name: physicalmm.h                                                    *
+ *   Date: 23/09/2005                                                      *
  ***************************************************************************/
 
-#ifndef _ARCH_H_
-#define _ARCH_H_
+#include <stdint.h>
 
-#define ARCH_IA32_NATIVE
-#define ARCH_IA32
+#ifndef _PHYSICALMM_H_
+#define _PHYSICALMM_H_
 
-extern unsigned long kernel_heap_start;
-extern unsigned long kernel_heap_end;
-extern unsigned long kernel_heap_free_pos;
-#define KERNEL_HEAP_START kernel_heap_start
-#define KERNEL_HEAP_END kernel_heap_end
-#define KERNEL_HEAP_FREE_POS kernel_heap_free_pos
-
-#define NEW_DEFAULT_TYPE unsigned int
-
-#define LITTLE_ENDIAN 1234
-#define NULL_POINTERS_REGION_SIZE 4096
+class PhysicalMM
+{
+    public:
+        static void init();
+        static uint32_t allocPage();
+        static void freePage(uint32_t addr);
+        static void setAllocatedPage(uint32_t addr);
+        
+    private:
+};
 
 #endif
