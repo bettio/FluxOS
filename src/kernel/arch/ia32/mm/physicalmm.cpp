@@ -26,27 +26,32 @@
 #include <cstring.h>
 #include <cstdlib.h>
 
+#define BITMAP_SIZE 0x20000
+
 uint32_t *pageBitmap;
+uint32_t freePagesNum = BITMAP_SIZE; //USE A REAL COUNT
 
 void PhysicalMM::init()
 {
     //TODO: use a smaller bitmap, this bitmap covers all the possible 32 bit physical address space
-    pageBitmap = (uint32_t *) malloc(0x20000);
-    memset(pageBitmap, 0, 0x20000);
+    pageBitmap = (uint32_t *) malloc(BITMAP_SIZE);
+    memset(pageBitmap, 0, BITMAP_SIZE);
 }
 
 void PhysicalMM::setAllocatedPage(uint32_t addr)
 {
     pageBitmap[addr / 4096 / 32] |= (1 << ((addr / 4096) % 32));
+    freePagesNum--;
 }
 
 uint32_t PhysicalMM::allocPage()
 {
-    for (int i = 0; i < 0x20000 / 4; i++){
+    for (int i = 0; i < BITMAP_SIZE / 4 /*4 bytes for each item*/; i++){
         if (pageBitmap[i] != 0xFFFFFFFF){
             for (int j = 0; j < 32; j++){
                 if (!(pageBitmap[i] & (1 << j))){
                     pageBitmap[i] |= (1 << j);
+                    freePagesNum--;
                     return (i*32 + j)*4096;
                 }
             }
@@ -56,8 +61,9 @@ uint32_t PhysicalMM::allocPage()
     return (uint32_t) -1;
 }
 
-//TODO: Implement me
-void PhysicalMM::freePage(uint32_t physAddr)
+void PhysicalMM::freePage(uint32_t addr)
 {
-    
+    pageBitmap[addr / 4096 / 32] &= ~(1 << ((addr / 4096) % 32));
+    freePagesNum++;
 }
+
