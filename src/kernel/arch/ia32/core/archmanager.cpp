@@ -47,7 +47,9 @@ void ArchManager::Init()
 void ArchManager::InitArch()
 {
     IDT::init();
-    PagingManager::init();
+    #ifndef NO_MMU
+        PagingManager::init();
+    #endif  
     IRQ::init();
     SyscallsManager::init();
     
