@@ -87,6 +87,8 @@ void PagingManager::mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAdd
 
         } else {
             //TODO: IMPLEMENT ME
+            printk("PagingManager::mapMemoryRegion: implement me\n");
+            while (1);
         }
         for (int j = addrToPageTableIndex(virtualAddr); j <= addrToPageTableIndex(virtualAddr + len - 1); j++){
             pageTable[j] = pageTableEntry(physAddr + i*4096*4096 + j*4096, KERNEL_STD_PAGE);
