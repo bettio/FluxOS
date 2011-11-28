@@ -29,6 +29,109 @@
 
 extern int errno;
 
+#define SYSCALL_1(name, num, retT, arg0_t) \
+    retT name(arg0_t arg0) \
+    { \
+        register long syscall asm("%eax") = num; \
+        register long _arg0 asm("%ebx") = (long) arg0; \
+        \
+        register long result asm("%eax"); \
+        \
+        asm volatile("syscall" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
+#define SYSCALL_2(name, num, retT, arg0_t, arg1_t) \
+    retT name(arg0_t arg0, arg1_t arg1) \
+    { \
+        register long syscall asm("%eax") = num; \
+        register long _arg0 asm("%ebx") = (long) arg0; \
+        register long _arg1 asm("%ecx") = (long) arg1; \
+        \
+        register long result asm("%eax"); \
+        \
+        asm volatile("syscall" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0), "r" (_arg1)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
+#define SYSCALL_3(name, num, retT, arg0_t, arg1_t, arg2_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2) \
+    { \
+        register long syscall asm("%eax") = num; \
+        register long _arg0 asm("%ebx") = (long) arg0; \
+        register long _arg1 asm("%ecx") = (long) arg1; \
+        register long _arg2 asm("%edx") = (long) arg2; \
+        \
+        register long result asm("%eax"); \
+        \
+        asm volatile("syscall" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
+#define SYSCALL_5(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3, arg4_t arg4) \
+    { \
+        register long syscall asm("%eax") = num; \
+        register long _arg0 asm("%ebx") = (long) arg0; \
+        register long _arg1 asm("%ecx") = (long) arg1; \
+        register long _arg2 asm("%edx") = (long) arg2; \
+        register long _arg3 asm("%esi") = (long) arg3; \
+        register long _arg4 asm("%edi") = (long) arg4; \
+        \
+        register long result asm("%eax"); \
+        \
+        asm volatile("syscall" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (_arg3), "r" (_arg4)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
+SYSCALL_1(unlink, 10, int, const char *)
+SYSCALL_1(rmdir, 40, int, const char *)
+SYSCALL_2(rename, 38, int, const char *, const char *)
+SYSCALL_2(mkdir, 39, int, const char *, mode_t)
+SYSCALL_2(chmod, 15, int, const char *, mode_t)
+SYSCALL_2(fchmod, 94, int, int, mode_t)
+SYSCALL_3(chown, 182, int, const char *, uid_t, gid_t)
+SYSCALL_3(fchown, 95, int, int, uid_t, gid_t)
+SYSCALL_3(lchown, 16, int, const char *, uid_t, gid_t)
+SYSCALL_2(link, 9, int, const char *, const char *)
+SYSCALL_2(symlink, 83, int, const char *, const char *)
+SYSCALL_3(mknod, 14, int, const char *, mode_t, dev_t)
+SYSCALL_5(mount, 21, int, const char *, const char *, const char *, unsigned long, const void *)
+SYSCALL_2(umount2, 52, int, const char *, int)
+SYSCALL_2(creat, 8, int, const char *, mode_t)
+
 void _exit(int status)
 {
 	/* Parameters */
