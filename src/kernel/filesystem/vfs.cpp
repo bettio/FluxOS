@@ -180,7 +180,8 @@ int VFS::Umount(const char *mountpoint)
 //TODO: stringhe vuote
 int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool traverse_leaf_link, int count)
 {
-    char *path = strdup(_path);
+    char *pathClone = strdup(_path);
+    char *path = pathClone;
     if (path == NULL){
         return -ENOMEM;    
     }
@@ -299,7 +300,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
     }
 
     *node = tmpnode;
-    free(path);
+    free(pathClone);
 
     return 0;
 }
