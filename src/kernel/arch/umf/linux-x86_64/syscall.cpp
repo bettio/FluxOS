@@ -55,14 +55,16 @@ uint64_t write(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t 
 
 	long retVal = write((int) ebx, tmpBuf, edx);
 
-	free(tmpBuf);
+	if (edx > TMP_FAST_BUF_SIZE){
+        free(tmpBuf);
+    }
 
 	return retVal;
 }
 
 uint64_t readlink(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	char *tmpBufPath = (char *) malloc(TMP_FAST_BUF_SIZE);
+	char *tmpBufPath = (char *) malloc(TMP_FAST_BUF_SIZE); //TODO: check this
 	char *tmpBufLink = (char *) malloc(edx);
 
 	StrNCpyFromUserToKernel(tmpBufPath, (const char *) ebx, TMP_FAST_BUF_SIZE, cpid);
@@ -331,6 +333,10 @@ uint64_t read(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t e
 
 	MemCpyFromKernelToUser((void *) ecx, tmpBuf, edx, cpid);
 
+    if (edx > TMP_FAST_BUF_SIZE){
+        free(tmpBuf);
+    }
+    
 	return retVal;
 }
 
