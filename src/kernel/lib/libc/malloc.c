@@ -525,6 +525,10 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define DLMALLOC_EXPORT extern
 #endif
 
+#include <mm/memfails.h>
+#define USAGE_ERROR_ACTION(m,p) mallocUsageError(m) //TODO: changeme
+#define CORRUPTION_ERROR_ACTION(m) mallocCorruptionError(m)
+
 #include <arch.h>
 #ifdef ARCH_UMM_BRK
 #define HAVE_MMAP 0
