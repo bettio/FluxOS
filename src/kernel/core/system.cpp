@@ -22,6 +22,7 @@
 #include <core/system.h>
 
 #include <task/task.h>
+#include <task/scheduler.h>
 #include <filesystem/errors.h>
 #include <defs.h>
 #include <cstring.h>
@@ -31,7 +32,7 @@ char DomainName[256];
 
 int SetHostName(const char *name, size_t len)
 {
-    if (Task::CurrentTask()->Uid == 0){
+    if (Scheduler::currentThread()->parentProcess->uid == 0){
         strncpy(HostName, name, MAX(len, 256));
         return 0;
 
@@ -42,7 +43,7 @@ int SetHostName(const char *name, size_t len)
 
 int SetDomainName(const char *name, size_t len)
 {
-    if (Task::CurrentTask()->Uid == 0){
+    if (Scheduler::currentThread()->parentProcess->uid == 0){
 	    strncpy(DomainName, name, MAX(len, 256));
         return 0;
 

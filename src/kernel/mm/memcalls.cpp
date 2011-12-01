@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,23 +16,21 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: task.h                                                          *
+ *   Name: memcalls.cpp                                                    *
+ *   Date: 02/12/2012                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_TASK_H
-#define _TASK_TASK_H
+#include <mm/memcalls.h>
 
-#include <task/processcontrolblock.h>
-#include <ListWithHoles>
-#include <arch.h>
+#include <task/scheduler.h>
 
-class Task{
-	public:
-	        static void init();
-		static int SetUid(unsigned int uid);
-		static int SetGid(unsigned int gid);
-		static ProcessControlBlock *CreateNewTask(const char *name);
-                static ListWithHoles<ProcessControlBlock *> *processes;
-};
+//IMPLEMENT CHECKS
+void *brk(void *ptr)
+{
+    if (ptr != NULL){
+        Scheduler::currentThread()->parentProcess->dataSegmentEnd = ptr;
+    }
 
-#endif
+    return Scheduler::currentThread()->parentProcess->dataSegmentEnd;
+}
+

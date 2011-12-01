@@ -22,6 +22,8 @@
 
 #include <core/archmanager.h>
 #include <core/printk.h>
+#include <task/scheduler.h>
+#include <task/task.h>
 #include <cstdlib.h>
 #include <arch/umf/drivers/console.h>
 #include <arch/umf/drivers/diskimage.h>
@@ -46,6 +48,8 @@ void ArchManager::InitMemoryManagment()
 
 void ArchManager::InitMultitasking()
 {
+        Task::init();
+        Scheduler::init();
 	SysCall::Init();
 }
 

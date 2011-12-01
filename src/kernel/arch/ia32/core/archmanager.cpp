@@ -20,6 +20,7 @@
  *   Date: 05/09/2006                                                      *
  ***************************************************************************/
 
+#include <task/task.h>
 #include <core/printk.h>
 #include <core/archmanager.h>
 #include <drivers/vt.h>
@@ -49,7 +50,8 @@ void ArchManager::InitArch()
     IDT::init();
     #ifndef NO_MMU
         PagingManager::init();
-    #endif  
+    #endif
+    Task::init();
     IRQ::init();
     SyscallsManager::init();
     
@@ -70,6 +72,7 @@ void ArchManager::InitMultitasking()
 
 void ArchManager::InitHardware()
 {
+    Vt::ReInit();
 }
 
 void ArchManager::StartInit()

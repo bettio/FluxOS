@@ -23,6 +23,8 @@
 #ifndef _THREADCONTROLBLOCK_H_
 #define _THREADCONTROLBLOCK_H_
 
+#include <task/processcontrolblock.h>
+
 enum ThreadStatus
 {
     Running, /* R */
@@ -33,9 +35,12 @@ enum ThreadStatus
 
 struct ThreadControlBlock
 {
-    ThreadStatus status;
     void *stack;
     void *currentStackPtr;
+    ProcessControlBlock *parentProcess;
+    ThreadStatus status;
+    unsigned int tid;
 };
 
 #endif
+

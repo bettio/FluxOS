@@ -21,6 +21,9 @@
 
 #include <QList>
 
+#ifndef _LIST_WITH_HOLES_
+#define _LIST_WITH_HOLES_
+
 template <typename T> class ListWithHoles
 {
     private:
@@ -77,4 +80,12 @@ template <typename T> class ListWithHoles
         {
             return m_list->at(i);
         }
+
+	inline int size() const
+	{
+            return m_list->size();
+	}
 };
+
+#endif
+

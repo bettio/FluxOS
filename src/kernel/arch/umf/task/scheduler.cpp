@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,23 +16,28 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: task.h                                                          *
+ *   Name: scheduler.cpp                                                   *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_TASK_H
-#define _TASK_TASK_H
+#include <task/scheduler.h>
+#include <arch/umf/core/hostsyscalls.h>
 
-#include <task/processcontrolblock.h>
-#include <ListWithHoles>
-#include <arch.h>
+#include <stdint.h>
+#include <core/printk.h>
+#include <cstdlib.h>
+#include <lib/koof/intkeymap.h>
+extern IntKeyMap<int> *Pids;
 
-class Task{
-	public:
-	        static void init();
-		static int SetUid(unsigned int uid);
-		static int SetGid(unsigned int gid);
-		static ProcessControlBlock *CreateNewTask(const char *name);
-                static ListWithHoles<ProcessControlBlock *> *processes;
-};
+QList<ThreadControlBlock *> *Scheduler::threads;
+int Scheduler::s_currentThread = 0;
 
-#endif
+void Scheduler::init()
+{
+    threads = new QList<ThreadControlBlock *>();
+}
+
+ThreadControlBlock *Scheduler::currentThread()
+{
+    return threads->at((*Pids)[HostSysCalls::getpid()]);
+}

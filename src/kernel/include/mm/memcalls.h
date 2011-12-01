@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,23 +16,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: task.h                                                          *
+ *   Name: memcalls.h                                                      *
+ *   Date: 02/12/1211                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_TASK_H
-#define _TASK_TASK_H
+#ifndef _MM_MEMCALLS_H_
+#define _MM_MEMCALLS_H_
 
-#include <task/processcontrolblock.h>
-#include <ListWithHoles>
-#include <arch.h>
-
-class Task{
-	public:
-	        static void init();
-		static int SetUid(unsigned int uid);
-		static int SetGid(unsigned int gid);
-		static ProcessControlBlock *CreateNewTask(const char *name);
-                static ListWithHoles<ProcessControlBlock *> *processes;
-};
+void *brk(void *ptr);
 
 #endif
+

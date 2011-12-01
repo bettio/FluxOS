@@ -16,68 +16,43 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: task.cpp                                                        *
+ *   Name: processcontrolblock.h                                           *
+ *   Date: 24/10/2007                                                      *
  ***************************************************************************/
 
-#include <task/task.h>
-#include <task/scheduler.h>
-#include <arch.h>
+#ifndef _TASK_PROCESSCONTROLBLOCK_H
+#define _TASK_PROCESSCONTROLBLOCK_H
+#include <KOOFCore>
+#include <filesystem/vfs.h>
+#include <filesystem/filedescriptor.h>
+#include <kdef.h>
+
 #include <ListWithHoles>
 
-ListWithHoles<ProcessControlBlock *> *Task::processes;
+enum TaskStatus{
+    NOT_STARTED,
+	READY,
+	WAITING,
+	SLEEPING,
+	RUNNING,
+	TERMINATED
+};
 
-void Task::init()
+class ProcessControlBlock
 {
-    processes = new ListWithHoles<ProcessControlBlock *>();
-}
+    public:
+        unsigned int pid;
+        unsigned int uid;
+        unsigned int gid;
+        TaskStatus status;
+        char *name;
+        ProcessControlBlock *parent;
 
-int Task::SetUid(unsigned int uid)
-{
-	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
+        void *dataSegmentEnd;
 
-	if (task->uid == 0){
-		task->uid = uid;
+        ListWithHoles <FileDescriptor *> *openFiles;
+        VNode *currentWorkingDirNode;
+};
 
-		return 0;
-	}else{
-		return -EPERM;
-	}
-}
+#endif
 
-int Task::SetGid(unsigned int gid)
-{
-	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
-
-	if (task->uid == 0){
-		task->gid = gid;
-
-		return 0;
-	}else{
-		return -EPERM;
-	}
-}
-
-ProcessControlBlock *Task::CreateNewTask(const char *name)
-{
-	ProcessControlBlock *process = new ProcessControlBlock;
-        int newTaskPid = processes->add(process);
-	process->name = strdup(name);
-	process->pid = newTaskPid;
-
-	//TODO: Add stdin and stdout
-        process->openFiles = new ListWithHoles<FileDescriptor *>();
-	VNode *node;
-        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &node, true);
-        FileDescriptor *fdesc = new FileDescriptor(node);
-        process->openFiles->add(fdesc);
-        fdesc = new FileDescriptor(node);
-        process->openFiles->add(fdesc);
-
-	FileSystem::VFS::RelativePathToVnode(0, "/", &node);
-
-	process->currentWorkingDirNode = node;
-
-        process->status = READY;
-
-	return process;
-}

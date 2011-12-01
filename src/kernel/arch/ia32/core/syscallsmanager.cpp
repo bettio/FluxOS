@@ -21,6 +21,7 @@
  ***************************************************************************/
 
 #include <arch/ia32/core/syscallsmanager.h>
+#include <task/scheduler.h>
 
 #include <arch/ia32/core/idt.h>
 #include <core/printk.h>
@@ -116,11 +117,7 @@ uint32_t read(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 
 uint32_t write(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
-    if (ebx == 1){
-        return Out->Write(Out, (char *) ecx, (int) edx);
-    }else{
-        return write((int) ebx, (void *) ecx, (size_t) edx);
-    }
+    return write((int) ebx, (void *) ecx, (size_t) edx);
 }
 
 uint32_t readlink(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
@@ -146,22 +143,22 @@ uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 
 uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    return Task::CurrentTask()->Parent->Pid;
+    return Scheduler::currentThread()->parentProcess->parent->pid;
 }
 
 uint32_t getpid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    return Task::CurrentTask()->Pid;
+    return Scheduler::currentThread()->parentProcess->pid;
 }
 
 uint32_t getgid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    return Task::CurrentTask()->Gid;
+    return Scheduler::currentThread()->parentProcess->gid;
 }
 
 uint32_t getuid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    return Task::CurrentTask()->Uid;
+    return Scheduler::currentThread()->parentProcess->uid;
 }
 
 uint32_t setgid(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)

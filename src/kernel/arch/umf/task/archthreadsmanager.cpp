@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,43 +16,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: taskdescriptor.h                                                *
- *   Date: 24/10/2007                                                      *
+ *   Name: archthreadsmanager.cpp                                          *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_TASKDESCRIPTOR_H
-#define _TASK_TASKDESCRIPTOR_H
-#include <KOOFCore>
-#include <filesystem/vfs.h>
-#include <filesystem/filedescriptor.h>
-#include <kdef.h>
+#include <task/archthreadsmanager.h>
+#include <cstdlib.h>
+#include <stdint.h>
 
-#include <ListWithHoles>
-
-enum TaskStatus{
-    NOT_STARTED,
-	READY,
-	WAITING,
-	SLEEPING,
-	RUNNING,
-	TERMINATED
-};
-
-class TaskDescriptor
+void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
 {
-	public:
-		char TaskName[64];
-		unsigned int Pid;
-		unsigned int Uid;
-		unsigned int Gid;
-		TaskDescriptor *Parent;
-		TaskStatus Status;
-		ListWithHoles <FileDescriptor *> *OpenFiles;
-		VNode *CwdNode;
-		int User;
-		int Nice;
+    //size + stack overflow guards (4096 * 2)
+    void *stack = malloc(size + 4096*2);
+    *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
+    return stack;
+}
 
-		long EndDataSegment;
-};
-
-#endif
+ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
+{
+    ThreadControlBlock *tmpCB = new ThreadControlBlock;
+    return tmpCB;
+}
