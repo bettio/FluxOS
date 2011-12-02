@@ -7,4 +7,5 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     drivers/diskpart.cpp
     drivers/fbconsole.cpp
     drivers/vt.cpp
+    drivers/ramdisk.cpp
 )

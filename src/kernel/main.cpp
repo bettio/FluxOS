@@ -29,6 +29,9 @@
 
 #include <drivers/chardevicemanager.h>
 #include <drivers/blockdevicemanager.h>
+#include <drivers/diskpart.h>
+#include <drivers/ramdisk.h>
+
 
 #include <filesystem/procfs/procfs.h>
 #include <filesystem/ext2/ext2.h>
@@ -38,10 +41,7 @@
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
 
-
 #include <core/system.h>
-
-#include <drivers/diskpart.h>
 
 #define BOOT 0
 
@@ -60,6 +60,7 @@ int main()
 	BlockDeviceManager::Init();
 	FileSystem::DevFS::Init();
 	DiskPart::Init();
+        RamDisk::init();
 
 	FileSystem::VFS::Init();
 
