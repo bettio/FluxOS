@@ -77,6 +77,7 @@ volatile uint32_t *PagingManager::createEmptyPageTable()
     return pageTable;
 }
 
+//SPLIT ME IN 2 DIFFERNT FUNCTIONS: ONE THAT HAS TO BE USED WHILE PAGING IS DISABLED AND THE OTHER WHEN IS ENABLED
 void PagingManager::mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len)
 {
     for (int i = addrToPageDirIndex(virtualAddr); i <= addrToPageDirIndex(virtualAddr + len - 1); i++){
@@ -86,9 +87,12 @@ void PagingManager::mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAdd
             pageDir[i] = pageDirectoryEntry((uint32_t) pageTable, KERNEL_STD_PAGE);
 
         } else {
+	    //HERE WE ASSUME THAT PAGING IS ALREADY ENABLED
+	    //RECURSIVE PAGING
+	    pageTable = (volatile uint32_t *) ((0x3FF << 22) | (i << 12));
             //TODO: IMPLEMENT ME
-            printk("PagingManager::mapMemoryRegion: implement me\n");
-            while (1);
+            //printk("PagingManager::mapMemoryRegion: implement me\n");
+            //while (1);
         }
         for (int j = addrToPageTableIndex(virtualAddr); j <= addrToPageTableIndex(virtualAddr + len - 1); j++){
             pageTable[j] = pageTableEntry(physAddr + i*4096*4096 + j*4096, KERNEL_STD_PAGE);
@@ -110,7 +114,7 @@ void PagingManager::enable()
 
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
-    printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
+    //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
 
     if (isMissingPageError(errorCode)){
         if (hasMemoryPermissions(faultAddress, errorCode)){
