@@ -67,7 +67,7 @@ uint32_t SyscallsManager::nullSysCallHandler(uint32_t ebx, uint32_t ecx, uint32_
     printk("Null System Call Handler:\n"
            " - ebx: 0x%x, ecx: 0x%x\n"
            " - edx: 0x%x, esi: 0x%x\n"
-           " - edi: 0x%x",
+           " - edi: 0x%x\n",
            ebx, ecx, edx, esi, edi);
 
     return -EFAULT;
@@ -397,4 +397,5 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(181, pwrite);
     registerSyscall(182, chown);
     registerSyscall(183, getcwd);
+    registerSyscall(220, CreateProcess);
 }
