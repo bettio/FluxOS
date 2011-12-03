@@ -36,11 +36,11 @@ void Timer::init()
 {
     //0x43 - Timer control
     //0xC Chan 0 - LoHi Byte - Mode 0 - Binary
-    ///outportb_p(0x43, 0xC); 
+    outportb_p(0x43, 0xC); 
 
     //0x40 - Frequency divider for chan0 control
-    ///outportb_p(0x40, DIVIDER & 0xFF);
-    ///outportb_p(0x40, DIVIDER >> 8);
+    outportb_p(0x40, DIVIDER & 0xFF);
+    outportb_p(0x40, DIVIDER >> 8);
 
     SystemTimer::init(TICK_FREQ);
     IRQ::setHandler(SystemTimer::timerTickISR, 0);
