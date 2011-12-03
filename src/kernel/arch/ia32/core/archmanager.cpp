@@ -35,6 +35,10 @@
 #include <arch/ia32/mm/pagingmanager.h>
 
 #include <core/elfloader.h>
+#include <task/scheduler.h>
+#include <task/processcontrolblock.h>
+#include <task/task.h>
+#include <task/archthreadsmanager.h>
 
 void ArchManager::Init()
 {
@@ -77,4 +81,11 @@ void ArchManager::InitHardware()
 
 void ArchManager::StartInit()
 {
+    ElfLoader loader;
+    loader.loadExecutableFile("/bin/init");
+    ProcessControlBlock *process = Task::CreateNewTask("init");
+    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread((void (*)(void)) loader.entryPoint(), 0, 0);
+    thread->parentProcess = process;
+    thread->status = Running;
+    Scheduler::threads->append(thread);
 }
