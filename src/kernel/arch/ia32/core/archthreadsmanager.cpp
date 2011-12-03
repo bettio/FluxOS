@@ -21,7 +21,10 @@
  ***************************************************************************/
 
 #include <task/archthreadsmanager.h>
+
+#include <arch/ia32/mm/pagingmanager.h>
 #include <cstdlib.h>
+#include <cstring.h>
 #include <stdint.h>
 
 struct RegistersFrame
@@ -42,7 +45,9 @@ struct RegistersFrame
 void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
 {
     //size + stack overflow guards (4096 * 2)
-    void *stack = malloc(size + 4096*2);
+    void *stack;
+    posix_memalign(&stack, PAGE_BOUNDARY, size + 4096*2);
+    memset(stack, 0, size + 4096*2); //This line is not only required to clean the stack, but also to get assured to use an allocated page
     *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
     return stack;
 }
