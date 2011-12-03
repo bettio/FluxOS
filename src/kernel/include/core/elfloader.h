@@ -29,6 +29,7 @@ class ElfLoader
 {
     public:
         void load(void *elfBin);
+        int loadExecutableFile(const char *path);
         bool isValid() const;
         void *entryPoint();
 

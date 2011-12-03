@@ -77,6 +77,18 @@ struct ElfShdr
     uint32_t entsize;
 };
 
+struct ElfProgramHeader
+{
+    uint32_t type;
+    uint32_t offset;
+    uint32_t virtualAddr;
+    uint32_t physicalAddr;
+    uint32_t segmentFileSize;
+    uint32_t segmentMemSize;
+    uint32_t flags;
+    uint32_t align;
+};
+
 struct ElfRel
 {
     uint32_t offset;

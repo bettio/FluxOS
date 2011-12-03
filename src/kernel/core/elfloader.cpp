@@ -23,6 +23,7 @@
 #include <core/elfloader.h>
 #include <core/elf.h>
 #include <filesystem/vfs.h>
+#include <filesystem/vnodemanager.h>
 #include <arch.h>
 #include <core/printk.h>
 #include <cstring.h>
@@ -71,6 +72,46 @@ void ElfLoader::load(void *elfBinary)
             continue;
         }
     }
+}
+
+int ElfLoader::loadExecutableFile(const char *path)
+{
+    VNode *node;
+    int res = FileSystem::VFS::RelativePathToVnode(0, path, &node);
+    if (res < 0){
+        return -ENOENT;
+    }
+
+    elfHeader = new Elf;
+    res = FS_CALL(node, read)(node, 0, (char *) elfHeader, sizeof(Elf));
+    if (res < 0){
+        FileSystem::VNodeManager::PutVnode(node);
+        return res;
+    }
+
+    if (!isValid()) printk("Not an ELF file\n");
+
+    ElfProgramHeader *pHeader = (ElfProgramHeader *) malloc(elfHeader->phentsize * elfHeader->phnum);
+    res = FS_CALL(node, read)(node, elfHeader->phoff, (char *) pHeader, elfHeader->phentsize * elfHeader->phnum);
+    if (res < 0){
+        FileSystem::VNodeManager::PutVnode(node);
+        return res;
+    }
+
+    for (int i = 0; i < elfHeader->phnum; i++){
+        if (pHeader[i].type == 1){
+            char *segment = (char *) pHeader[i].virtualAddr;
+            res = FS_CALL(node, read)(node, pHeader[i].offset, segment, pHeader[i].segmentMemSize);
+            if (res < 0){
+                FileSystem::VNodeManager::PutVnode(node);
+                return res;
+            }
+	}
+    }
+
+    FileSystem::VNodeManager::PutVnode(node);
+
+    return 0;
 }
 
 bool ElfLoader::isValid() const
