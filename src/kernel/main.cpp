@@ -43,7 +43,7 @@
 
 #include <core/system.h>
 
-#define BOOT 0
+#define BOOT 1
 
 int main()
 {
@@ -83,7 +83,7 @@ int main()
     }
     FileSystem::VNodeManager::PutVnode(node);
     #else
-	FileSystem::VFS::Mount("/dev/fd0", "/", "ext2", 0, 0);
+	FileSystem::VFS::Mount("/dev/ramd0", "/", "ext2", 0, 0);
 	#endif
 
 	FileSystem::VFS::Mount("null", "/dev/", "devfs", 0, 0);
@@ -93,13 +93,13 @@ int main()
 
 	ArchManager::InitMultitasking();
 
-	SetHostName("flux_host", 9);
-	SetDomainName("flux_domain", 11);
+	//SetHostName("flux_host", 9);
+	//SetDomainName("flux_domain", 11);
 
 	printk("Starting Init...\n");
 
 #if BOOT == 1
-    ArchManager::StartInit();
+        ArchManager::StartInit();
 #endif
     
 	while(1);
