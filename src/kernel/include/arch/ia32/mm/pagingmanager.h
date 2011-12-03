@@ -49,10 +49,10 @@ class PagingManager
     public:
         static void init();
         inline static void setCR3(uint32_t cr3reg) { asm volatile("movl %0, %%cr3\n" : : "r"(cr3reg)); }
-        static void mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len);
+        static void mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len);
         static volatile uint32_t *createEmptyPageDir();
         static volatile uint32_t *createEmptyPageTable();
-
+        static void newPage(uint32_t addr);
     private:   
         static void enable();
         inline static uint32_t pageTableEntry(uint32_t address, unsigned int flags) { return address | flags; }

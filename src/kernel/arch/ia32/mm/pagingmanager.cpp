@@ -39,10 +39,10 @@ void PagingManager::init()
     
     volatile uint32_t *pageDir = createEmptyPageDir();
     unsigned long oldPos = kernel_heap_free_pos;
-    mapMemoryRegion(pageDir, 0, 0, alignToBound(kernel_heap_free_pos, 4096*1024)); 
+    mapPhysicalMemoryRegion(pageDir, 0, 0, alignToBound(kernel_heap_free_pos, 4096*1024)); 
     if (alignToBound(kernel_heap_free_pos, 4096*1024) != alignToBound(oldPos, 4096*1024)){
         printk("Warning: We didn't map everything");
-	mapMemoryRegion(pageDir, alignToBound(oldPos, 4096*1024), alignToBound(oldPos, 4096*1024), alignToBound(kernel_heap_free_pos, 4096*1024));
+	mapPhysicalMemoryRegion(pageDir, alignToBound(oldPos, 4096*1024), alignToBound(oldPos, 4096*1024), alignToBound(kernel_heap_free_pos, 4096*1024));
     }
     
     //Protect the first page against null pointer bugs (NULL_POINTERS_REGION)
@@ -77,8 +77,10 @@ volatile uint32_t *PagingManager::createEmptyPageTable()
     return pageTable;
 }
 
-//SPLIT ME IN 2 DIFFERNT FUNCTIONS: ONE THAT HAS TO BE USED WHILE PAGING IS DISABLED AND THE OTHER WHEN IS ENABLED
-void PagingManager::mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len)
+/*
+ * This function is rather limited and it doesn't work in all situations
+ */
+void PagingManager::mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len)
 {
     for (int i = addrToPageDirIndex(virtualAddr); i <= addrToPageDirIndex(virtualAddr + len - 1); i++){
         volatile uint32_t *pageTable;
@@ -99,6 +101,24 @@ void PagingManager::mapMemoryRegion(volatile uint32_t *pageDir, uint32_t physAdd
             PhysicalMM::setAllocatedPage(physAddr + i*4096*4096 + j*4096);
         }
     }
+}
+
+void PagingManager::newPage(uint32_t addr)
+{
+   int di = addrToPageDirIndex(addr);
+   int ti = addrToPageTableIndex(addr);
+
+   volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+   volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+   if (pageDir[di] == MISSING_PAGE){
+       pageDir[di] = pageDirectoryEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE);
+       for (int i = 0; i < 1024; i++){
+           pageTable[i] = MISSING_PAGE;
+       }
+   }
+
+  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE);
 }
 
 void PagingManager::enable()
@@ -123,7 +143,7 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
                 printk("Trying to %s null pointer (addr: 0x%x)\n", errorString, faultAddress);
 		while (1);
 	    }
-	    PagingManager::mapMemoryRegion((volatile uint32_t *) 0xFFFFF000, PhysicalMM::allocPage(), faultAddress & 0xFFFFF000, PAGE_SIZE);  
+	    PagingManager::newPage(faultAddress);
 	}else{
             const char *errorString = (errorCode & 2) ? "write" : "read";
             printk("Segmentation Fault while trying to %s unallocated address 0x%x\n", errorString, faultAddress);
