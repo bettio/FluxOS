@@ -26,6 +26,7 @@
 #include <drivers/vt.h>
 #include <arch/ia32/core/idt.h>
 #include <arch/ia32/core/syscallsmanager.h>
+#include <arch/ia32/drivers/keyboard.h>
 #include <arch/ia32/drivers/timer.h>
 #include <arch/ia32/drivers/video.h>
 #include <arch/ia32/core/irq.h>
@@ -77,6 +78,7 @@ void ArchManager::InitMultitasking()
 void ArchManager::InitHardware()
 {
     Vt::ReInit();
+    Keyboard::init();
 }
 
 void ArchManager::StartInit()
