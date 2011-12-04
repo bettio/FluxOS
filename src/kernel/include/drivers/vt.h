@@ -33,6 +33,7 @@ class Vt
 {
     public:
         static void init(ConsoleDevice *dev);
+        static void notifyKeyPress(int code);
         static CharDevice *Device();
         static int Write(CharDevice *cd, const char *buffer, int count);
         static int Read(CharDevice *cd, char *buffer, int count);

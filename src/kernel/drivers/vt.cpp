@@ -44,6 +44,10 @@ unsigned int SavedY;
 
 ConsoleDevice *Vt::console;
 
+char keysBuffer[256];
+int kbPos;
+int readPos;
+
 CharDevice Vt::ttyDev =
 {
     0,
@@ -96,7 +100,25 @@ int Vt::Write(CharDevice *cd, const char *buffer, int count)
 
 int Vt::Read(CharDevice *cd, char *buffer, int count)
 {
-    return 0;
+    if (count == 0){
+        return 0;
+    }
+
+    int buffCounter = 0;
+    while (1){
+        while (kbPos == readPos);
+        while (readPos < kbPos){
+            char tmp = keysBuffer[readPos];
+            readPos = (readPos + 1) % 256;
+
+            if ((buffCounter == count) || tmp == '\n'){
+                return count;
+            }
+
+            buffer[buffCounter] = tmp;
+            buffCounter++;
+        }
+    }
 }
 
 int Vt::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
@@ -117,6 +139,13 @@ int Vt::ioctl(VNode *node, int request, long arg)
 void *Vt::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     return 0;
+}
+
+void Vt::notifyKeyPress(int code)
+{
+    keysBuffer[kbPos] = code;
+    kbPos = (kbPos + 1) % 256;
+    console->print(code);
 }
 
 void Vt::putc(char c)
