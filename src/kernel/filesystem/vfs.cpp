@@ -198,7 +198,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
     int result;
 
     if (count == MAX_COUNT){
-        free(path);
+        free(pathClone);
         return -ELOOP;
     }
 
@@ -235,7 +235,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
                 DEBUG_MSG("Path component access error\n");
                 *node = 0;
                 VNodeManager::PutVnode(tmpnode);
-                free(path);
+                free(pathClone);
                 return result;
             }
         #else
@@ -247,7 +247,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
             DEBUG_MSG("Error: failed file lookup\n");
             *node = 0;
             VNodeManager::PutVnode(tmpnode);
-            free(path);
+            free(pathClone);
             return result;
         }
 
@@ -255,7 +255,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
         if (S_ISREG(NodeType) && (nextPath[0] != 0)){
             *node = 0;
             VNodeManager::PutVnode(tmpnode);
-            free(path);
+            free(pathClone);
             return -ENOTDIR;
 
         }else if (S_ISLNK(NodeType) && !(!traverse_leaf_link && nextPath[0] == '\0')){
@@ -264,14 +264,14 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
             if (tmplnkbuf == NULL){
                 node = 0;
                 VNodeManager::PutVnode(tmpnode);
-                free(path);
+                free(pathClone);
                 return -ENOMEM;
             }
             result = FS_CALL(nextVnode, readlink)(nextVnode, tmplnkbuf, 20480);
             if (result < 0){
                 node = 0;
                 VNodeManager::PutVnode(tmpnode);
-                free(path);
+                free(pathClone);
                 return result;                
             }
             
@@ -282,7 +282,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
             if (result < 0){
                 *node = 0;
                 VNodeManager::PutVnode(tmpnode);
-                free(path);
+                free(pathClone);
                 return result;
             }
         }
