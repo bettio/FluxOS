@@ -278,8 +278,6 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
 //TODO: implementare la modalita` append
 int open(const char *pathname, int flags)
 {
-    printk("OPEN: %s\n", pathname);
-    
 	int result;
 
 	VNode *node;
