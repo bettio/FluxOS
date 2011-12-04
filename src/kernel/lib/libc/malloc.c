@@ -537,10 +537,14 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #ifdef KERNEL_HEAP_START
 #define HAVE_MMAP 0
 #define MORECORE moreheap
-void *moreheap(unsigned long increment)
+/*
+ * This function must behave like sbrk!
+ */
+void *moreheap(long increment)
 {
+    void *previousPos = KERNEL_HEAP_FREE_POS;
     KERNEL_HEAP_FREE_POS += increment;
-    return (void *) kernel_heap_free_pos;
+    return (void *) previousPos;
 }
 
 #else
