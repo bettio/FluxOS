@@ -40,6 +40,8 @@ struct ThreadControlBlock
     ProcessControlBlock *parentProcess;
     ThreadStatus status;
     unsigned int tid;
+
+    void *addressSpaceTable;
 };
 
 #endif

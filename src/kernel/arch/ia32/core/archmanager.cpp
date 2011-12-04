@@ -81,13 +81,23 @@ void ArchManager::InitHardware()
     Keyboard::init();
 }
 
-void ArchManager::StartInit()
+void Loader()
 {
     ElfLoader loader;
     loader.loadExecutableFile("/bin/init");
+    ((void (*)(void)) loader.entryPoint())(); 
+}
+
+void ArchManager::StartInit()
+{
     ProcessControlBlock *process = Task::CreateNewTask("init");
-    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread((void (*)(void)) loader.entryPoint(), 0, 0);
+    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(Loader, 0, 0);
     thread->parentProcess = process;
     thread->status = Running;
+
+    #ifndef NO_MMU
+        thread->addressSpaceTable = (void *) PagingManager::createPageDir(); 
+    #endif
+
     Scheduler::threads->append(thread);
 }

@@ -22,6 +22,7 @@
 
 #include <stdint.h>
 #include <arch/ia32/core/contextswitcher.h>
+#include <arch/ia32/mm/pagingmanager.h>
 #include <task/scheduler.h>
 #include <cstdlib.h>
 
@@ -34,6 +35,10 @@ void ContextSwitcher::init()
     ThreadControlBlock *currentThread = new ThreadControlBlock;
     currentThread->stack = 0;
     currentThread->currentStackPtr = 0;
+    #ifndef NO_MMU
+        //Here we assume that Physical == Virtual address. this works only for the first task
+        currentThread->addressSpaceTable = (void *) PagingManager::physicalAddressOf((void *) 0xFFFFF000);
+    #endif
     Scheduler::threads->append(currentThread);
 }
 
@@ -41,5 +46,9 @@ void ContextSwitcher::init()
 void ContextSwitcher::schedule(long *esp)
 {
     Scheduler::currentThread()->currentStackPtr = (void *) *esp;
-    *esp = (long) Scheduler::nextThread()->currentStackPtr;
+    ThreadControlBlock *nThread = Scheduler::nextThread(); //Now currentThread points to nextThread.
+    #ifndef NO_MMU
+        PagingManager::changeAddressSpace((volatile uint32_t *) nThread->addressSpaceTable);
+    #endif
+    *esp = (long) nThread->currentStackPtr;
 }

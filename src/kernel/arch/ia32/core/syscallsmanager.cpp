@@ -36,6 +36,16 @@
 #include <task/task.h>
 #include <filesystem/fscalls.h>
 
+#include <core/elfloader.h>
+#include <task/scheduler.h>
+#include <task/processcontrolblock.h>
+#include <task/task.h>
+#include <task/archthreadsmanager.h>
+
+#include <mm/memcalls.h>
+#include <arch/ia32/mm/pagingmanager.h>
+
+
 #define SYSCALL_MAXNUM 256
 
 extern "C" void syscallHandler();
@@ -73,13 +83,13 @@ uint32_t SyscallsManager::nullSysCallHandler(uint32_t ebx, uint32_t ecx, uint32_
     return -EFAULT;
 }
     
-extern "C" void doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
+extern "C" uint32_t doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
 {
     if (eax < 256){
-        SyscallsTable[eax](ebx, ecx, edx, esi, edi);
+        return SyscallsTable[eax](ebx, ecx, edx, esi, edi);
     
     }else{
-         SyscallsManager::nullSysCallHandler(ebx, ecx, edx, esi, edi);
+         return SyscallsManager::nullSysCallHandler(ebx, ecx, edx, esi, edi);
     }
 }
 
@@ -95,8 +105,11 @@ asm(
     "pushl %ecx\n"
     "pushl %ebx\n"
     "pushl %eax\n"
+    "sti\n"
     "call doSyscall\n"
+    "cli\n"
     "addl $28, %esp\n"
+    "movl %eax, 28(%esp)\n"
     "popa\n"
     "sti\n"
     "iret\n"
@@ -104,9 +117,9 @@ asm(
 
 uint32_t exit(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: exit\n");
-    asm("sti");
-    while(1);
+    Scheduler::currentThread()->status = UWaiting;
+    Scheduler::currentThread()->parentProcess->status = TERMINATED;
+    while (1);
     return 0;
 }
 
@@ -133,12 +146,30 @@ uint32_t fork(uint32_t, uint32_t, uint32_t, uint32_t esi, uint32_t edi)
     return 0;
 }
 
+char *executable;
+
+void _Loader()
+{
+    ElfLoader loader;
+    loader.loadExecutableFile(executable);
+    ((void (*)(void)) loader.entryPoint())();
+    while(1);
+}
+
 uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: CreateProcess\n");
-    while(1);
+    executable = strdup((const char *) ebx);
+    ProcessControlBlock *process = Task::CreateNewTask((const char *)  ebx);
+    process->dataSegmentEnd = (void *) 0xC0000000; 
+    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(_Loader, 0, 0);
+    thread->parentProcess = process;
 
-    return 0;
+    thread->addressSpaceTable = (void *) PagingManager::createPageDir();
+
+    thread->status = Running;
+    Scheduler::threads->append(thread);
+
+    return process->pid;
 }
 
 uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
@@ -188,9 +219,7 @@ uint32_t execve(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 
 uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
-    printk("Not implemented syscall: waitpid\n");
-    while(1);
-
+    while (Task::processes->at(ebx)->status != TERMINATED);
     return 0;
 }
 
@@ -219,10 +248,7 @@ uint32_t kill(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 
 uint32_t brk(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: brk\n");
-    while(1);
-
-    return 0;
+    return (uint32_t) brk((void *) ebx);
 }
 
 uint32_t chdir(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
