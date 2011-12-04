@@ -25,12 +25,12 @@
 
 #include <task/threadcontrolblock.h>
 
-#define DEFAULT_KERNEL_SIZE 8192
+#define DEFAULT_KERNEL_STACK_SIZE 8192
 
 class ArchThreadsManager
 {
     public:
-        static void *allocateKernelStack(void **stackAddr, int size = DEFAULT_KERNEL_SIZE);
+        static void *allocateKernelStack(void **stackAddr, int size = DEFAULT_KERNEL_STACK_SIZE);
         static ThreadControlBlock *createKernelThread(void (*fn)(), int flags = 0, void *args = 0);
 };
 
