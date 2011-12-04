@@ -42,10 +42,13 @@ struct RegistersFrame
     uint32_t eflags;
 };
 
+/**
+ * @return a pointer to the the stack memory area, useful to free() it. Don't use it for the stack.
+ */
 void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
 {
     //size + stack overflow guards (4096 * 2)
-    void *stack;
+    void *stack = 0;
     posix_memalign(&stack, PAGE_BOUNDARY, size + 4096*2);
     memset(stack, 0, size + 4096*2); //This line is not only required to clean the stack, but also to get assured to use an allocated page
     *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
