@@ -47,6 +47,7 @@ ConsoleDevice *Vt::console;
 char keysBuffer[256];
 int kbPos;
 int readPos;
+int inputAreaX; //HACK to avoid too much chars with backspace
 
 CharDevice Vt::ttyDev =
 {
@@ -104,6 +105,8 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
         return 0;
     }
 
+    inputAreaX = console->x(); //HACK
+
     int buffCounter = 0;
     while (1){
         while (kbPos == readPos);
@@ -111,7 +114,15 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
             char tmp = keysBuffer[readPos];
             readPos = (readPos + 1) % 256;
 
+            if (tmp == '\b'){
+                if (buffCounter > 0){
+		    buffCounter--;
+		}
+		continue;
+	    }
+
             if ((buffCounter == count)){
+	        inputAreaX = -1; //HACK
                 return buffCounter;
             }
 
@@ -119,6 +130,7 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
             buffCounter++;
 
 	    if (tmp == '\n'){
+	        inputAreaX = -1; //HACK
                 return buffCounter;
 	    }
         }
@@ -149,7 +161,18 @@ void Vt::notifyKeyPress(int code)
 {
     keysBuffer[kbPos] = code;
     kbPos = (kbPos + 1) % 256;
-    console->print(code);
+
+    if ((code == '\b')){
+        //HACK
+	if (console->x() - 1 >= inputAreaX){
+            console->setX(console->x() - 1);
+            console->print(' ');
+            console->setX(console->x() - 1);
+	}
+    }else{
+        console->print(code);
+    }
+
 }
 
 void Vt::putc(char c)
