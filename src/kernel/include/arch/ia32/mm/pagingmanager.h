@@ -52,11 +52,16 @@ class PagingManager
         static void mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len);
         static volatile uint32_t *createEmptyPageDir();
         static volatile uint32_t *createEmptyPageTable();
+        static volatile uint32_t *createPageDir();
         static void newPage(uint32_t addr);
-    private:   
+        static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
+        static void cloneKernelSpace(volatile uint32_t *pageDir);
+        inline static int addrToPageDirIndex(uint32_t addr){ return addr >> 22; }
+        inline static int addrToPageTableIndex(uint32_t addr){ return (addr >> 12) & 0x3FF; }
+        inline static uint32_t physicalAddressOf(void *ptr) { return ((volatile uint32_t *) ((0x3FF << 22) | (addrToPageDirIndex((uint32_t) ptr) << 12)))[addrToPageTableIndex((uint32_t) ptr)] & 0xFFFFF000; }
+
+    private:
         static void enable();
         inline static uint32_t pageTableEntry(uint32_t address, unsigned int flags) { return address | flags; }
         inline static uint32_t pageDirectoryEntry(uint32_t address, unsigned int flags) { return address | flags; }
-        inline static int addrToPageDirIndex(uint32_t addr){ return addr >> 22; }
-        inline static int addrToPageTableIndex(uint32_t addr){ return (addr >> 12) & 0x3FF; }
 };

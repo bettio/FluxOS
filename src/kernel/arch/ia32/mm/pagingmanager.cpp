@@ -77,6 +77,16 @@ volatile uint32_t *PagingManager::createEmptyPageTable()
     return pageTable;
 }
 
+volatile uint32_t *PagingManager::createPageDir()
+{
+    volatile uint32_t *pageDir = 0;
+    posix_memalign((void **) &pageDir, PAGE_BOUNDARY, PAGE_SIZE);
+    memset((void *) pageDir, 0, PAGE_SIZE);
+    PagingManager::cloneKernelSpace(pageDir);
+
+    return pageDir;
+}
+
 /*
  * This function is rather limited and it doesn't work in all situations
  */
@@ -127,6 +137,24 @@ void PagingManager::enable()
     asm volatile("movl %%cr0,%0": "=r"(cr0reg));
     cr0reg |= 0x80000000;
     asm volatile("movl %0, %%cr0\n": :"r"(cr0reg));
+}
+
+void PagingManager::cloneKernelSpace(volatile uint32_t *pageDir)
+{
+    volatile uint32_t *currentPageDir = (volatile uint32_t *) 0xFFFFF000; 
+
+    for (int i = 0; i < KERNEL_SPACE_UPPER_LIMIT / (PAGE_SIZE*1024); i++){
+        pageDir[i] = currentPageDir[i];
+    }
+
+    pageDir[1023] = pageDirectoryEntry((uint32_t) physicalAddressOf((void *) pageDir), KERNEL_STD_PAGE);
+}
+
+void PagingManager::changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate)
+{
+    cloneKernelSpace(pageDir);
+
+    setCR3((uint32_t) physicalAddressOf((void *) pageDir));
 }
 
 #define hasMemoryPermissions(a, b) (1)
