@@ -542,8 +542,14 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
  */
 void *moreheap(long increment)
 {
+    if (KERNEL_HEAP_FREE_POS + increment > KERNEL_SPACE_UPPER_LIMIT){
+        printk("WARNING: sbrk can't increase the heap size\n");
+        return (void *) -1;
+    }
+
     void *previousPos = KERNEL_HEAP_FREE_POS;
     KERNEL_HEAP_FREE_POS += increment;
+
     return (void *) previousPos;
 }
 
