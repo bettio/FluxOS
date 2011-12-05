@@ -351,9 +351,11 @@ int VFS::GetDirPathFromVnode(VNode *node, char **pathFromVnode)
     while (pathStack.size()){
         char *name = pathStack.takeLast();
         strcpy(path + i, name);
-        i += strlen(name) + 1;
-        path[i - 1] = '/';
         free(name);
+        if (pathStack.size()){
+            i += strlen(name) + 1;
+            path[i - 1] = '/';
+	} 
     }
 
     *pathFromVnode = path;
