@@ -155,6 +155,7 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 	return 0;
 }
 
+//If I return a pointer I can't do easily distinctions between different errors
 ext2_inode *Ext2::ReadInode(VNode *node)
 {
 	ext2_privdata *privdata = (ext2_privdata *) node->mount->privdata;
@@ -454,14 +455,18 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 	#endif
 
 	ext2_inode *inode = /*(ext2_inode *)*/ ReadInode(node);
+        if (inode == NULL){
+	    return -ENOMEM;
+	}
 
 	if (!S_ISDIR(inode->i_mode)){
 		printk("I can only do lookups on a directory\n");
-
+                delete inode;
 		return -ENOTDIR;
 	}
 
-	ext2_dir_entry_2 *dir = (ext2_dir_entry_2 *) malloc(inode->i_size);
+	ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) malloc(inode->i_size);
+	void *dir = dirEntry;
 	if (dir == NULL) return -ENOMEM;
 	ReadData(inode, node, 0, (char *) dir, inode->i_size); 
 
@@ -475,23 +480,29 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 		//If the first part of the name is the same but is longer than dir->name_len
 		//we want to reconize the name as different
 		//dir->name *isn't a null terminated* string
-		if (!strncmp(name, dir->name, dir->name_len) && (name[dir->name_len] == 0)){
-			VNodeManager::GetVnode(node->mount->mountId, dir->inode, vnd);
+		if (!strncmp(name, dirEntry->name, dirEntry->name_len) && (name[dirEntry->name_len] == 0)){
+			VNodeManager::GetVnode(node->mount->mountId, dirEntry->inode, vnd);
 
 			(*vnd)->mount = node->mount;
-			*ntype = ReadInode(*vnd)->i_mode;
+			ext2_inode *fileInode = ReadInode(*vnd); //CHECK ME
+			*ntype = fileInode->i_mode;
 
+                        delete inode;
+                        free(dir);
+			delete fileInode;
 			return 0;
 		}
 
-		readBytes += dir->rec_len;
-		dir = (ext2_dir_entry_2 *) ((unsigned long) dir + dir->rec_len);
+		readBytes += dirEntry->rec_len;
+		dirEntry = (ext2_dir_entry_2 *) ((unsigned long) dirEntry + dirEntry->rec_len);
 	}while(readBytes < inode->i_size);
 
 	vnd = NULL;
 
 	printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
 
+        delete inode;
+        free(dir);
 	return -ENOENT;
 }
 
