@@ -162,27 +162,29 @@ ext2_inode *Ext2::ReadInode(VNode *node)
 	int inodeIndex = ((uint32_t) (node->vnid.id - 1)) % privdata->sblock->s_inodes_per_group;
 	int inodeGroup = ((uint32_t) (node->vnid.id - 1)) / privdata->sblock->s_inodes_per_group;
 
-	char *tmpblk = (char *) malloc(512);
-
-	//TODO: Warning: unchecked malloc
-	privdata->blkdev->ReadBlock(privdata->blkdev, 4, 1, (uint8_t *) tmpblk);
-
-	ext2_group_desc *group = (ext2_group_desc *) tmpblk;
+	char *groupTmpBlkBuff = (char *) malloc(512);
+        if (groupTmpBlkBuff == 0){
+	    return 0;
+	}
+	privdata->blkdev->ReadBlock(privdata->blkdev, 4, 1, (uint8_t *) groupTmpBlkBuff);
+	ext2_group_desc *group = (ext2_group_desc *) groupTmpBlkBuff;
 
 	#if 0
 		printk("Inode table: %i\n", group->bg_inode_table);
 	#endif
 
-	tmpblk = (char *) malloc(privdata->sblock->s_blocks_per_group * privdata->sblock->s_inode_size);
 	//TODO: Warning: unchecked malloc
-
-	tmpblk = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
-    
+	char *inodeTableTmpBlkBuf = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
 	privdata->blkdev->ReadBlock(privdata->blkdev, group[inodeGroup].bg_inode_table * privdata->DiskBlocksPerFSBlock,
-					(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) tmpblk);
-	ext2_inode *first_table = (ext2_inode *) tmpblk;
+					(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) inodeTableTmpBlkBuf);
+	ext2_inode *first_table = (ext2_inode *) inodeTableTmpBlkBuf;
 
-	return &first_table[inodeIndex];
+        free(group);
+        ext2_inode *inode = new ext2_inode;
+        memcpy(inode, &first_table[inodeIndex], sizeof(ext2_inode));
+        free(first_table);
+
+        return inode;
 }
 
 int Ext2::ReadBlocksData(ext2_inode *inode, uint32_t *indirectBlocks, VNode *node, uint32_t pos, char *buffer, unsigned int bufsize)
