@@ -111,12 +111,16 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
             char tmp = keysBuffer[readPos];
             readPos = (readPos + 1) % 256;
 
-            if ((buffCounter == count) || tmp == '\n'){
-                return count;
+            if ((buffCounter == count)){
+                return buffCounter;
             }
 
             buffer[buffCounter] = tmp;
             buffCounter++;
+
+	    if (tmp == '\n'){
+                return buffCounter;
+	    }
         }
     }
 }
