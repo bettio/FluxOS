@@ -21,6 +21,7 @@
 
 #include <task/task.h>
 #include <task/scheduler.h>
+#include <filesystem/vnodemanager.h>
 #include <arch.h>
 #include <ListWithHoles>
 
@@ -81,3 +82,32 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 
 	return process;
 }
+
+ProcessControlBlock *Task::NewProcess(const char *name)
+{
+    ProcessControlBlock *parent = Scheduler::currentThread()->parentProcess;
+
+    ProcessControlBlock *process = new ProcessControlBlock;
+    int newTaskPid = processes->add(process);
+    process->pid = newTaskPid;
+    process->uid = parent->uid;
+    process->gid = parent->gid;
+    process->status = READY;
+    process->name = strdup(name);
+    process->parent = parent;
+    process->dataSegmentEnd = (void *) 0xC0000000;
+    process->openFiles = new ListWithHoles<FileDescriptor *>();
+    for (int i = 0; i < parent->openFiles->size(); i++){
+        FileDescriptor *oldFd = parent->openFiles->at(i);
+	if (oldFd != 0){
+            FileDescriptor *newFd = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(oldFd->node));
+            newFd->fpos = oldFd->fpos;
+            process->openFiles->add(newFd);
+        }
+    }
+
+    process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
+
+    return process;
+}
+

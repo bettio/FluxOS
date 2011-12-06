@@ -159,8 +159,7 @@ void _Loader()
 uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
     executable = strdup((const char *) ebx);
-    ProcessControlBlock *process = Task::CreateNewTask((const char *)  ebx);
-    process->dataSegmentEnd = (void *) 0xC0000000; 
+    ProcessControlBlock *process = Task::NewProcess((const char *)  ebx);
     ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(_Loader, 0, 0);
     thread->parentProcess = process;
 
