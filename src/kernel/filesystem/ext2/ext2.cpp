@@ -499,7 +499,9 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 
 	vnd = NULL;
 
-	printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
+        #ifdef EXT2_DEBUG
+	    printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
+        #endif
 
         delete inode;
         free(dir);

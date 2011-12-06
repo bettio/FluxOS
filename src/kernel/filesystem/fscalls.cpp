@@ -20,8 +20,11 @@
  *   Date: 01/07/2006                                                      *
  ***************************************************************************/
 
+#define ENABLE_DEBUG_MSG 0
+
 #include <filesystem/fscalls.h>
 
+#include <debugmacros.h>
 #include <cstdlib.h>
 #include <core/printk.h>
 #include <filesystem/filedescriptor.h>
@@ -288,7 +291,7 @@ int open(const char *pathname, int flags)
         if (flags & O_CREAT){
 			createNewFile(pathname, flags, &node); //le stesse flag?
         }else{
-		    printk("Failed to open file\n");
+		    DEBUG_MSG("Failed to open %s\n", pathname);
 
 		    return result;
         }
