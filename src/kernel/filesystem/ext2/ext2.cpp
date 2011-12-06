@@ -539,14 +539,15 @@ int Ext2::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
         dirent *prevDirp;
 
 	do{
+	    if (dir->name_len != 0){
 		rawstrcpy(dirp->d_name, dir->name, sizeof(dirp->d_name), dir->name_len + 1);
 		dirp->d_reclen = sizeof(dirent);
 		dirp->d_off = sizeof(dirent); //TODO: ci andrebbe pos
 		bufferUsedBytes += dirp->d_reclen;
-
+ 
                 prevDirp = dirp;
-		dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-
+		dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen); 
+            }
 		readBytes += dir->rec_len;
 		dir = (ext2_dir_entry_2 *) ((unsigned long) dir + dir->rec_len);
 	//TODO: < o <=?
@@ -556,7 +557,7 @@ int Ext2::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
         prevDirp->d_off = 0; 
 
 	//return 0 on end of directory, else read bytes
-	return /*(dir->inode) ? */readBytes/* : 0*/;
+	return /*(dir->inode) ? */bufferUsedBytes/* : 0*/;
 }
 
 int Ext2::Stat(VNode *node, struct stat *buf)
