@@ -62,21 +62,28 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 {
 	ProcessControlBlock *process = new ProcessControlBlock;
         int newTaskPid = processes->add(process);
-	process->name = strdup(name);
 	process->pid = newTaskPid;
-
-	//TODO: Add stdin and stdout
+        process->uid = 0;
+	process->gid = 0;
+	process->name = strdup(name);
+        process->parent = 0;
+	process->dataSegmentEnd = (void *) 0xC0000000;
         process->openFiles = new ListWithHoles<FileDescriptor *>();
-	VNode *node;
-        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &node, true);
-        FileDescriptor *fdesc = new FileDescriptor(node);
+	VNode *ttyNode;
+        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
+	//stdin
+        FileDescriptor *fdesc = new FileDescriptor(ttyNode);
         process->openFiles->add(fdesc);
-        fdesc = new FileDescriptor(node);
+	//stdout
+        fdesc = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(ttyNode));
         process->openFiles->add(fdesc);
+	//stderr
+	fdesc = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(ttyNode));
+	process->openFiles->add(fdesc);
 
-	FileSystem::VFS::RelativePathToVnode(0, "/", &node);
-
-	process->currentWorkingDirNode = node;
+        VNode *cwdNode;
+	FileSystem::VFS::RelativePathToVnode(0, "/", &cwdNode);
+	process->currentWorkingDirNode = cwdNode;
 
         process->status = READY;
 
@@ -92,7 +99,6 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->pid = newTaskPid;
     process->uid = parent->uid;
     process->gid = parent->gid;
-    process->status = READY;
     process->name = strdup(name);
     process->parent = parent;
     process->dataSegmentEnd = (void *) 0xC0000000;
@@ -107,6 +113,9 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     }
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
+
+
+    process->status = READY;
 
     return process;
 }
