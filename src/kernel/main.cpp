@@ -93,9 +93,6 @@ int main()
 
 	ArchManager::InitMultitasking();
 
-	//SetHostName("flux_host", 9);
-	//SetDomainName("flux_domain", 11);
-
 	printk("Starting Init...\n");
 
 #if BOOT == 1
