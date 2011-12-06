@@ -69,8 +69,8 @@ int ProcFS::Mount(FSMount *fsmount, BlockDevice *blkdev)
 int ProcFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
 	if (node->vnid.id == 2){
-		if (pos < sizeof("FluxOS 0.1\n")){
-		    strncpy(buffer, "FluxOS 0.1\n" + pos, bufsize);
+		if (pos < sizeof("FluxOS Kernel 0.1\n") - 1){
+		    strncpy(buffer, "FluxOS Kernel 0.1\n" + pos, bufsize);
 		    return bufsize;
 		}else{
 		    return 0;
