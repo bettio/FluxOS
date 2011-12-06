@@ -40,11 +40,14 @@ class SystemTimer
         static void init(int frequency);
         static void timerTickISR();
         static void sleep(int millis, ThreadControlBlock *thread);
-        
+        static long time(long *t);
+	static int stime(long *t);
+
     private:
         static uint64_t systemTicks;
         static QList<ThreadTimer> *timers;
         static int tickFrequency;
+	static long startupTimestamp;
 };
 
 #endif

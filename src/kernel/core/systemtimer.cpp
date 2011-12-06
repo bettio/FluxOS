@@ -22,6 +22,7 @@
 
 #include <core/systemtimer.h>
 
+long SystemTimer::startupTimestamp;
 uint64_t SystemTimer::systemTicks;
 QList<ThreadTimer> *SystemTimer::timers;
 int SystemTimer::tickFrequency;
@@ -59,3 +60,21 @@ void SystemTimer::timerTickISR()
         }
     }
 }
+
+long SystemTimer::time(long *t)
+{
+    long tSeconds = startupTimestamp + (systemTicks / tickFrequency); 
+    if (t != 0){
+        *t = tSeconds; //CHECK
+    }
+    return tSeconds;
+}
+
+//CHECK PERM
+int SystemTimer::stime(long *t)
+{
+    startupTimestamp = *t - systemTicks / tickFrequency;
+
+    return 0;
+}
+

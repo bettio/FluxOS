@@ -28,6 +28,7 @@
 #include <filesystem/vfs.h>
 #include <drivers/chardevice.h>
 
+#include <core/systemtimer.h>
 #include <core/printk.h>
 #include <filesystem/vfs.h>
 #include <cstdlib.h>
@@ -169,6 +170,11 @@ uint32_t getuid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
     return Scheduler::currentThread()->parentProcess->uid;
 }
 
+uint32_t stime(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return (uint32_t) SystemTimer::stime((long *) ebx);
+}
+
 uint32_t setgid(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return Task::SetGid(ebx);
@@ -240,10 +246,7 @@ uint32_t getdents(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 
 uint32_t time(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: time\n");
-    while(1);
-
-    return 0;
+    return SystemTimer::time((long *) ebx);
 }
 
 uint32_t sethostname(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
@@ -375,6 +378,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(22, umount);
     registerSyscall(23, setuid);
     registerSyscall(24, getuid);
+    registerSyscall(25, stime);
     registerSyscall(28, fstat);
     registerSyscall(37, kill);
     registerSyscall(45, brk);
