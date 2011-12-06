@@ -16,67 +16,24 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
- *   Date: 05/09/2006                                                      *
+ *   Name: userprocsmanager.h                                              *
+ *   Date: 06/12/2011                                                      *
  ***************************************************************************/
 
-#include <task/task.h>
-#include <core/printk.h>
-#include <core/archmanager.h>
-#include <drivers/vt.h>
-#include <arch/ia32/core/idt.h>
-#include <arch/ia32/core/syscallsmanager.h>
-#include <arch/ia32/drivers/keyboard.h>
-#include <arch/ia32/drivers/timer.h>
-#include <arch/ia32/drivers/video.h>
-#include <arch/ia32/core/irq.h>
-#include <arch/ia32/core/gdt.h>
-#include <arch/ia32/core/pci.h>
-#include <arch/ia32/core/userprocsmanager.h>
-#include <boot/bootloaderinfo.h>
-#include <arch/ia32/mm/pagingmanager.h>
+#ifndef _USER_PROCS_MANAGER_H
+#define _USER_PROCS_MANAGER_H
 
-void ArchManager::Init()
+class UserProcsManager
 {
-    //initmem();
-    GDT::init();
+    public:
+        static void createInitProcess();
+        static int createProcess(const char *path, const char *args, const char *envp);
 
-    Video::init();
-    Out = Vt::Device();
-}
+    private:
+        static void processLoader();
+        static char *executable;
+        static char *args;
+};
 
-void ArchManager::InitArch()
-{
-    IDT::init();
-    #ifndef NO_MMU
-        PagingManager::init();
-    #endif
-    Task::init();
-    IRQ::init();
-    SyscallsManager::init();
-    
-    PCI::init();
+#endif
 
-    asm("sti");
-    
-    Timer::init();
-}
-
-void ArchManager::InitMemoryManagment()
-{
-}
-
-void ArchManager::InitMultitasking()
-{
-}
-
-void ArchManager::InitHardware()
-{
-    Vt::ReInit();
-    Keyboard::init();
-}
-
-void ArchManager::StartInit()
-{
-    UserProcsManager::createInitProcess();
-}

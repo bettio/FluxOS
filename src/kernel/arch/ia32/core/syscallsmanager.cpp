@@ -36,15 +36,13 @@
 #include <task/task.h>
 #include <filesystem/fscalls.h>
 
-#include <core/elfloader.h>
+#include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
 #include <task/processcontrolblock.h>
 #include <task/task.h>
 #include <task/archthreadsmanager.h>
 
 #include <mm/memcalls.h>
-#include <arch/ia32/mm/pagingmanager.h>
-
 
 #define SYSCALL_MAXNUM 256
 
@@ -146,35 +144,9 @@ uint32_t fork(uint32_t, uint32_t, uint32_t, uint32_t esi, uint32_t edi)
     return 0;
 }
 
-char *executable;
-char *args;
-
-void _Loader()
-{
-    ElfLoader loader;
-    loader.loadExecutableFile(executable);
-    /*This doesn't work: ((int (*)(...)) loader.entryPoint())(executable, args, 0);*/
-    asm("pushl %1\n"
-        "pushl %2\n"
-        "pushl %3\n"
-        "jmp %0\n" : : "r" (loader.entryPoint()), "r" (args), "r" (executable), "r" (1 + (strlen(args) != 0)));
-    while(1);
-}
-
 uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
-    executable = strdup((const char *) ebx);
-    args = strdup((const char *) ecx);
-    ProcessControlBlock *process = Task::NewProcess((const char *)  ebx);
-    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(_Loader, 0, 0);
-    thread->parentProcess = process;
-
-    thread->addressSpaceTable = (void *) PagingManager::createPageDir();
-
-    thread->status = Running;
-    Scheduler::threads->append(thread);
-
-    return process->pid;
+    return UserProcsManager::createProcess((const char *) ebx, (const char *) ecx, 0);
 }
 
 uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)

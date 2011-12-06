@@ -8,4 +8,5 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     arch/ia32/core/irq.cpp
     arch/ia32/core/pci.cpp
     arch/ia32/core/syscallsmanager.cpp
+    arch/ia32/core/userprocsmanager.cpp
 )
