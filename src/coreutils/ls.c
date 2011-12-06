@@ -36,6 +36,8 @@
 /*FIXME: ugly ugly ugly code */
 int main(int argc, char **argv)
 {
+    int readBytes;
+    int pos;
     int dfd;
     char *cd;
     char *tmpPath;
@@ -50,8 +52,10 @@ int main(int argc, char **argv)
     }
 
     dfd = open(cd, 0, 0); /*verificare questa open*/
-    getdents(dfd, ent, 4096*15);
+    readBytes = getdents(dfd, ent, 4096*15);
 
+
+    pos = 0;
     /*int j = 0;*/
 
     do{
@@ -99,10 +103,10 @@ int main(int argc, char **argv)
         /*printf("%s  %i %i %i %i\t%i\t%s\n", modestr, s->st_nlink, s->st_uid, s->st_gid, s->st_size, s->st_mtime, ent->d_name);*/
         printf("%s  %s\n", modestr, ent->d_name);
 
-        ent = (struct dirent *) (((unsigned long) ent) + ent->d_reclen);
-    }while(ent->d_off != 0);
+        pos += ent->d_reclen;
 
-    printf("\n");
+        ent = (struct dirent *) (((unsigned long) ent) + ent->d_reclen);
+    }while(pos < readBytes);
 
     return EXIT_SUCCESS;
 }
