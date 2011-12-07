@@ -92,6 +92,29 @@ extern int errno;
         } \
     }
 
+#define SYSCALL_4(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3) \
+    { \
+        register long syscall asm("%eax") = num; \
+        register long _arg0 asm("%ebx") = (long) arg0; \
+        register long _arg1 asm("%ecx") = (long) arg1; \
+        register long _arg2 asm("%edx") = (long) arg2; \
+        register long _arg3 asm("%esi") = (long) arg3; \
+        \
+        register long result asm("%eax"); \
+        \
+        asm volatile("int $0x80" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (_arg3)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
 #define SYSCALL_5(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) \
     retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3, arg4_t arg4) \
     { \
