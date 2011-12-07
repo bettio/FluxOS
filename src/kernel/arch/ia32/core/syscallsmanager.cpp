@@ -132,6 +132,11 @@ uint32_t write(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
     return write((int) ebx, (void *) ecx, (size_t) edx);
 }
 
+uint32_t symlink(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return symlink((const char *) ebx, (const char *) ecx);
+}
+
 uint32_t readlink(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
     return readlink((const char *) ebx, (char *) ecx, (size_t) edx);
@@ -206,6 +211,21 @@ uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_
     return 0;
 }
 
+uint32_t creat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return creat((const char *) ebx, (mode_t) ecx);
+}
+
+uint32_t link(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return link((const char *) ebx, (const char *) ecx);
+}
+
+uint32_t unlink(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return unlink((const char *) ebx);
+}
+
 uint32_t getcwd(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
     return getcwd((char *) ebx, (int) ecx);
@@ -229,6 +249,26 @@ uint32_t kill(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
     return 0;
 }
 
+uint32_t rename(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return rename((const char *) ebx, (const char *) ecx);
+}
+
+uint32_t mkdir(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return mkdir((const char *) ebx, (mode_t) ecx);
+}
+
+uint32_t rmdir(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return rmdir((const char *) ebx);
+}
+
+uint32_t dup(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return dup((int) ebx);
+}
+
 uint32_t brk(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return (uint32_t) brk((void *) ebx);
@@ -247,6 +287,11 @@ uint32_t getdents(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 uint32_t time(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return SystemTimer::time((long *) ebx);
+}
+
+uint32_t mknod(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
+{
+    return mknod((const char *) ebx, (mode_t) ecx, (dev_t) edx);
 }
 
 uint32_t sethostname(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
@@ -366,9 +411,13 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(5, open);
     registerSyscall(6, close);
     registerSyscall(7, waitpid);
+    registerSyscall(8, creat);
+    registerSyscall(9, link);
+    registerSyscall(10, unlink);
     registerSyscall(11, execve);
     registerSyscall(12, chdir);
     registerSyscall(13, time);
+    registerSyscall(14, mknod);
     registerSyscall(15, chmod);
     registerSyscall(16, lchown);
     registerSyscall(18, stat);
@@ -380,21 +429,34 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(24, getuid);
     registerSyscall(25, stime);
     registerSyscall(28, fstat);
+    //30 utime
+    //33 access
+    //34 nice
     registerSyscall(37, kill);
+    registerSyscall(38, rename);
+    registerSyscall(39, mkdir);
+    registerSyscall(40, rmdir);
+    registerSyscall(41, dup);
     registerSyscall(45, brk);
     registerSyscall(46, setgid);
     registerSyscall(47, getgid);
+    //52 umount2
     registerSyscall(54, ioctl);
     registerSyscall(55, fcntl);
+    //57 setpgid
+    //60 umask
+    //61 ustat
+    //63 dup2
     registerSyscall(64, getppid);
     registerSyscall(74, sethostname);
+    registerSyscall(83, symlink);
+    registerSyscall(85, readlink);
     registerSyscall(90, mmap);
     registerSyscall(92, truncate);
     registerSyscall(93, ftruncate);
     registerSyscall(94, fchmod);
     registerSyscall(95, fchown);
     registerSyscall(107, lstat);
-    registerSyscall(85, readlink);
     registerSyscall(118, fsync);
     registerSyscall(121, setdomainname);
     registerSyscall(122, uname);
@@ -404,5 +466,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(181, pwrite);
     registerSyscall(182, chown);
     registerSyscall(183, getcwd);
+    //187 sendfile
     registerSyscall(220, CreateProcess);
 }
+
