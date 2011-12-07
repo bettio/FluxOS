@@ -37,7 +37,7 @@ extern int errno;
         \
         register long result asm("%eax"); \
         \
-        asm volatile("syscall" \
+        asm volatile("int $0x80" \
                      : "=r" (result) \
                      : "r" (syscall), "r" (_arg0)); \
         \
@@ -58,7 +58,7 @@ extern int errno;
         \
         register long result asm("%eax"); \
         \
-        asm volatile("syscall" \
+        asm volatile("int $0x80" \
                      : "=r" (result) \
                      : "r" (syscall), "r" (_arg0), "r" (_arg1)); \
         \
@@ -80,7 +80,7 @@ extern int errno;
         \
         register long result asm("%eax"); \
         \
-        asm volatile("syscall" \
+        asm volatile("int $0x80" \
                      : "=r" (result) \
                      : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2)); \
         \
@@ -104,7 +104,7 @@ extern int errno;
         \
         register long result asm("%eax"); \
         \
-        asm volatile("syscall" \
+        asm volatile("int $0x80" \
                      : "=r" (result) \
                      : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (_arg3), "r" (_arg4)); \
         \
