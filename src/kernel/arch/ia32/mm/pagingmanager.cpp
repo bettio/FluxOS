@@ -159,6 +159,7 @@ void PagingManager::changeAddressSpace(volatile uint32_t *pageDir, bool forceUpd
 
 #define hasMemoryPermissions(a, b) (1)
 #define isMissingPageError(errorCode) ( !(errorCode & 1) )
+#define GET_FAULT_EIP() *((uint32_t *) ((char *) &faultAddress + 32))
 
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
@@ -168,7 +169,8 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
         if (hasMemoryPermissions(faultAddress, errorCode)){
 	    if (faultAddress < NULL_POINTERS_REGION_SIZE){
                 const char *errorString = (errorCode & 2) ? "write" : "read";
-                printk("Trying to %s null pointer (addr: 0x%x)\n", errorString, faultAddress);
+                uint32_t eip = GET_FAULT_EIP();
+                printk("Instruction at 0x%x tried to %s null pointer (addr: 0x%x)\n", eip, errorString, faultAddress);
 		while (1);
 	    }
 	    PagingManager::newPage(faultAddress);
@@ -184,6 +186,10 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
     }
 }
 
+/*
+ * If you change the stack usage, please make sure
+ * to change also GET_FAULT_EIP
+ */
 asm(".globl pageFaultHandler    \n"
     "pageFaultHandler:  \n"
     "nop                \n"
