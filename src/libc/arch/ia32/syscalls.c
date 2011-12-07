@@ -117,6 +117,7 @@ extern int errno;
     }
 
 SYSCALL_1(unlink, 10, int, const char *)
+SYSCALL_1(stime, 25, int, time_t *)
 SYSCALL_1(rmdir, 40, int, const char *)
 SYSCALL_2(rename, 38, int, const char *, const char *)
 SYSCALL_2(mkdir, 39, int, const char *, mode_t)
