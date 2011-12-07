@@ -28,6 +28,7 @@
 #include <filesystem/vfs.h>
 #include <drivers/chardevice.h>
 
+#include <core/archmanager.h>
 #include <core/systemtimer.h>
 #include <core/printk.h>
 #include <filesystem/vfs.h>
@@ -140,6 +141,11 @@ uint32_t symlink(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 uint32_t readlink(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
     return readlink((const char *) ebx, (char *) ecx, (size_t) edx);
+}
+
+uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t)
+{
+    ArchManager::reboot();
 }
 
 uint32_t fork(uint32_t, uint32_t, uint32_t, uint32_t esi, uint32_t edi)
@@ -451,6 +457,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(74, sethostname);
     registerSyscall(83, symlink);
     registerSyscall(85, readlink);
+    registerSyscall(88, reboot);
     registerSyscall(90, mmap);
     registerSyscall(92, truncate);
     registerSyscall(93, ftruncate);

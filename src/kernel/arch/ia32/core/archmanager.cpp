@@ -80,3 +80,17 @@ void ArchManager::StartInit()
 {
     UserProcsManager::createInitProcess();
 }
+
+//try to triple fault to reset the CPU
+void ArchManager::reboot()
+{
+    char c;
+    unsigned long int idtReg[2];
+    idtReg[0] = 0;
+    idtReg[1] = (unsigned long int) &c;
+    asm volatile ("lidt (%0)": :"g" ((char *) idtReg + 2));
+    //this should work, but it causes a null point error on qem: asm volatile ("lidt 0"); 
+    asm("int $0x80");
+    while (1);   
+}
+
