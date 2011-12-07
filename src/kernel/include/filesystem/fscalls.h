@@ -72,5 +72,6 @@ int rename(const char *oldpath, const char *newpath);
 int mknod(const char *pathname, mode_t mode, dev_t dev);
 
 int chmod(const char *path, mode_t mode);
+int dup(int oldfd);
 
 #endif
