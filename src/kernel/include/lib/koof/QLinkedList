@@ -2,8 +2,8 @@
  *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
+ *   it under the terms of the GNU Library General Public License as       *
+ *   published by the Free Software Foundation; either version 2, or       *
  *   (at your option) any later version.                                   *
  *                                                                         *
  *   This program is distributed in the hope that it will be useful,       *
@@ -11,8 +11,8 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
+ *   You should have received a copy of the GNU Library General Public     *
+ *   License along with this program; if not, write to the                 *
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
@@ -32,194 +32,275 @@ template <typename T> class QLinkedList
                 Node *prev;
                 T body;
       
-                Node(const T &value)
+                inline Node(const T &value, Node *p, Node *n)
                 {
-                    next = 0;
-                    prev = 0;
+                    prev = p;
+                    next = n;
                     body = value;
                 }
         };
-    
-    Node *m_head;
-    Node *m_tail;
-    int m_size;
 
-    Node *node(int i)
-    {
-    Node *tmpNode = m_head;
-      
-    for (int j = 0; j < i; j++){
-      tmpNode = tmpNode->next;
-    }
-    
-    return tmpNode;      
-    }
+        Node *m_head;
+        Node *m_tail;
+        int m_size;
 
-  public:
-    QLinkedList()
-    {
-      m_head = 0;
-      m_tail = 0;
-      m_size = 0;
-    }
-    
-    inline int size() const
-    {
-      return m_size;
-    }
-    
-    bool append(const T &value)
-    {
-      Node *tmpNode = new Node(value);
-      
-      if (m_size == 0){
-        m_head = tmpNode;
-        m_tail = tmpNode;
-
-      }else{
-        m_tail->next = tmpNode;
-        tmpNode->prev = m_tail;
-      }
-
-      m_tail = tmpNode;
-      m_size++;
-    }
-    
-    bool prepend(const T &value)
-    {
-      Node *tmpNode = new Node(value);
-      
-      if (m_size != 0){
-    m_head->prev = tmpNode;
-        tmpNode->next = m_head;
-      }
-
-      m_head = tmpNode;
-      m_size++;
-    }
-
-    bool insert(int before, const T &value)
-    {
-      if (before == 0){
-    return prepend(value);
-
-      }else{
-    Node *newNode = new Node(value);
-    
-        Node *prevNode = node(before);
-    prevNode->prev->next = newNode;
-    newNode->prev = prevNode->prev;
-    prevNode->prev = newNode;
-    newNode->next = prevNode;
-    
-    m_size++;
-      }
-    }
-    
-    void remove(int i)
-    {
-        if (i == 0){
+        Node *node(int index)
+        {
             Node *tmpNode = m_head;
-            m_head = m_head->next;
-            if (m_head){
-                m_head->prev = 0;
+      
+            for (int i = 0; i < index; i++){
+                tmpNode = tmpNode->next;
+            }
+    
+            return tmpNode;      
+        }
+
+        void removeAllNodes()
+        {
+            Node *nextNode = m_head;
+
+            while (nextNode != 0){
+                Node *tmpNode = nextNode;
+                nextNode = nextNode->next;
+                delete tmpNode;
+            }
+        }
+
+    public:
+        QLinkedList()
+        {
+            m_head = 0;
+            m_tail = 0;
+            m_size = 0;
+        }
+
+        inline void clear()
+        {
+            removeAllNodes();
+            m_size = 0;
+            m_head = 0;
+            m_tail = 0;
+        }
+
+        ~QLinkedList()
+        {
+            removeAllNodes();
+        }
+
+        inline int size() const
+        {
+            return m_size;
+        }
+    
+        bool append(const T &value)
+        {
+            Node *tmpNode = new Node(value, m_tail, 0);
+      
+            if (m_size != 0){
+                m_tail->next = tmpNode;
+                
+            }else{
+                m_head = tmpNode;
+            }
+
+            m_tail = tmpNode;
+            m_size++;
+            
+            return true;
+        }
+    
+        bool prepend(const T &value)
+        {
+            Node *tmpNode = new Node(value, 0, m_head);
+
+            if (m_size != 0){
+                m_head->prev = tmpNode;
+
+            }else{
+                m_tail = tmpNode;
+            }
+
+            m_head = tmpNode;
+            m_size++;
+            
+            return true;
+        }
+
+        bool insert(int before, const T &value)
+        {
+            if (before == 0){
+                return prepend(value);
+            
+            }else if (before == m_size){
+                return append(value);
+
+            }else{
+                Node *prevNode = node(before);
+                Node *newNode = new Node(value, prevNode->prev, prevNode);
+                prevNode->prev->next = newNode;
+                prevNode->prev = newNode;
+
+                m_size++;
+            }
+        
+            return true;
+        }
+    
+        void remove(int i)
+        {
+            Node *tmpNode;
+            if (i == 0){
+                tmpNode = m_head;
+                m_head = m_head->next;
+                if (m_head){
+                    m_head->prev = 0;
+                }
+
+            }else if (i == m_size - 1){
+                tmpNode = m_tail;
+                m_tail = m_tail->prev;
+                m_tail->next = 0;
+
+            }else{
+                tmpNode = node(i);
+                tmpNode->prev->next = tmpNode->next;
+                tmpNode->next->prev = tmpNode->prev;
             }
             delete tmpNode;
 
-        }else if (i == m_size - 1){
-            Node *tmpNode = m_tail;
-            m_tail = m_tail->prev;
-            m_tail->next = 0;
-            delete tmpNode;
+            m_size--;
+        }
 
-      }else{
-            Node *tmpNode = node(i);
-            tmpNode->prev->next = tmpNode->next;
-            tmpNode->next->prev = tmpNode->prev;
-            delete tmpNode;
-      }
-      
-      m_size--;
-    }
+        inline T &operator[](int i)
+        {
+            return node(i)->body;
+        }
 
-    inline T &operator[](int i)
-    {
-      return node(i)->body;
-    }
+        inline const T &operator[](int i) const
+        {
+            return node(i)->body;
+        }
+    
+        inline void removeFirst()
+        {
+            remove(0);
+        }
+    
+        inline T takeFirst()
+        {
+            T tmp = m_head->body;
+            remove(0);
+      
+            return tmp;
+        }
+    
+        inline void removeLast()
+        {
+            remove(m_size - 1);
+        }
+    
+        inline T takeLast()
+        {
+            T tmp = m_tail->body;
+            remove(m_size - 1);
+      
+            return tmp;
+        }
+    
+        inline T &first()
+        {
+            return m_head->body;
+        }
+    
+        inline T &last()
+        {
+            return m_tail->body;
+        }
+    
+        inline bool startsWith(const T &value) const
+        {
+            return (m_head->body == value);
+        }
+    
+        bool contains(const T &value) const
+        {
+            Node *tmpNode = m_head;
 
-    inline const T &operator[](int i) const
-    {
-      return node(i)->body;
-    }
-    
-    inline void removeFirst()
-    {
-      remove(0);
-    }
-    
-    inline T takeFirst()
-    {
-      T tmp = m_head->body;
-      remove(0);
+            while (tmpNode != 0){
+                if (tmpNode->body == value){
+                    return true;
+                }
+                tmpNode = tmpNode->next;
+            }
       
-      return tmp;
-    }
+            return false;
+        }
     
-    inline void removeLast()
-    {
-      remove(m_size - 1);
-    }
-    
-    inline T takeLast()
-    {
-      T tmp = m_tail->body;
-      remove(m_size - 1);
+        int count(const T &value) const
+        {
+            int counter = 0;
       
-      return tmp;      
-    }
-    
-    inline T &first()
-    {
-      return m_head->body;
-    }
-    
-    inline T &last()
-    {
-      return m_tail->body;
-    }
-    
-    inline bool startsWith(const T &value) const
-    {
-      return (m_head->body == value);
-    }
-    
-    bool contains(const T &value) const
-    {
-      Node *tmpNode = m_head;
+            Node *tmpNode = m_head;
 
-      for (int i = 0; i < m_size; i++){
-    if (tmpNode->body == value){
-      return true;
-    }
-    tmpNode = tmpNode->next;
-      }
+            while (tmpNode != 0){
+                counter += (tmpNode->body == value);
+                tmpNode = tmpNode->next;
+            }
       
-      return false;
-    }
-    
-    int count(const T &value) const
-    {
-      int counter = 0;
-      
-      Node *tmpNode = m_head;
+            return counter;
+        }
+        
+        class const_iterator
+        {
+            private:
+                friend class QLinkedList;
+                Node *currentNode;
 
-      for (int i = 0; i < m_size; i++){
-    counter += (tmpNode->body == value);
-    tmpNode = tmpNode->next;
-      }
-      
-      return counter;
-    }
+            public:
+                inline const_iterator &operator++()
+                {
+                    currentNode = currentNode->next;
+                    return *this;
+                }
+
+                inline const_iterator operator++(int)
+                {
+                    const_iterator oldIterator = *this;
+                    ++(*this);
+                    return oldIterator;
+                }
+
+                inline bool operator!=(const const_iterator &other) const
+                {
+                    return this->currentNode != other.currentNode;
+                }
+
+                inline bool operator==(const const_iterator &other) const
+                {
+                    return this->currentNode == other.currentNode;
+                }
+
+                inline const T &value() const
+                {
+                    return currentNode->body;
+                }
+        };
+
+        const_iterator constBegin() const
+        {
+            const_iterator iterator;
+
+            iterator.currentNode = m_head;
+            
+            return iterator;
+        }
+
+        inline const_iterator constEnd() const
+        {
+            const_iterator iterator;
+            iterator.currentNode = 0;
+            return iterator;
+        }
 };
 
 #endif
