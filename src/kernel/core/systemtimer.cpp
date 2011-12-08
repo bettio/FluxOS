@@ -55,7 +55,7 @@ void SystemTimer::timerTickISR()
     for (int i = 0; i < timers->count(); i++){
         if (timers->at(i).expiralSystemTime < systemTicks){
             timers->at(i).parentThread->status = Running;
-            timers->remove(i);
+            timers->removeAt(i);
             //TODO: schedule the thread, please
         }
     }
