@@ -36,7 +36,14 @@ char *UserProcsManager::args;
 void UserProcsManager::processLoader()
 {   
     ElfLoader loader;
-    loader.loadExecutableFile(executable);
+    int res = loader.loadExecutableFile(executable);
+    if (res < 0 || !loader.isValid()){
+        printk("Cannot load executable file: %s error: %i\n", executable, res);
+        //exit
+        Scheduler::currentThread()->status = UWaiting;
+        Scheduler::currentThread()->parentProcess->status = TERMINATED;
+	while(1);
+    }
     /*This doesn't work: ((int (*)(...)) loader.entryPoint())(executable, args, 0);*/
     asm("pushl %1\n"
         "pushl %2\n"
