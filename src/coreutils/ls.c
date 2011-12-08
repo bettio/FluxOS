@@ -32,6 +32,18 @@
 #include <sys/types.h>
 */
 
+void printError(char *fname)
+{
+    /* strlen("cat: ") = 5 */
+    char *s = malloc(5 + strlen(fname) + 1);
+    strcpy(s, "ls: ");
+    strcat(s, fname);
+
+    perror(s);
+
+    free(s);
+}
+
 /*TODO: we must fix ls for a single file*/
 /*FIXME: ugly ugly ugly code */
 int main(int argc, char **argv)
@@ -51,7 +63,11 @@ int main(int argc, char **argv)
         getcwd(cd, 256);
     }
 
-    dfd = open(cd, 0, 0); /*verificare questa open*/
+    dfd = open(cd, 0, 0);
+    if (dfd < 0){
+        printError(*argv);
+        return EXIT_FAILURE;
+    }
     readBytes = getdents(dfd, ent, 4096*15);
 
 
