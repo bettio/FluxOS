@@ -548,7 +548,7 @@ void *moreheap(long increment)
         return (void *) -1;
     }
 
-    void *previousPos = KERNEL_HEAP_FREE_POS;
+    void *previousPos = (void *) KERNEL_HEAP_FREE_POS;
     KERNEL_HEAP_FREE_POS += increment;
 
     return (void *) previousPos;
