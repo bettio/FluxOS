@@ -27,12 +27,13 @@
 #include <defs.h>
 #include <cstring.h>
 
-char *HostName = "flux_host";
-char *DomainName = "flux_domain";
+const char *HostName = "flux_host";
+const char *DomainName = "flux_domain";
 
 int SetHostName(const char *name, size_t len)
 {
     if (Scheduler::currentThread()->parentProcess->uid == 0){
+        //small memory leak
         HostName = strndup(name, MAX(len,256));
         return 0;
 
@@ -44,6 +45,7 @@ int SetHostName(const char *name, size_t len)
 int SetDomainName(const char *name, size_t len)
 {
     if (Scheduler::currentThread()->parentProcess->uid == 0){
+            //small memory leak
 	    DomainName = strndup(name, MAX(len,256));
         return 0;
 
