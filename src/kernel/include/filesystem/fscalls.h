@@ -33,7 +33,7 @@ int readlink(const char *path, char *buf, size_t bufsiz);
 int open(const char *pathname, int flags);
 int close(int fd);
 int lseek(int fd, off_t offset, int whence);
-int getdents(unsigned int fd, dirent *dirp, unsigned int count);
+int getdents(int fd, dirent *dirp, unsigned int count);
 int getcwd(char *buf, int size);
 int chdir(const char *path);
 int read(int fd, void *buf, size_t count);

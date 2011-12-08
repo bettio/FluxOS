@@ -42,6 +42,9 @@ using namespace FileSystem;
 #define ENAMETOOLONG 99; //HACK FIXME
 #define ERANGE 100;
 
+#define CHECK_FOR_EBADF(fd) \
+if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
+
 int isValidFileName(const char *name)
 {
     int len = strlen(name);
@@ -130,6 +133,7 @@ int lstat(const char *path, struct stat *buf)
 
 int fstat(int filedes, struct stat *buf)
 {
+        CHECK_FOR_EBADF(filedes);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
 	if (fdesc == NULL) return -EBADF;
 
@@ -200,6 +204,7 @@ int fstat64(int filedes, struct stat64 *buf64)
 {
 	struct stat buf;
 
+        CHECK_FOR_EBADF(filedes);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
 	if (fdesc == NULL) return -EBADF;
 
@@ -237,8 +242,9 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 	return FS_CALL(tmpnode, readlink)(tmpnode, buf, bufsiz);
 }
 
-int getdents(unsigned int fd, dirent *dirp, unsigned int count)
+int getdents(int fd, dirent *dirp, unsigned int count)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -304,6 +310,7 @@ int open(const char *pathname, int flags)
 
 int close(int fd)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -318,6 +325,7 @@ int close(int fd)
 
 int write(int fd, const void *buf, size_t count)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -330,6 +338,7 @@ int write(int fd, const void *buf, size_t count)
 
 int read(int fd, void *buf, size_t count)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -342,6 +351,7 @@ int read(int fd, void *buf, size_t count)
 
 int lseek(int fd, off_t offset, int whence)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 
 	if (fdesc == NULL) return -EBADF;
@@ -359,6 +369,7 @@ int lseek(int fd, off_t offset, int whence)
 
 int fsync(int fd)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -367,6 +378,7 @@ int fsync(int fd)
 
 int fdatasync(int fd)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -388,6 +400,7 @@ int truncate(const char *path, uint64_t length)
 //NOTE: 64 bit implementation
 int ftruncate(int fd, uint64_t length)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -407,6 +420,7 @@ int chmod(const char *path, mode_t mode)
 
 int fchmod(int fildes, mode_t mode)
 {
+        CHECK_FOR_EBADF(fildes);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fildes);
 	if (fdesc == NULL) return -EBADF;
 
@@ -426,6 +440,7 @@ int chown(const char *path, uid_t owner, gid_t group)
 
 int fchown(int fd, uid_t owner, gid_t group)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -445,6 +460,7 @@ int lchown(const char *path, uid_t owner, gid_t group)
 
 int pread(int fd, void *buf, size_t count, uint64_t offset)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -453,6 +469,7 @@ int pread(int fd, void *buf, size_t count, uint64_t offset)
 
 int pwrite(int fd, const void *buf, size_t count, uint64_t offset)
 {
+        CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
@@ -467,6 +484,7 @@ int fcntl(int fd, int cmd, long arg)
 
 int ioctl(int d, int request, long arg)
 {
+        CHECK_FOR_EBADF(d);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
 	if (fdesc == NULL) return -EBADF;
 
@@ -546,6 +564,7 @@ int statfs(const char *path, struct statfs *buf)
 
 int fstatfs(int fd, struct statfs *buf)
 {
+    CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
     if (fdesc == NULL) return -EBADF;
 
@@ -727,6 +746,7 @@ int rename(const char *oldpath, const char *newpath)
 
 int dup(int oldfd)
 {
+    CHECK_FOR_EBADF(oldfd);
     FileDescriptor *oldFdesc = Scheduler::currentThread()->parentProcess->openFiles->at(oldfd);
     if (oldFdesc == NULL) return -EBADF;
     
