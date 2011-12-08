@@ -93,7 +93,7 @@ void command_switch(const char *c)
 		int z = strlen(myc);
 		while((myc[i] != ' ') && (i < z)) i++;
 		myc[i] = 0;
-		char *myargs = &myc[i] + 1;
+		char *myargs = (i < z) ? &myc[i] + 1 : "";
 		char tmp[50];
 		strcpy(tmp, "/bin/");
 		strcat(tmp, myc);
