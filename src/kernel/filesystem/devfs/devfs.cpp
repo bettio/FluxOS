@@ -78,10 +78,9 @@ int DevFS::RegisterAsFileSystem()
 	FileSystemInfo *info = new FileSystemInfo;
 	if (info == NULL) return -ENOMEM;
 	info->name = "devfs";
-
 	info->mount = Mount;
 
-	FileSystem::VFS::RegisterFileSystem(info);
+	return FileSystem::VFS::RegisterFileSystem(info);
 }
 
 int DevFS::Mount(FSMount *fsmount, BlockDevice *)
