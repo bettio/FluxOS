@@ -146,6 +146,7 @@ uint32_t readlink(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t)
 {
     ArchManager::reboot();
+    return -EPERM;
 }
 
 uint32_t fork(uint32_t, uint32_t, uint32_t, uint32_t esi, uint32_t edi)
