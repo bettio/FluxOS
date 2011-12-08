@@ -269,8 +269,7 @@ int DevFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 	tmpInode->Minor = dev & 0xFFFF; //TODO: Need to be changed to 64 bit
 	tmpInode->Size = 0;
 
-        int id = Inodes->size();
-        Inodes->append(tmpInode);
+        int id = Inodes->append(tmpInode);
 
 	TmpInode *inode = Inodes->at(1);
 

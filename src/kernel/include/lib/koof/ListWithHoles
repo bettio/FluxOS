@@ -56,9 +56,7 @@ template <typename T> class ListWithHoles
                 }
             }
             
-            //I don't like this
-            m_list->append(value);
-            return m_list->size() - 1;
+            return m_list->append(value);
         }
 
         inline void remove(int i)
