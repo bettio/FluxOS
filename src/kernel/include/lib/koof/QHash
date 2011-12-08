@@ -2,8 +2,8 @@
  *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
+ *   it under the terms of the GNU Library General Public License as       *
+ *   published by the Free Software Foundation; either version 2, or       *
  *   (at your option) any later version.                                   *
  *                                                                         *
  *   This program is distributed in the hope that it will be useful,       *
@@ -11,8 +11,8 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
+ *   You should have received a copy of the GNU Library General Public     *
+ *   License along with this program; if not, write to the                 *
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
@@ -23,7 +23,6 @@
 #define _QHASH_H_
 
 #include <KOOFCore>
-#include <core/printk.h>
 
 #define QHASH_DEFAULT_CAPACITY 2
 
@@ -150,6 +149,43 @@ template <typename Key, typename T> class QHash
             return 0;
         }
 
+        void eraseArrayAndRemoveNodes()
+        {
+            for (int i = 0; i < m_capacity; i++){
+                Node *nextNode = m_array[i];
+                m_array[i] = 0;
+                
+                while (nextNode != 0){
+                    Node *tmpNode = nextNode;
+                    nextNode = nextNode->next;
+                    delete tmpNode;
+                }
+            }            
+        }
+
+        void initFromHash(const QHash<Key, T> &q){
+            if (q.isEmpty()){
+                init(q.m_capacity);
+            }else{
+                init(q.m_capacity);
+                for (int i = 0; i < m_capacity; i++){
+                    if (q.m_array[i]){
+                        Node *newNode = new Node(q.m_array[i]->key, q.m_array[i]->body);
+                        m_array[i] = newNode;
+                        Node *tmpNode = q.m_array[i]->next;
+
+                        while (tmpNode){
+                            newNode->next = new Node(tmpNode->key, tmpNode->body);
+                            newNode = newNode->next;
+                            tmpNode = tmpNode->next;
+                        }
+                    }else{
+                        m_array[i] = 0;
+                    }
+                }
+            }
+        }
+
     public:
         inline QHash()
         {
@@ -167,25 +203,20 @@ template <typename Key, typename T> class QHash
 
         inline ~QHash()
         {
-            delete m_array;
+            eraseArrayAndRemoveNodes();
+            delete[] m_array;
         }
 
-        //TODO
         QHash(const QHash<Key, T> &q)
         {
-            printk("QHash copy constructor not implemented\n");
-            while(1);
+            CHECK_THIS_OBJECT()
+
+            initFromHash(q);
         }
 
-        //TODO
         QHash<Key, T> &operator=(const QHash<Key, T> &other)
         {
-            if (other.isEmpty()){
-                init(other.m_capacity);
-            }else{
-                printk("Part of the = operator is not implemented\n");
-                while(1);
-            }
+            initFromHash(other);
 
             return *this;
         }
@@ -334,68 +365,61 @@ template <typename Key, typename T> class QHash
 
         bool clear(int newCapacity = QHASH_DEFAULT_CAPACITY)
         {
-            for (int i = 0; i < m_capacity; i++)
-            {
-                if (m_array[i]){
-                    Node *node;
-                    Node *nextNode = m_array[i];
-                    do{
-                        node = nextNode;
-                        nextNode = node->next;
-                        delete node;
-                    }while (nextNode);
-
-                    m_array[i] = 0;
-                }
+            eraseArrayAndRemoveNodes();
+            if (m_capacity != newCapacity){
+                delete m_array;
+                init(newCapacity);
             }
-            delete m_array;
-            init(newCapacity);
 
             return m_array != 0;
         }
 
         class const_iterator
         {
-            public:
+            private:
+                friend class QHash;
                 const QHash *m_hash;
                 int currentHashArrayIndex;
                 Node *currentNode;
 
             public:
-                void operator++()
+                const_iterator &operator++()
                 {
                     if (currentNode->next != 0){
                         currentNode = currentNode->next;
 
                     }else{
                         do{
-                            if (currentHashArrayIndex < m_hash->m_capacity){
+                            if (currentHashArrayIndex < m_hash->m_capacity - 1){
                                 currentHashArrayIndex++;
                             }else{
                                 currentNode = 0;
-                                return;
+
+                                return *this;
                             }
                         }while (m_hash->m_array[currentHashArrayIndex] == 0);
 
                         currentNode = m_hash->m_array[currentHashArrayIndex];
                     }
+                    
+                    return *this;
                 }
 
-                inline const_iterator &operator++(int)
+                inline const_iterator operator++(int)
                 {
-                    const_iterator oldIterator;
-                    oldIterator.m_hash = m_hash;
-                    oldIterator.currentHashArrayIndex = currentHashArrayIndex;
-                    oldIterator.currentNode = currentNode;
-
+                    const_iterator oldIterator = *this;
                     ++(*this);
-
                     return oldIterator;
                 }
 
                 inline bool operator!=(const const_iterator &other) const
                 {
                     return this->currentNode != other.currentNode;
+                }
+
+                inline bool operator==(const const_iterator &other) const
+                {
+                    return this->currentNode == other.currentNode;
                 }
 
                 inline const Key &key() const
@@ -433,5 +457,40 @@ template <typename Key, typename T> class QHash
             return iterator;
         }
 };
+
+inline int qHash(char c)
+{
+    return c;
+}
+
+inline int qHash(short int i)
+{
+   return i;
+}
+
+inline int qHash(int i)
+{
+   return i;
+}
+
+inline int qHash(long int l)
+{
+    if (sizeof(long int) == sizeof(int) * 2){
+        return ((int *) &l)[0] + ((int *) &l)[1];
+
+    }else{
+        return l;
+    }
+}
+
+inline int qHash(void *v)
+{
+    if (sizeof(void *) == sizeof(int) * 2){
+        return ((int *) &v)[0] + ((int *) &v)[1];
+
+    }else{
+        return *((int *) &v);
+    }
+}
 
 #endif
