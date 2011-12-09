@@ -53,6 +53,7 @@ extern "C"
 	size_t uitoaz(unsigned long long n, char *s, unsigned int b);
 	long atol(const char *str);
 	long labs(long num) CONST_FUNCTION;
+        void abort(void);
 #if __cplusplus
 }
 #endif
