@@ -70,7 +70,11 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->dataSegmentEnd = (void *) 0xC0000000;
         process->openFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *ttyNode;
-        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
+        int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
+        if (res < 0){
+            printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
+            return 0;
+        }
 	//stdin
         FileDescriptor *fdesc = new FileDescriptor(ttyNode);
         process->openFiles->add(fdesc);
@@ -82,7 +86,12 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->openFiles->add(fdesc);
 
         VNode *cwdNode;
-	FileSystem::VFS::RelativePathToVnode(0, "/", &cwdNode);
+	res = FileSystem::VFS::RelativePathToVnode(0, "/", &cwdNode);
+        if (res < 0){
+            printk("Cannot find any root filesystem\n");
+            return 0;
+        }
+	    
 	process->currentWorkingDirNode = cwdNode;
 
         process->status = READY;
