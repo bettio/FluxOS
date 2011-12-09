@@ -468,7 +468,7 @@ int TmpFS::Name(VNode *directory, VNode *node, char **name, int *len)
 
     QHash<QString, int>::const_iterator dirIterator = inode->Directory.constBegin();
     do{
-        if (dirIterator.value() == node->vnid.id){
+        if ((unsigned int) dirIterator.value() == node->vnid.id){
             *name = strndup(dirIterator.key().toAscii(), dirIterator.key().length() + 1);
             *len = dirIterator.key().length();
             return 0;
