@@ -46,7 +46,14 @@ int CharDeviceManager::Register(CharDevice *cd)
         return 0;
     }
 
-    CharDevices.insert(DevId(cd->Major, cd->Minor), cd);
+    DevId chrId(cd->Major, cd->Minor);
+    CharDevice *existingDev = CharDevices.value(chrId);
+    if (existingDev != 0){
+       printk("Error: Major and Minor already used by /dev/%s\n", existingDev->name);
+       return 0;
+    }
+        
+    CharDevices.insert(chrId, cd);
     CharDevicesByName.insert(cd->name, cd);
 
     FileSystem::DevFS::Mknod(0, cd->name, S_IFCHR, (cd->Major << 16) | cd->Minor);
