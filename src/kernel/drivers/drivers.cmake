@@ -6,6 +6,9 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     drivers/fb32bppfunctions.cpp
     drivers/diskpart.cpp
     drivers/fbconsole.cpp
+    drivers/fulldev.cpp
+    drivers/nulldev.cpp
     drivers/vt.cpp
     drivers/ramdisk.cpp
+    drivers/zerodev.cpp
 )

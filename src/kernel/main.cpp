@@ -31,7 +31,9 @@
 #include <drivers/blockdevicemanager.h>
 #include <drivers/diskpart.h>
 #include <drivers/ramdisk.h>
-
+#include <drivers/fulldev.h>
+#include <drivers/nulldev.h>
+#include <drivers/zerodev.h>
 
 #include <filesystem/procfs/procfs.h>
 #include <filesystem/ext2/ext2.h>
@@ -59,6 +61,9 @@ int main()
 	CharDeviceManager::Init();
 	BlockDeviceManager::Init();
 	FileSystem::DevFS::Init();
+        FullDev::init();
+        NullDev::init();
+        ZeroDev::init();
 	DiskPart::Init();
         RamDisk::init();
 
