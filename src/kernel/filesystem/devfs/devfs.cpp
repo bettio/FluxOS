@@ -145,12 +145,13 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			(*vnd)->mount = mnt;
 
 			CharDevice *dev = CharDeviceManager::Device(Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
+                        (*vnd)->privdata = dev;
 			///printk("Major: %i, Minor: %i\n", Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
 			modInfo->ioctl = dev->ioctl;
-		}else if (S_ISCHR(*ntype)){
-			///printk("Block device\n");
+		}else if (S_ISBLK(*ntype)){
+                        ///printk("Block device\n");
 			FSMount *mnt = new FSMount;
 			memcpy(mnt, node->mount, sizeof(FSMount));
 			FSModuleInfo *modInfo = new FSModuleInfo;
@@ -160,6 +161,7 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			(*vnd)->mount = mnt;
 
 			BlockDevice *dev = BlockDeviceManager::Device(Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
+                        (*vnd)->privdata = dev;
 			///printk("Major: %i, Minor: %i\n", Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
