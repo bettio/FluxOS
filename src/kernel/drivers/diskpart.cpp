@@ -33,6 +33,7 @@
 #define BR_SIGNATURE 0xAA55
 
 QHash<QString, Partition *> *DiskPart::Partitions;
+int DiskPart::nextId;
 
 struct PartitionDescriptor
 {
@@ -202,12 +203,14 @@ void DiskPart::RegisterPartition(BlockDevice *parent, const char *namingScheme, 
 
 	BlockDevice *tmpBlkDev = new BlockDevice;
 	//TODO: Warning: unchecked malloc
-    tmpBlkDev->Major = 0;
-    tmpBlkDev->Minor = 0;
+    tmpBlkDev->Major = 2;
+    tmpBlkDev->Minor = nextId;
 	tmpBlkDev->int_cookie = 0;
 	tmpBlkDev->name = tmpStr;
 	tmpBlkDev->ReadBlock = ReadBlock;
 	BlockDeviceManager::Register(tmpBlkDev);
+
+	nextId++;
 }
 
 void DiskPart::ReadBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer)

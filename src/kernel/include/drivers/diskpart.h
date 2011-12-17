@@ -51,6 +51,7 @@ class DiskPart
 		static QList<char *> *BlockCache;
 		static void RegisterPartition(BlockDevice *parent, const char *namingScheme, int partitionNum, uint32_t partitionStart, uint32_t partitionLength);
 		static QHash<QString, Partition *> *Partitions;
+		static int nextId;
 };
 
 #endif
