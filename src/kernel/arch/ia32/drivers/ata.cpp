@@ -25,6 +25,7 @@
 #include <arch/ia32/io.h>
 #include <core/printk.h>
 #include <drivers/blockdevice.h>
+#include <drivers/genericblockdevice.h>
 #include <drivers/diskpart.h>
 #include <cstdlib.h>
 #include <cstring.h>
@@ -43,6 +44,8 @@
 #define DEVICE_OFF 6
 #define COMMAND_OFF 7
 
+int ATA::nextId;
+
 void ATA::init()
 {
     printk("Searching for ATA disks...\n");
@@ -60,15 +63,20 @@ BlockDevice *ATA::registerDisk(const char *name, int cookie)
 {
     BlockDevice *disk = new BlockDevice;
     //TODO: Warning: unchecked malloc
+    disk->Major = 10;
+    disk->Minor = nextId;
     disk->int_cookie = cookie;
     disk->name = strdup(name);
     disk->ReadBlock = readBlock;
+    disk->read = GenericBlockDevice::read;
     BlockDeviceManager::Register(disk);
     int nameLen = strlen(name);
     char *newName = (char *) malloc(nameLen + 3);
     strcpy(newName, name);
     strcat(newName, "p#");
     DiskPart::CreatePartitionsDevices(disk, newName);
+
+    nextId++;
 
     return disk;;
 }
@@ -112,15 +120,16 @@ void ATA::identifyDisk(const char *name, uint16_t baseAddr, uint16_t c)
 void ATA::readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer)
 {
     int baseAddr = bd->int_cookie >> 16;
-    int c = bd->int_cookie & 1;
+    int c = (bd->int_cookie >> 4) & 1;
 
     for (int b = block; b < block + blockn; b++){
+        //LBA28
         outportb(baseAddr + FEATURES_OFF, 0x00);
         outportb(baseAddr + SECT_COUNT_OFF, blockn);
         outportb(baseAddr + LBA_LOW_OFF, b & 0xFF);
         outportb(baseAddr + LBA_MID_OFF, ((b & 0xFF00) >> 8));
         outportb(baseAddr + LBA_HIGH_OFF, ((b & 0xFF0000) >> 16));
-        outportb(baseAddr + DEVICE_OFF, 0xE0 | (c << 4) |  ((b & 0xF000000) >> 24));
+        outportb(baseAddr + DEVICE_OFF, (c ? 0xF0 : 0xE0) |  ((b & 0xF000000) >> 24));
         outportb(baseAddr + COMMAND_OFF, 0x20);
 
         while (!(inportb(baseAddr + DATA_OFF) & 0x08));
@@ -132,4 +141,6 @@ void ATA::readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer
         }
     }
 }
+
+
 

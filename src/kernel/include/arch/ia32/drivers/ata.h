@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 struct BlockDevice;
+struct VNode;
 
 class ATA
 {
@@ -34,6 +35,9 @@ class ATA
         static void identifyDisk(const char *name, uint16_t baseAddr, uint16_t c);
         static BlockDevice *registerDisk(const char *name, int cookie);
         static void readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer);
+        static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
+   private:
+        static int nextId;
 };
 
 #endif
