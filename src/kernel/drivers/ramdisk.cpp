@@ -23,6 +23,7 @@
 #include <boot/bootloaderinfo.h>
 #include <drivers/blockdevicemanager.h>
 #include <cstdlib.h>
+#include <filesystem/errors.h>
 
 #include <core/printk.h>
 #include <drivers/ramdisk.h>
@@ -40,6 +41,12 @@ void RamDisk::init()
            ramd0->Major = 0;
            ramd0->Minor = 0;
            ramd0->ReadBlock = readBlock;
+           ramd0->WriteBlock = writeBlock;
+           ramd0->read = read;
+           ramd0->write = write;
+           ramd0->ioctl = ioctl;
+           ramd0->mmap = mmap;
+
            BlockDeviceManager::Register(ramd0);
        }
 }
@@ -47,5 +54,49 @@ void RamDisk::init()
 void RamDisk::readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer)
 {
     memcpy(blockbuffer, diskMem + block*512, blockn*512);
+}
+
+bool RamDisk::writeBlock(BlockDevice *bd, int block, int blocksN, uint8_t *blockbuffer)
+{
+    memcpy(diskMem + block*512, blockbuffer, blocksN*512);
+    return true;
+}
+
+int RamDisk::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
+{
+    if (pos >= BootLoaderInfo::moduleSize(0)){
+        return 0;
+    }
+
+    if (pos + bufsize >= BootLoaderInfo::moduleSize(0)){
+        bufsize = BootLoaderInfo::moduleSize(0) - pos;
+    }
+
+    memcpy(buffer, diskMem + pos, bufsize);
+    return bufsize;
+}
+
+int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+{
+    if (pos >= BootLoaderInfo::moduleSize(0)){
+        return 0;
+    }
+
+    if (pos + bufsize >= BootLoaderInfo::moduleSize(0)){
+        bufsize = BootLoaderInfo::moduleSize(0) - pos;
+    }
+
+    memcpy(diskMem + pos, buffer, bufsize);
+    return bufsize;
+}
+
+int RamDisk::ioctl(VNode *node, int request, long arg)
+{
+    return -EINVAL;
+}
+
+void *RamDisk::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    return (void *) -EINVAL;
 }
 
