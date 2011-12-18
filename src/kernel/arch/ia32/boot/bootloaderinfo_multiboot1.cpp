@@ -90,6 +90,11 @@ void *BootLoaderInfo::module(int i)
     return (void *) (((module_t *) MultiBootInfo::infoBlock->mods_addr)[i].mod_start);
 }
 
+unsigned long BootLoaderInfo::moduleSize(int i)
+{
+    return ((module_t *) MultiBootInfo::infoBlock->mods_addr)[i].mod_end - ((module_t *) MultiBootInfo::infoBlock->mods_addr)[i].mod_start;
+}
+
 int BootLoaderInfo::modulesCount()
 {
     return (MultiBootInfo::infoBlock->flags & (1 << 3)) ? MultiBootInfo::infoBlock->mods_count : 0;

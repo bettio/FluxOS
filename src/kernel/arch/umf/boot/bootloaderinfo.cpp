@@ -31,6 +31,11 @@ void *BootLoaderInfo::module(int i)
     return 0;
 }
 
+void *BootLoaderInfo::moduleSize(int i)
+{
+    return 0;
+}
+
 int BootLoaderInfo::modulesCount()
 {
     return 0;

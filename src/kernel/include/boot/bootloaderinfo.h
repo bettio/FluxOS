@@ -27,8 +27,8 @@ class BootLoaderInfo
 {
     public:
         static void *module(int i);
+        static unsigned long moduleSize(int i);
         static int modulesCount();
-
 };
 
 #endif
