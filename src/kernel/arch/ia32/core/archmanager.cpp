@@ -28,6 +28,7 @@
 #include <arch/ia32/core/syscallsmanager.h>
 #include <arch/ia32/drivers/ata.h>
 #include <arch/ia32/drivers/keyboard.h>
+#include <arch/ia32/drivers/ps2mouse.h>
 #include <arch/ia32/drivers/timer.h>
 #include <arch/ia32/drivers/video.h>
 #include <arch/ia32/core/irq.h>
@@ -76,6 +77,7 @@ void ArchManager::InitHardware()
     Vt::ReInit();
     Keyboard::init();
     ATA::init();
+    PS2Mouse::init();
 }
 
 void ArchManager::StartInit()
