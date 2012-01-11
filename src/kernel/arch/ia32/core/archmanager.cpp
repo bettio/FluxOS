@@ -31,10 +31,13 @@
 #include <arch/ia32/drivers/ps2mouse.h>
 #include <arch/ia32/drivers/timer.h>
 #include <arch/ia32/drivers/video.h>
+#include <arch/ia32/drivers/vesafb.h>
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/core/gdt.h>
 #include <arch/ia32/core/pci.h>
 #include <arch/ia32/core/userprocsmanager.h>
+#include <arch/ia32/boot/multiboot.h>
+#include <arch/ia32/boot/multibootinfo.h>
 #include <boot/bootloaderinfo.h>
 #include <arch/ia32/mm/pagingmanager.h>
 
@@ -43,7 +46,11 @@ void ArchManager::Init()
     //initmem();
     GDT::init();
 
-    Video::init();
+    if (MultiBootInfo::infoBlock->flags & MULTIBOOT_INFO_VIDEO_INFO){
+        VesaFB::init(MultiBootInfo::infoBlock->vbe_mode_info);
+    }else{
+        Video::init();
+    }
     Out = Vt::Device();
 }
 
@@ -52,6 +59,7 @@ void ArchManager::InitArch()
     IDT::init();
     #ifndef NO_MMU
         PagingManager::init();
+        VesaFB::mapPhysicalMem();
     #endif
     Task::init();
     IRQ::init();

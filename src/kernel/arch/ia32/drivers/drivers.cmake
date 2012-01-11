@@ -6,5 +6,6 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     arch/ia32/drivers/keyboard.cpp
     arch/ia32/drivers/keytraslation.cpp
     arch/ia32/drivers/ps2mouse.cpp
+    arch/ia32/drivers/vesafb.cpp
 )
 
