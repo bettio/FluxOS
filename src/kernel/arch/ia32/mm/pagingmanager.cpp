@@ -128,6 +128,51 @@ void PagingManager::mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t
     }
 }
 
+void *PagingManager::mapPhysicalMemory(uint32_t physAddr, int physLen)
+{
+    int len = physLen;
+
+    void *virtMemPtr;
+    if (posix_memalign((void **) &virtMemPtr, PAGE_BOUNDARY, len)){
+        printk("Error: can't allocate %i bytes of virtual memory for %x", len, physAddr);
+	return 0;
+    }
+
+    uint32_t virtualAddr = (uint32_t) virtMemPtr;
+    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+    unsigned int physPages = 0;
+    for (unsigned int i = addrToPageDirIndex(virtualAddr); i <= addrToPageDirIndex(virtualAddr + len - 1); i++){
+        volatile uint32_t *pageTable;
+        if (pageDir[i] == 0){
+            pageTable = createEmptyPageTable();
+            pageDir[i] = pageDirectoryEntry((uint32_t) pageTable, KERNEL_STD_PAGE);
+
+        } else {
+	    pageTable = (volatile uint32_t *) ((0x3FF << 22) | (i << 12));
+        }
+
+        int startAddr;
+        if (addrToPageDirIndex(virtualAddr) < i){
+            startAddr = i*4096*4096;
+        }else{
+            startAddr = virtualAddr;
+        }
+        int endAddr;
+        if (addrToPageDirIndex(virtualAddr + len - 1) > i){
+            endAddr = (i + 1)*4096*4096;
+        }else{
+            endAddr = virtualAddr + len;
+        }
+        for (unsigned int j = addrToPageTableIndex(startAddr); j <= addrToPageTableIndex(endAddr - 1); j++){ 
+            pageTable[j] = pageTableEntry(physAddr + physPages*4096, KERNEL_STD_PAGE);
+            PhysicalMM::setAllocatedPage(physAddr + physPages*4096);
+            physPages++;
+        }
+    }
+
+    return virtMemPtr;
+}
+
 void PagingManager::newPage(uint32_t addr)
 {
    int di = addrToPageDirIndex(addr);

@@ -56,8 +56,9 @@ class PagingManager
         static void newPage(uint32_t addr);
         static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
         static void cloneKernelSpace(volatile uint32_t *pageDir);
-        inline static int addrToPageDirIndex(uint32_t addr){ return addr >> 22; }
-        inline static int addrToPageTableIndex(uint32_t addr){ return (addr >> 12) & 0x3FF; }
+        static void *mapPhysicalMemory(uint32_t physAddr, int len);
+        inline static unsigned int addrToPageDirIndex(uint32_t addr){ return addr >> 22; }
+        inline static unsigned int addrToPageTableIndex(uint32_t addr){ return (addr >> 12) & 0x3FF; }
         inline static uint32_t physicalAddressOf(void *ptr) { return ((volatile uint32_t *) ((0x3FF << 22) | (addrToPageDirIndex((uint32_t) ptr) << 12)))[addrToPageTableIndex((uint32_t) ptr)] & 0xFFFFF000; }
 
     private:
