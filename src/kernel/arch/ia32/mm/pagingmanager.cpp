@@ -92,7 +92,8 @@ volatile uint32_t *PagingManager::createPageDir()
  */
 void PagingManager::mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len)
 {
-    for (int i = addrToPageDirIndex(virtualAddr); i <= addrToPageDirIndex(virtualAddr + len - 1); i++){
+    unsigned int physPages = 0;
+    for (unsigned int i = addrToPageDirIndex(virtualAddr); i <= addrToPageDirIndex(virtualAddr + len - 1); i++){
         volatile uint32_t *pageTable;
         if (pageDir[i] == 0){
             pageTable = createEmptyPageTable();
@@ -106,9 +107,23 @@ void PagingManager::mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t
             //printk("PagingManager::mapMemoryRegion: implement me\n");
             //while (1);
         }
-        for (int j = addrToPageTableIndex(virtualAddr); j <= addrToPageTableIndex(virtualAddr + len - 1); j++){
-            pageTable[j] = pageTableEntry(physAddr + i*4096*4096 + j*4096, KERNEL_STD_PAGE);
-            PhysicalMM::setAllocatedPage(physAddr + i*4096*4096 + j*4096);
+
+        int startAddr;
+        if (addrToPageDirIndex(virtualAddr) < i){
+            startAddr = i*4096*4096;
+        }else{
+            startAddr = virtualAddr;
+        }
+        int endAddr;
+        if (addrToPageDirIndex(virtualAddr + len - 1) > i){
+            endAddr = (i + 1)*4096*4096;
+        }else{
+            endAddr = virtualAddr + len;
+        }
+        for (unsigned int j = addrToPageTableIndex(startAddr); j <= addrToPageTableIndex(endAddr - 1); j++){ 
+            pageTable[j] = pageTableEntry(physAddr + physPages*4096, KERNEL_STD_PAGE);
+            PhysicalMM::setAllocatedPage(physAddr + physPages*4096);
+            physPages++;
         }
     }
 }
