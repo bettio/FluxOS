@@ -58,7 +58,7 @@ int CharDeviceManager::Register(CharDevice *cd)
 
     FileSystem::DevFS::Mknod(0, cd->name, S_IFCHR, (cd->Major << 16) | cd->Minor);
 
-    printk("Registered block device %s.\n", cd->name);
+    printk("Registered char device %s.\n", cd->name);
 
     return 0;
 }
