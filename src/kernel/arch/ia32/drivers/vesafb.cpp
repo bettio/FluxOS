@@ -26,7 +26,9 @@
 #include <drivers/fbdevice.h>
 #include <drivers/fb24bppfunctions.h>
 #include <drivers/fb32bppfunctions.h>
-
+#include <drivers/genericfbdevice.h>
+#include <drivers/chardevicemanager.h>
+#include <drivers/chardevice.h>
 #include <filesystem/vnode.h>
 #include <filesystem/errors.h>
 #include <arch/ia32/mm/pagingmanager.h>
@@ -126,6 +128,31 @@ bool VesaFB::mapPhysicalMem()
     }
 }
 
+#include <core/printk.h>
+
+bool VesaFB::registerDevice()
+{
+    if (!videoMem){
+        return false;
+    }
+
+    CharDevice *fb0 = new CharDevice;
+    if (fb0 == NULL){
+        return false;
+    }
+    fb0->int_cookie = 0;
+    fb0->name = "fb0";
+    fb0->Major = 89;
+    fb0->Minor = 0;
+    fb0->read = read;
+    fb0->write = write;
+    fb0->ioctl = ioctl;
+    fb0->mmap = mmap;
+    CharDeviceManager::Register(fb0);
+
+    return true;
+}
+
 int VesaFB::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
 {
     return 0;
@@ -138,5 +165,11 @@ int VesaFB::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int VesaFB::ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return GenericFBDevice::ioctl(&fbDev, node, request, arg);
 }
+
+void *VesaFB::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    return GenericFBDevice::mmap(&fbDev, node, start, length, prot, flags, fd, offset);
+}
+

@@ -86,6 +86,7 @@ void ArchManager::InitHardware()
     Keyboard::init();
     ATA::init();
     PS2Mouse::init();
+    VesaFB::registerDevice();
 }
 
 void ArchManager::StartInit()
