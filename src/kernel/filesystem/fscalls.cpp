@@ -767,3 +767,15 @@ int pipe(int pipefd[2])
 {
     return -EINVAL;
 }
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return (void *) -EBADF;
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return (void *) -EBADF;
+
+    void *ret = FS_CALL(fdesc->node, mmap)(fdesc->node, addr, length, prot, flags, fd, offset);
+
+    return ret;
+}
+

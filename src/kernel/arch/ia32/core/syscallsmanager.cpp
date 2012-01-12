@@ -48,6 +48,16 @@
 
 #define SYSCALL_MAXNUM 256
 
+struct MmapArgs
+{
+	unsigned long addr;
+	unsigned long len;
+	unsigned long prot;
+	unsigned long flags;
+	unsigned long fd;
+	unsigned long offset;
+};
+
 extern "C" void syscallHandler();
 
 uint32_t (*SyscallsTable[SYSCALL_MAXNUM])(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi);
@@ -403,10 +413,8 @@ uint32_t pwrite(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t
 
 uint32_t mmap(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: mmap\n");
-    while(1);
-
-    return 0;
+    MmapArgs *args = (MmapArgs *) ebx;
+    return (uint32_t) mmap((void *) args->addr, (size_t) args->len, (int) args->prot, (int) args->flags, (int) args->fd, (size_t) args->offset);
 }
 
 void SyscallsManager::registerDefaultSyscalls()
