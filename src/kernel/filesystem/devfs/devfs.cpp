@@ -150,6 +150,7 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
 			modInfo->ioctl = dev->ioctl;
+			modInfo->mmap = dev->mmap;
 		}else if (S_ISBLK(*ntype)){
                         ///printk("Block device\n");
 			FSMount *mnt = new FSMount;
@@ -166,6 +167,7 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
 			modInfo->ioctl = dev->ioctl;
+			modInfo->mmap = dev->mmap;
 		}
 
 		return 0;
