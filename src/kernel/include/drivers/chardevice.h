@@ -39,7 +39,7 @@ struct CharDevice
     int (*read) (VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
     int (*write) (VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
     int (*ioctl)(VNode *node, int request, long arg);
-    void *(*mmap)(void *start, size_t length, int prot, int flags, int fd, off_t offset); //TODO -Eerror?
+    void *(*mmap)(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset); //TODO -Eerror?
 
     const char *name;
 };

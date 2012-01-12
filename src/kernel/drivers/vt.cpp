@@ -152,7 +152,7 @@ int Vt::ioctl(VNode *node, int request, long arg)
     return 0;
 }
 
-void *Vt::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+void *Vt::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     return 0;
 }

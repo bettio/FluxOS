@@ -35,7 +35,7 @@ class FullDev
         static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
         static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
         static int ioctl(VNode *node, int request, long arg);
-        static void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+        static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);
 
     private:
         static CharDevice fullDev;

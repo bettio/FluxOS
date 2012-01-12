@@ -95,7 +95,7 @@ int RamDisk::ioctl(VNode *node, int request, long arg)
     return -EINVAL;
 }
 
-void *RamDisk::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+void *RamDisk::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     return (void *) -EINVAL;
 }

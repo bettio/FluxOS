@@ -67,7 +67,7 @@ int NullDev::ioctl(VNode *node, int request, long arg)
     return 0;
 }
 
-void *NullDev::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+void *NullDev::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     return 0;
 }
