@@ -1,6 +1,11 @@
 #ifndef _FCNTL_H
 #define _FCNTL_H
 
+#if __cplusplus
+extern "C"
+{
+#endif
+
 #include <sys/stats.h>
 
 #define O_ACCMODE	   0003
@@ -27,5 +32,9 @@
 
 extern int open(const char *pathname, int flags, ...);
 extern int creat(const char *pathname, mode_t mode);
+
+#if __cplusplus
+}
+#endif
 
 #endif

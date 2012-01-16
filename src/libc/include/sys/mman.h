@@ -30,6 +30,11 @@
    without PROT_READ.  The only guarantees are that no writing will be
    allowed without PROT_WRITE and no access will be allowed for PROT_NONE. */
 
+#if __cplusplus
+extern "C"
+{
+#endif
+
 #define PROT_READ	0x1		/* Page can be read.  */
 #define PROT_WRITE	0x2		/* Page can be written.  */
 #define PROT_EXEC	0x4		/* Page can be executed.  */
@@ -104,3 +109,7 @@
 
 void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 int munmap(void *start, size_t length);
+
+#if __cplusplus
+}
+#endif

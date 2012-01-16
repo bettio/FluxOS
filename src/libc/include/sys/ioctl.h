@@ -19,4 +19,19 @@
  *   Name: ioctl.h                                                         *
  ***************************************************************************/
 
-int ioctl(int d, int request, /*...*/ long *addr);
+#ifndef _LIBC_IOCTL_H
+#define _LIBC_IOCTL_H
+
+#if __cplusplus
+extern "C"
+{
+#endif
+
+int ioctl(int d, int request, /*...*/ void *addr);
+
+#if __cplusplus
+}
+#endif
+
+#endif
+

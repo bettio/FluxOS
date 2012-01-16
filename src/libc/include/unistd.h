@@ -8,6 +8,11 @@
 	typedef unsigned int size_t;
 #endif
 
+#if __cplusplus
+extern "C"
+{
+#endif
+
 extern int write(int fd, const char *buf, size_t count);
 extern ssize_t read(int fd, void *buf, unsigned int count);
 extern int close(int fd);
@@ -120,5 +125,10 @@ extern int lstat(const char *path, struct stat *buf);
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
+
+
+#if __cplusplus
+}
+#endif
 
 #endif
