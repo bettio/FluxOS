@@ -20,12 +20,15 @@
  *   Date: 01/07/2006                                                      *
  ***************************************************************************/
 
+#define ENABLE_DEBUG_MSG 0
+
 #include <filesystem/fscalls.h>
 
+#include <debugmacros.h>
 #include <cstdlib.h>
 #include <core/printk.h>
 #include <filesystem/filedescriptor.h>
-#include <task/task.h>
+#include <task/scheduler.h>
 #include <filesystem/vnodemanager.h>
 
 using namespace FileSystem;
@@ -38,6 +41,9 @@ using namespace FileSystem;
 
 #define ENAMETOOLONG 99; //HACK FIXME
 #define ERANGE 100;
+
+#define CHECK_FOR_EBADF(fd) \
+if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
 
 int isValidFileName(const char *name)
 {
@@ -67,10 +73,10 @@ int isValidUserFileName(const char *name)
 
 //TODO: testare se un file descriptor e` valido
 
-int getcwd(char *buf, int size)
+int getcwd(char *buf, size_t size)
 {
     char *path;
-    int retVal = VFS::GetDirPathFromVnode(Task::CurrentTask()->CwdNode, &path);
+    int retVal = VFS::GetDirPathFromVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, &path);
     if (retVal < 0){
         return retVal;
     }
@@ -92,11 +98,11 @@ int chdir(const char *path)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	if (result < 0) return result;
 
-	Task::CurrentTask()->CwdNode = node;
+	Scheduler::currentThread()->parentProcess->currentWorkingDirNode = node;
 
 	return 0;
 }
@@ -105,7 +111,7 @@ int stat(const char *path, struct stat *buf)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
 
@@ -118,7 +124,7 @@ int lstat(const char *path, struct stat *buf)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node, false);	
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);	
 
 	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
 
@@ -127,7 +133,8 @@ int lstat(const char *path, struct stat *buf)
 
 int fstat(int filedes, struct stat *buf)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(filedes);
+        CHECK_FOR_EBADF(filedes);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
 	if (fdesc == NULL) return -EBADF;
 
 	VNode *tmpnode = fdesc->node;
@@ -139,7 +146,7 @@ int stat64(const char *path, struct stat64 *buf64)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	struct stat buf;
 
@@ -168,7 +175,7 @@ int lstat64(const char *path, struct stat64 *buf64)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);
 
 	struct stat buf;
 
@@ -197,7 +204,8 @@ int fstat64(int filedes, struct stat64 *buf64)
 {
 	struct stat buf;
 
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(filedes);
+        CHECK_FOR_EBADF(filedes);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
 	if (fdesc == NULL) return -EBADF;
 
 	VNode *tmpnode = fdesc->node;
@@ -227,16 +235,17 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 {
 	VNode *tmpnode;
 
-	int result = VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, path, &tmpnode, false);
+	int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &tmpnode, false);
 
 	if (result < 0) return result;
 
 	return FS_CALL(tmpnode, readlink)(tmpnode, buf, bufsiz);
 }
 
-int getdents(unsigned int fd, dirent *dirp, unsigned int count)
+int getdents(int fd, dirent *dirp, unsigned int count)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, getdents)(fdesc->node, dirp, count);
@@ -246,9 +255,9 @@ int access(const char *pathname, int mode)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) pathname, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) pathname, &node, false);
 
-	if (result >= 0) result = FS_CALL(node, access)(node, mode, Task::CurrentTask()->Uid, Task::CurrentTask()->Gid);
+	if (result >= 0) result = FS_CALL(node, access)(node, mode, Scheduler::currentThread()->parentProcess->uid, Scheduler::currentThread()->parentProcess->gid);
 
 	return result;
 }
@@ -278,19 +287,17 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
 //TODO: implementare la modalita` append
 int open(const char *pathname, int flags)
 {
-    printk("OPEN: %s\n", pathname);
-    
 	int result;
 
 	VNode *node;
 
-	result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, pathname, &node, true);
+	result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, &node, true);
 
 	if (result < 0){
         if (flags & O_CREAT){
 			createNewFile(pathname, flags, &node); //le stesse flag?
         }else{
-		    printk("Failed to open file\n");
+		    DEBUG_MSG("Failed to open %s\n", pathname);
 
 		    return result;
         }
@@ -298,17 +305,18 @@ int open(const char *pathname, int flags)
 
 	FileDescriptor *fdesc = new FileDescriptor(node);
 
-	return Task::CurrentTask()->OpenFiles->add(fdesc);
+	return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
 int close(int fd)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	//TODO: Do other things
     
-	Task::CurrentTask()->OpenFiles->remove(fd);
+	Scheduler::currentThread()->parentProcess->openFiles->remove(fd);
 
 	delete fdesc;
 
@@ -317,7 +325,8 @@ int close(int fd)
 
 int write(int fd, const void *buf, size_t count)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	int ret = FS_CALL(fdesc->node, write)(fdesc->node, fdesc->fpos, (char *) buf, count);
@@ -329,7 +338,8 @@ int write(int fd, const void *buf, size_t count)
 
 int read(int fd, void *buf, size_t count)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	int ret = FS_CALL(fdesc->node, read)(fdesc->node, fdesc->fpos, (char *) buf, count);
@@ -341,7 +351,8 @@ int read(int fd, void *buf, size_t count)
 
 int lseek(int fd, off_t offset, int whence)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 
 	if (fdesc == NULL) return -EBADF;
 
@@ -358,7 +369,8 @@ int lseek(int fd, off_t offset, int whence)
 
 int fsync(int fd)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, fsync)(fdesc->node);
@@ -366,7 +378,8 @@ int fsync(int fd)
 
 int fdatasync(int fd)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, fdatasync)(fdesc->node);
@@ -377,7 +390,7 @@ int truncate(const char *path, uint64_t length)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	if (result >= 0) result = FS_CALL(node, truncate)(node, length);
 
@@ -387,7 +400,8 @@ int truncate(const char *path, uint64_t length)
 //NOTE: 64 bit implementation
 int ftruncate(int fd, uint64_t length)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, truncate)(fdesc->node, length);
@@ -397,7 +411,7 @@ int chmod(const char *path, mode_t mode)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	if (result >= 0) result = FS_CALL(node, chmod)(node, mode);
 
@@ -406,7 +420,8 @@ int chmod(const char *path, mode_t mode)
 
 int fchmod(int fildes, mode_t mode)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fildes);
+        CHECK_FOR_EBADF(fildes);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fildes);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, chmod)(fdesc->node, mode);
@@ -416,7 +431,7 @@ int chown(const char *path, uid_t owner, gid_t group)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
 
 	if (result >= 0) result = FS_CALL(node, chown)(node, owner, group);
 
@@ -425,7 +440,8 @@ int chown(const char *path, uid_t owner, gid_t group)
 
 int fchown(int fd, uid_t owner, gid_t group)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, chown)(fdesc->node, owner, group);
@@ -435,7 +451,7 @@ int lchown(const char *path, uid_t owner, gid_t group)
 {
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, (char *) path, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);
 
 	if (result >= 0) result = FS_CALL(node, chown)(node, owner, group);
 
@@ -444,7 +460,8 @@ int lchown(const char *path, uid_t owner, gid_t group)
 
 int pread(int fd, void *buf, size_t count, uint64_t offset)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, read)(fdesc->node, offset, (char *) buf, count);
@@ -452,7 +469,8 @@ int pread(int fd, void *buf, size_t count, uint64_t offset)
 
 int pwrite(int fd, const void *buf, size_t count, uint64_t offset)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+        CHECK_FOR_EBADF(fd);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
 	return FS_CALL(fdesc->node, write)(fdesc->node, offset, (char *) buf, count);
@@ -466,7 +484,8 @@ int fcntl(int fd, int cmd, long arg)
 
 int ioctl(int d, int request, long arg)
 {
-	FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(d);
+        CHECK_FOR_EBADF(d);
+	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
 	if (fdesc == NULL) return -EBADF;
 
 	printk("---ioctl\n");
@@ -497,7 +516,7 @@ int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **na
 
     if (currentPathToken - 1 > 0){
         char *tmpPath = strndup(pathname, currentPathToken - 1);
-        int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, tmpPath, &(*parentDirectory), true);
+        int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, tmpPath, &(*parentDirectory), true);
         free(tmpPath);
         if (result < 0){
             free(name);
@@ -506,7 +525,7 @@ int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **na
         }
         
     }else{
-        *parentDirectory = VNodeManager::ReferenceVnode(Task::CurrentTask()->CwdNode);
+        *parentDirectory = VNodeManager::ReferenceVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode);
     }
     
     return 0;
@@ -525,7 +544,7 @@ int utime(const char *filename, const struct utimbuf *buf)
 {
     VNode *tmpnode;
 
-    int result = VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, filename, &tmpnode, false);
+    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, filename, &tmpnode, false);
 
     if (result < 0) return result;
 
@@ -536,7 +555,7 @@ int statfs(const char *path, struct statfs *buf)
 {
     VNode *tmpnode;
 
-    int result = VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, path, &tmpnode, false);
+    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &tmpnode, false);
 
     if (result < 0) return result;
 
@@ -545,7 +564,8 @@ int statfs(const char *path, struct statfs *buf)
 
 int fstatfs(int fd, struct statfs *buf)
 {
-    FileDescriptor *fdesc = Task::CurrentTask()->OpenFiles->at(fd);
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
     if (fdesc == NULL) return -EBADF;
 
     return FS_CALL(fdesc->node, statfs)(fdesc->node, buf);
@@ -576,7 +596,7 @@ int unlink(const char *pathname)
 int link(const char *oldpath, const char *newpath)
 {
     VNode *oldNode;
-    int result = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, oldpath, &oldNode, false);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, oldpath, &oldNode, false);
     if (result < 0){
         return result;
     }
@@ -726,13 +746,14 @@ int rename(const char *oldpath, const char *newpath)
 
 int dup(int oldfd)
 {
-    FileDescriptor *oldFdesc = Task::CurrentTask()->OpenFiles->at(oldfd);
+    CHECK_FOR_EBADF(oldfd);
+    FileDescriptor *oldFdesc = Scheduler::currentThread()->parentProcess->openFiles->at(oldfd);
     if (oldFdesc == NULL) return -EBADF;
     
     FileDescriptor *fdesc = new FileDescriptor(VNodeManager::ReferenceVnode(oldFdesc->node));
     fdesc->fpos = oldFdesc->fpos;
     
-    return Task::CurrentTask()->OpenFiles->add(fdesc);
+    return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
 //TODO: Implement dup2
@@ -746,3 +767,15 @@ int pipe(int pipefd[2])
 {
     return -EINVAL;
 }
+
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+    if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return (void *) -EBADF;
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return (void *) -EBADF;
+
+    void *ret = FS_CALL(fdesc->node, mmap)(fdesc->node, addr, length, prot, flags, fd, offset);
+
+    return ret;
+}
+

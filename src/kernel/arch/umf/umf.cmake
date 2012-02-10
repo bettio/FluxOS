@@ -1,5 +1,6 @@
 include(arch/umf/boot/boot.cmake)
 include(arch/umf/core/core.cmake)
+include(arch/umf/mm/mm.cmake)
 include(arch/umf/drivers/drivers.cmake)
 include(arch/umf/task/task.cmake)
 

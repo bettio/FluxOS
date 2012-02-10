@@ -468,7 +468,7 @@ int TmpFS::Name(VNode *directory, VNode *node, char **name, int *len)
 
     QHash<QString, int>::const_iterator dirIterator = inode->Directory.constBegin();
     do{
-        if (dirIterator.value() == node->vnid.id){
+        if ((unsigned int) dirIterator.value() == node->vnid.id){
             *name = strndup(dirIterator.key().toAscii(), dirIterator.key().length() + 1);
             *len = dirIterator.key().length();
             return 0;
@@ -514,8 +514,11 @@ int TmpFS::Ioctl(VNode *node, int request, long arg)
     return -EINVAL;
 }
 
-//TODO
+//HACK: it should map memory!
 void *TmpFS::Mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    return 0;
+    TmpInode *inode = Inode(node);
+    if (S_ISDIR(inode->Mode)) return (void *) -EISDIR;
+
+    return inode->FileData;
 }

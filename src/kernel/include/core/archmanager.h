@@ -28,4 +28,5 @@ class ArchManager
 		static void InitMultitasking();
 		static void InitHardware();
         static void StartInit();
+	static void reboot();
 };

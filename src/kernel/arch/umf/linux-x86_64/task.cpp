@@ -20,7 +20,7 @@
  *   Date: 27/11/2007                                                      *
  ***************************************************************************/
 
-#include <task/task.h>
+#include <task/scheduler.h>
 #include <arch/umf/core/hostsyscalls.h>
 
 #include <core/printk.h>
@@ -84,7 +84,7 @@ void SyscallsLoop(pid_t child, const char *name)
 				}
 				
 				if (orig_eax == 60){
-                    Task::TaskDescriptorTable[(*Pids)[HostSysCalls::getpid()]].Status = TERMINATED;
+			        Scheduler::currentThread()->parentProcess->status = TERMINATED;
                 }
 			}else{
 				cpid = child;

@@ -26,11 +26,18 @@
 #define ARCH_IA32_NATIVE
 #define ARCH_IA32
 
-#define KERNEL_HEAP_START 0x9000000 
-#define KERNEL_HEAP_END 0x20000000
+extern unsigned long kernel_heap_start;
+extern unsigned long kernel_heap_end;
+extern unsigned long kernel_heap_free_pos;
+#define KERNEL_HEAP_START kernel_heap_start
+#define KERNEL_HEAP_END kernel_heap_end
+#define KERNEL_HEAP_FREE_POS kernel_heap_free_pos
 
 #define NEW_DEFAULT_TYPE unsigned int
 
 #define LITTLE_ENDIAN 1234
+#define NULL_POINTERS_REGION_SIZE 4096
+
+#define KERNEL_SPACE_UPPER_LIMIT 0x08000000
 
 #endif

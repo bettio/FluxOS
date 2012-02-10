@@ -69,8 +69,8 @@ int ProcFS::Mount(FSMount *fsmount, BlockDevice *blkdev)
 int ProcFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
 	if (node->vnid.id == 2){
-		if (pos < sizeof("FluxOS 0.1\n")){
-		    strncpy(buffer, "FluxOS 0.1\n" + pos, bufsize);
+		if (pos < sizeof("FluxOS Kernel 0.1\n") - 1){
+		    strncpy(buffer, "FluxOS Kernel 0.1\n" + pos, bufsize);
 		    return bufsize;
 		}else{
 		    return 0;
@@ -121,24 +121,28 @@ int ProcFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *nty
 
 int ProcFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
 {
+        int size = 0;
+
 	strcpy(dirp->d_name, ".");
 	dirp->d_reclen = sizeof(dirent);
 	dirp->d_off = 268;
+        size += dirp->d_reclen;
 
 	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
 
 	strcpy(dirp->d_name, "..");
 	dirp->d_reclen = sizeof(dirent);
 	dirp->d_off = 268;
+        size += dirp->d_reclen;
 
 	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
 
 	strcpy(dirp->d_name, "version");
 	dirp->d_reclen = sizeof(dirent);
 	dirp->d_off = 268;
+        size += dirp->d_reclen;
 
-
-	return 0;
+	return size;
 }
 
 int ProcFS::Stat(VNode *node, struct stat *buf)

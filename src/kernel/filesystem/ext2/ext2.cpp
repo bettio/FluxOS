@@ -155,6 +155,7 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 	return 0;
 }
 
+//If I return a pointer I can't do easily distinctions between different errors
 ext2_inode *Ext2::ReadInode(VNode *node)
 {
 	ext2_privdata *privdata = (ext2_privdata *) node->mount->privdata;
@@ -162,27 +163,29 @@ ext2_inode *Ext2::ReadInode(VNode *node)
 	int inodeIndex = ((uint32_t) (node->vnid.id - 1)) % privdata->sblock->s_inodes_per_group;
 	int inodeGroup = ((uint32_t) (node->vnid.id - 1)) / privdata->sblock->s_inodes_per_group;
 
-	char *tmpblk = (char *) malloc(512);
-
-	//TODO: Warning: unchecked malloc
-	privdata->blkdev->ReadBlock(privdata->blkdev, 4, 1, (uint8_t *) tmpblk);
-
-	ext2_group_desc *group = (ext2_group_desc *) tmpblk;
+	char *groupTmpBlkBuff = (char *) malloc(512);
+        if (groupTmpBlkBuff == 0){
+	    return 0;
+	}
+	privdata->blkdev->ReadBlock(privdata->blkdev, 4, 1, (uint8_t *) groupTmpBlkBuff);
+	ext2_group_desc *group = (ext2_group_desc *) groupTmpBlkBuff;
 
 	#if 0
 		printk("Inode table: %i\n", group->bg_inode_table);
 	#endif
 
-	tmpblk = (char *) malloc(privdata->sblock->s_blocks_per_group * privdata->sblock->s_inode_size);
 	//TODO: Warning: unchecked malloc
-
-	tmpblk = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
-    
+	char *inodeTableTmpBlkBuf = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
 	privdata->blkdev->ReadBlock(privdata->blkdev, group[inodeGroup].bg_inode_table * privdata->DiskBlocksPerFSBlock,
-					(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) tmpblk);
-	ext2_inode *first_table = (ext2_inode *) tmpblk;
+					(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) inodeTableTmpBlkBuf);
+	ext2_inode *first_table = (ext2_inode *) inodeTableTmpBlkBuf;
 
-	return &first_table[inodeIndex];
+        free(group);
+        ext2_inode *inode = new ext2_inode;
+        memcpy(inode, &first_table[inodeIndex], sizeof(ext2_inode));
+        free(first_table);
+
+        return inode;
 }
 
 int Ext2::ReadBlocksData(ext2_inode *inode, uint32_t *indirectBlocks, VNode *node, uint32_t pos, char *buffer, unsigned int bufsize)
@@ -452,14 +455,18 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 	#endif
 
 	ext2_inode *inode = /*(ext2_inode *)*/ ReadInode(node);
+        if (inode == NULL){
+	    return -ENOMEM;
+	}
 
 	if (!S_ISDIR(inode->i_mode)){
 		printk("I can only do lookups on a directory\n");
-
+                delete inode;
 		return -ENOTDIR;
 	}
 
-	ext2_dir_entry_2 *dir = (ext2_dir_entry_2 *) malloc(inode->i_size);
+	ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) malloc(inode->i_size);
+	void *dir = dirEntry;
 	if (dir == NULL) return -ENOMEM;
 	ReadData(inode, node, 0, (char *) dir, inode->i_size); 
 
@@ -473,23 +480,31 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 		//If the first part of the name is the same but is longer than dir->name_len
 		//we want to reconize the name as different
 		//dir->name *isn't a null terminated* string
-		if (!strncmp(name, dir->name, dir->name_len) && (name[dir->name_len] == 0)){
-			VNodeManager::GetVnode(node->mount->mountId, dir->inode, vnd);
+		if (!strncmp(name, dirEntry->name, dirEntry->name_len) && (name[dirEntry->name_len] == 0)){
+			VNodeManager::GetVnode(node->mount->mountId, dirEntry->inode, vnd);
 
 			(*vnd)->mount = node->mount;
-			*ntype = ReadInode(*vnd)->i_mode;
+			ext2_inode *fileInode = ReadInode(*vnd); //CHECK ME
+			*ntype = fileInode->i_mode;
 
+                        delete inode;
+                        free(dir);
+			delete fileInode;
 			return 0;
 		}
 
-		readBytes += dir->rec_len;
-		dir = (ext2_dir_entry_2 *) ((unsigned long) dir + dir->rec_len);
+		readBytes += dirEntry->rec_len;
+		dirEntry = (ext2_dir_entry_2 *) ((unsigned long) dirEntry + dirEntry->rec_len);
 	}while(readBytes < inode->i_size);
 
 	vnd = NULL;
 
-	printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
+        #ifdef EXT2_DEBUG
+	    printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
+        #endif
 
+        delete inode;
+        free(dir);
 	return -ENOENT;
 }
 
@@ -525,23 +540,21 @@ int Ext2::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
 	unsigned int readBytes = 0;
 
 	do{
+	    if (dir->name_len != 0){
 		rawstrcpy(dirp->d_name, dir->name, sizeof(dirp->d_name), dir->name_len + 1);
 		dirp->d_reclen = sizeof(dirent);
 		dirp->d_off = sizeof(dirent); //TODO: ci andrebbe pos
 		bufferUsedBytes += dirp->d_reclen;
-
-		dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-
+ 
+		dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen); 
+            }
 		readBytes += dir->rec_len;
 		dir = (ext2_dir_entry_2 *) ((unsigned long) dir + dir->rec_len);
 	//TODO: < o <=?
 	}while((readBytes < inode->i_size) && (bufferUsedBytes + sizeof(dirent) < count));
 
-	dirp = (struct dirent *) (((unsigned long) dirp) - dirp->d_reclen);
-	dirp->d_off = 0; //HACK
-
 	//return 0 on end of directory, else read bytes
-	return /*(dir->inode) ? */readBytes/* : 0*/;
+	return /*(dir->inode) ? */bufferUsedBytes/* : 0*/;
 }
 
 int Ext2::Stat(VNode *node, struct stat *buf)

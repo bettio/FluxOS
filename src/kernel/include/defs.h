@@ -27,12 +27,14 @@
           if (UNLIKELY(this == NULL)) return;
 
 #define MAX(a, b) \
-          ((a > b) ? a : b)
+          (((a) > (b)) ? (a) : (b))
 
 #define MIN(a, b) \
-          ((a < b) ? a : b)
+          (((a) < (b)) ? (a) : (b))
 
 #define ABS(a) \
-          ((a < 0) ? -a : a)
+          (((a) < 0) ? (-(a)) : (a))
 
+inline unsigned long alignToBound(unsigned long a, unsigned long alignTo) {return ((a + alignTo) / alignTo) * alignTo;}
+          
 #endif

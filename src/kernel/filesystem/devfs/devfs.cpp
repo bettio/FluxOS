@@ -25,9 +25,9 @@
 #include <cstdlib.h>
 #include <cstring.h>
 #include <arch.h>
-#include <lib/koof/vector.h>
-#include <lib/koof/keymap.h>
-
+#include <QHash>
+#include <QList>
+#include <QString>
 
 #include <filesystem/vfs.h>
 #include <filesystem/devfs/devfs.h>
@@ -52,23 +52,23 @@ struct TmpInode
 	uint32_t Minor;
 
 	uint8_t *FileData;
-	KeyMap<int> *Directory;
+    QHash<QString, int> *Directory;
 };
 
 using namespace FileSystem;
 
-Vector<TmpInode *> Inodes;
+QList<TmpInode *> *Inodes;
 
 int DevFS::Init()
 {
-	Inodes = Vector<TmpInode *>();
+	Inodes = new QList<TmpInode *>();
 	TmpInode *tmpInode = new TmpInode;
 	tmpInode->Mode = S_IFDIR;
-	tmpInode->Directory = new KeyMap<int>();
-	tmpInode->Directory->Add(".", 1);
-	tmpInode->Directory->Add("..", 1);
-	Inodes.Add(0);
-	Inodes.Add(tmpInode);
+	tmpInode->Directory = new QHash<QString, int>();
+	tmpInode->Directory->insert(".", 1);
+	tmpInode->Directory->insert("..", 1);
+    Inodes->append(NULL); //The first inode is the inode 1
+    Inodes->append(tmpInode);
 
 	return 0;
 }
@@ -78,10 +78,9 @@ int DevFS::RegisterAsFileSystem()
 	FileSystemInfo *info = new FileSystemInfo;
 	if (info == NULL) return -ENOMEM;
 	info->name = "devfs";
-
 	info->mount = Mount;
 
-	FileSystem::VFS::RegisterFileSystem(info);
+	return FileSystem::VFS::RegisterFileSystem(info);
 }
 
 int DevFS::Mount(FSMount *fsmount, BlockDevice *)
@@ -123,17 +122,17 @@ int DevFS::Mount(FSMount *fsmount, BlockDevice *)
 
 int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
 {
-	TmpInode *inode = Inodes[node->vnid.id];
-	
+	TmpInode *inode = Inodes->at(node->vnid.id);
+
 	if (!S_ISDIR(inode->Mode)) return -ENOTDIR;
 
-	int inodeIndex = (*inode->Directory)[name];
-	
+	int inodeIndex = inode->Directory->value(name);
+
 	if (inodeIndex){
 		VNodeManager::GetVnode(node->mount->mountId, inodeIndex, vnd);
 
 		(*vnd)->mount = node->mount;
-		*ntype = Inodes[inodeIndex]->Mode;
+		*ntype = Inodes->at(inodeIndex)->Mode;
 
 		if (S_ISCHR(*ntype)){
 			///printk("Char device\n");
@@ -145,13 +144,15 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			mnt->fs = modInfo;
 			(*vnd)->mount = mnt;
 
-			CharDevice *dev = CharDeviceManager::Device(Inodes[inodeIndex]->Major, Inodes[inodeIndex]->Minor);
-			///printk("Major: %i, Minor: %i\n", Inodes[inodeIndex]->Major, Inodes[inodeIndex]->Minor);
+			CharDevice *dev = CharDeviceManager::Device(Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
+                        (*vnd)->privdata = dev;
+			///printk("Major: %i, Minor: %i\n", Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
 			modInfo->ioctl = dev->ioctl;
-		}else if (S_ISCHR(*ntype)){
-			///printk("Block device\n");
+			modInfo->mmap = dev->mmap;
+		}else if (S_ISBLK(*ntype)){
+                        ///printk("Block device\n");
 			FSMount *mnt = new FSMount;
 			memcpy(mnt, node->mount, sizeof(FSMount));
 			FSModuleInfo *modInfo = new FSModuleInfo;
@@ -160,11 +161,13 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 			mnt->fs = modInfo;
 			(*vnd)->mount = mnt;
 
-			BlockDevice *dev = BlockDeviceManager::Device(Inodes[inodeIndex]->Major, Inodes[inodeIndex]->Minor);
-			///printk("Major: %i, Minor: %i\n", Inodes[inodeIndex]->Major, Inodes[inodeIndex]->Minor);
+			BlockDevice *dev = BlockDeviceManager::Device(Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
+                        (*vnd)->privdata = dev;
+			///printk("Major: %i, Minor: %i\n", Inodes->at(inodeIndex)->Major, Inodes->at(inodeIndex)->Minor);
 			modInfo->read = dev->read;
 			modInfo->write = dev->write;
 			modInfo->ioctl = dev->ioctl;
+			modInfo->mmap = dev->mmap;
 		}
 
 		return 0;
@@ -184,7 +187,7 @@ int DevFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int DevFS::Readlink(VNode *node, char *buffer, size_t bufsize)
 {
-	TmpInode *inode = Inodes[node->vnid.id];
+	TmpInode *inode = Inodes->at(node->vnid.id);
 
 	if (!S_ISLNK(inode->Mode)) return -EINVAL;
 
@@ -202,31 +205,28 @@ int DevFS::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int buf
 
 int DevFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
 {
-	TmpInode *inode = Inodes[node->vnid.id];
-	
-	if (!S_ISDIR(inode->Mode)) return -ENOTDIR;
+    TmpInode *inode = Inodes->at(node->vnid.id);
 
-	KeyMap<int> *dir = inode->Directory;
+    if (!S_ISDIR(inode->Mode)) return -ENOTDIR;
 
-	unsigned int bufferUsedBytes = 0;
-	int i = 0;
+    QHash<QString, int>::const_iterator dirIterator = inode->Directory->constBegin();
+    unsigned int bufferUsedBytes = 0;
+    do{
+        rawstrcpy(dirp->d_name, dirIterator.key().toAscii(), sizeof(dirp->d_name), dirIterator.key().length() + 1);
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = sizeof(dirent); //TODO: ci andrebbe pos
+        bufferUsedBytes += dirp->d_reclen;
 
-	do{
-		rawstrcpy(dirp->d_name, (*dir)[i], sizeof(dirp->d_name), strlen((*dir)[i]) + 1);
-		dirp->d_reclen = sizeof(dirent);
-		dirp->d_off = sizeof(dirent); //TODO: ci andrebbe pos
-		bufferUsedBytes += dirp->d_reclen;
+        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+        ++dirIterator;
+    }while ((dirIterator != inode->Directory->constEnd()) && (bufferUsedBytes + sizeof(dirent) < count));
 
-		dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-		i++;
-	}while ((i < dir->Size()) && (bufferUsedBytes + sizeof(dirent) < count));
-
-	return bufferUsedBytes;
+    return bufferUsedBytes;
 }
 
 int DevFS::Stat(VNode *node, struct stat *buf)
 {
-	TmpInode *inode = Inodes[node->vnid.id];
+	TmpInode *inode = Inodes->at(node->vnid.id);
 
 	buf->st_dev = 0;
 	buf->st_ino = node->vnid.id;
@@ -273,11 +273,11 @@ int DevFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 	tmpInode->Minor = dev & 0xFFFF; //TODO: Need to be changed to 64 bit
 	tmpInode->Size = 0;
 
-	int id = Inodes.Add(tmpInode);
+        int id = Inodes->append(tmpInode);
 
-	TmpInode *inode = Inodes[1];
+	TmpInode *inode = Inodes->at(1);
 
-	inode->Directory->Add(newName, id);
+	inode->Directory->insert(newName, id);
 
 	return 0;
 }

@@ -2,8 +2,8 @@
  *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
+ *   it under the terms of the GNU Library General Public License as       *
+ *   published by the Free Software Foundation; either version 2, or       *
  *   (at your option) any later version.                                   *
  *                                                                         *
  *   This program is distributed in the hope that it will be useful,       *
@@ -11,8 +11,8 @@
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
  *   GNU General Public License for more details.                          *
  *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
+ *   You should have received a copy of the GNU Library General Public     *
+ *   License along with this program; if not, write to the                 *
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
@@ -21,8 +21,6 @@
 
 #ifndef _QLIST_H_
 #define _QLIST_H_
-
-#include <KOOFCore>
 
 #define QLIST_DEFAULT_CAPACITY 2
 
@@ -96,205 +94,393 @@ template <typename T> class QList
             return *this;
         }
 
-  inline bool isValid() const
-  {
-    return ((m_array != 0) ||
-      ((m_array == 0) && (m_size != 0) && (m_capacity != 0)));
-  }
+        inline bool isValid() const
+        {
+            return ((m_array != 0) ||
+                    ((m_array == 0) && (m_size != 0) && (m_capacity != 0)));
+        }
 
-  inline bool isEmpty() const
-  {
-    return m_size == 0;
-  }
+        inline bool isEmpty() const
+        {
+            return m_size == 0;
+        }
 
-  inline int size() const
-  {
-    return m_size;
-  }
+        inline int size() const
+        {
+            return m_size;
+        }
 
-  inline int capacity() const
-  {
-    return m_capacity;
-  }
+        inline int capacity() const
+        {
+            return m_capacity;
+        }
 
-  inline int count() const
-  {
-    return m_size;
-  }
+        int count(const T &value) const
+        {
+            int counter = 0;
 
-  bool reserve(int newCapacity)
-  {
-    T *tmpArray = (T *) new T[newCapacity];
-    if (tmpArray == 0){
-        return false;
-    }
+            for (int i = 0; i < m_size; i++){
+                if (m_array[i] == value){
+                    counter++;
+                }
+            }
+            
+            return counter;
+        }
 
-    int newSize = (m_size < newCapacity) ? m_size : newCapacity;
-    for (int i = 0; i < newSize; i++){
-      tmpArray[i] = m_array[i];
-    }
+        inline int count() const
+        {
+            return m_size;
+        }
+
+        bool reserve(int newCapacity)
+        {
+            T *tmpArray = (T *) new T[newCapacity];
+            if (tmpArray == 0){
+                return false;
+            }
+
+            int newSize = (m_size < newCapacity) ? m_size : newCapacity;
+            for (int i = 0; i < newSize; i++){
+                tmpArray[i] = m_array[i];
+            }
     
-    m_capacity = newCapacity;
-    m_size = newSize;
+            m_capacity = newCapacity;
+            m_size = newSize;
     
-    delete m_array;
-    m_array = tmpArray;
+            delete m_array;
+            m_array = tmpArray;
 
-    return true;
-  }
+            return true;
+        }
 
-  void resize(int size)
-  {
-    reserve(size);
+        void resize(int size)
+        {
+            reserve(size);
 
-    for (int i = m_size; i < size; i++){
-      m_array[i] = T();
-    }
+            for (int i = m_size; i < size; i++){
+                m_array[i] = T();
+            }
     
-    m_size = size;
-  }
+            m_size = size;
+        }
 
-  void clear()
-  {
-    m_size = 0;
-    m_capacity = 0;
-    delete m_array;
-  }
+        void clear()
+        {
+            m_size = 0;
+            m_capacity = 0;
+            delete m_array;
+        }
 
-  inline void squeeze()
-  {
-    reserve(m_size);
-  }
+        inline void squeeze()
+        {
+            reserve(m_size);
+        }
 
-  /* TODO: cambiare in int */
-  bool append(const T &value)
-  {
-    if (m_size == m_capacity){
-      if (!reserve(m_capacity * 2)){
-        return false;
-      }
-    }
-    
-    m_array[m_size] = value;
-    m_size++;
+        int append(const T &value)
+        {
+            if (m_size == m_capacity){
+                if (!reserve(m_capacity * 2)){
+                    return -1;
+                }
+            }
+            
+	    int index = m_size;
+            m_array[index] = value;
+            m_size++;
 
-    return true;
-  }
+            return index;
+        }
 
-  inline T *data()
-  {
-    return m_array;    
-  }
+        inline T *data()
+        {
+            return m_array;    
+        }
 
-  inline const T *data() const
-  {
-    return m_array;
-  }
+        inline const T *data() const
+        {
+            return m_array;
+        }
 
-  inline const T *constData() const
-  {
-    return m_array;    
-  }
+        inline const T *constData() const
+        {
+            return m_array;    
+        }
 
-  inline const T &at(int i) const
-  {
-    return m_array[i];
-  }
+        inline const T &at(int i) const
+        {
+            return m_array[i];
+        }
 
-  const T value(int i, T &defaultValue) const
-  {
-    if (i < m_size){
-      return m_array[i];
-      
-    }else{
-      return defaultValue;
-    }
-  }
+        const T value(int i, T &defaultValue) const
+        {
+            if (i < m_size){
+                return m_array[i];
+            
+            }else{
+                return defaultValue;
+            }
+        }
 
-  const T value(int i) const
-  {
-    if (i < m_size){
-      return m_array[i];
-      
-    }else{
-      return T();
-    }
-  }
+        const T value(int i) const
+        {
+            if (i < m_size){
+                return m_array[i];
+            
+            }else{
+                return T();
+            }
+        }
 
-  inline T &operator[](int i)
-  {
-    return m_array[i];
-  }
+        inline T &operator[](int i)
+        {
+            return m_array[i];
+        }
 
-  inline const T &operator[](int i) const
-  {
-    return m_array[i];
-  }
-  
-  inline T &last()
-  {
-    return m_array[m_size - 1];
-  }
+        inline const T &operator[](int i) const
+        {
+            return m_array[i];
+        }
+        
+        inline T &last()
+        {
+            return m_array[m_size - 1];
+        }
 
-  inline const T &last() const
-  {
-    return m_array[m_size - 1];
-  }
-  
-  int indexOf(const T &value, int from = 0) const
-  {
-    for (int i = from; i < m_size; i++){
-      if (m_array[i] == value){
-        return i;
-      }
-    }  
-    return -1;
-  }
-  
-  bool insert(int i, int count, const T &value)
-  {
-    if (m_capacity < m_size + count){
-      if (!reserve(m_capacity * 2 + count)){
-        return false;
-      }
-    }
-    
-    for (int j = m_size + count - 1; j >= i; j--){
-      m_array[j] = m_array[j - count];
-    }
-    
-    for (int j = i; j < i + count; j++){
-      m_array[j] = value;
-    }
-    
-    m_size += count;
+        inline const T &last() const
+        {
+            return m_array[m_size - 1];
+        }
+        
+        int indexOf(const T &value, int from = 0) const
+        {
+            for (int i = from; i < m_size; i++){
+                if (m_array[i] == value){
+                    return i;
+                }
+            }  
+            return -1;
+        }
+        
+        bool insert(int i, int count, const T &value)
+        {
+            if (m_capacity < m_size + count){
+                if (!reserve(m_capacity * 2 + count)){
+                    return false;
+                }
+            }
+            
+            for (int j = m_size + count - 1; j >= i; j--){
+                m_array[j] = m_array[j - count];
+            }
+            
+            for (int j = i; j < i + count; j++){
+                m_array[j] = value;
+            }
+            
+            m_size += count;
 
-    return true;
-  }
-  
-  inline bool insert(int i, const T &value)
-  {
-    return insert(i, 1, value);
-  }
+            return true;
+        }
+        
+        inline bool insert(int i, const T &value)
+        {
+            return insert(i, 1, value);
+        }
 
-  inline bool prepend(const T &value)
-  {
-    return insert(0, 1, value);
-  }
+        inline bool prepend(const T &value)
+        {
+            return insert(0, 1, value);
+        }
 
-  void remove(int i, int count)
-  {
-    for (; i < m_size - count; i++){
-      m_array[i] = m_array[i + count];
-    }
-    
-    m_size -= count;
-  }
+        void remove(int i, int count)
+        {
+            for (; i < m_size - count; i++){
+                m_array[i] = m_array[i + count];
+            }
+            
+            m_size -= count;
+        }
 
-  inline void remove(int i)
-  {
-    remove(i, 1);
-  }
+        int removeAll(const T &value)
+        {
+            int destIndex = 0;
+            int i = 0;
+
+            for (; i < m_size; i++){
+                if (m_array[i] == value){
+                    destIndex = i;
+                    break;
+                }
+            }
+
+            int rcounter = 0;
+            for (; i < m_size; i++){
+                while (m_array[i] == value){
+                    i++;
+                    rcounter++;
+                }
+                m_array[destIndex] = m_array[i];
+                destIndex++;
+            }
+            m_size -= rcounter;
+
+	    return rcounter;
+        }
+
+        inline void removeAt(int i)
+        {
+            remove(i, 1);
+        }
+        
+        inline void removeFirst()
+        {
+            remove(0, 1);
+        }
+        
+        inline void removeLast()
+        {
+            remove(m_size - 1, 1);
+        }
+
+        inline T takeAt(int i)
+        {
+            T tmpVal = m_array[i];
+            remove(i, 1);
+            return tmpVal;
+        }
+
+        inline T takeFirst()
+        {
+            T tmpVal = m_array[0];
+            remove(0, 1);
+            return tmpVal;
+        }
+
+        inline T takeLast()
+        {
+            T tmpVal = m_array[m_size - 1];
+            remove(m_size - 1, 1);
+            return tmpVal;
+        }
+
+        class const_iterator
+        {
+            private:
+                friend class QList;
+                T *current;
+
+            public:
+                inline const_iterator &operator++()
+                {
+                    current++;
+                    return *this;
+                }
+
+                inline const_iterator operator++(int)
+                {
+                    const_iterator oldIterator = *this;
+                    ++(*this);
+                    return oldIterator;
+                }
+
+                inline bool operator!=(const const_iterator &other) const
+                {
+                    return this->current != other.current;
+                }
+
+                inline bool operator==(const const_iterator &other) const
+                {
+                    return this->current == other.current;
+                }
+
+                inline const T &value() const
+                {
+                    return *current;
+                }
+        };
+
+        const_iterator constBegin() const
+        {
+            const_iterator iterator;
+
+            iterator.current = m_array;
+            
+            return iterator;
+        }
+
+        inline const_iterator constEnd() const
+        {
+            const_iterator iterator;
+            iterator.current = &m_array[m_size];
+            return iterator;
+        }
+
+        inline void swap(int i, int j)
+        {
+            T tmp;
+            tmp = m_array[i];
+            m_array[i] = m_array[j];
+            m_array[j] = tmp;
+        }
+
+        inline T &first()
+        {
+            return m_array[0];
+        }
+
+        inline const T &first() const
+        {
+            return m_array[0];
+        }
+
+        inline bool endsWith(const T &value) const
+        {
+            return m_array[m_size - 1] == value;
+        }
+
+        inline bool startsWith(const T &value) const
+        {
+            return m_array[0] == value;
+        }
+
+        /*
+          STL Compatibility
+         */
+        inline bool empty() const
+        {
+            return isEmpty();
+        }
+
+        T &back()
+        {
+            return last();
+        }
+
+        const T &back() const
+        {
+            return last();
+        }
+
+        inline T &front()
+        {
+            return first();
+        }
+
+        inline const T &front() const
+        {
+            return first();
+        }
+
+        inline void push_back(const T & value)
+        {
+            append(value);
+        }
+        
+        inline void push_front(const T &value)
+        {
+            prepend(value);
+        }
 };
 
 #endif

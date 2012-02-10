@@ -22,24 +22,18 @@
 #ifndef _TASK_TASK_H
 #define _TASK_TASK_H
 
-#include <task/taskdescriptor.h>
+#include <task/processcontrolblock.h>
+#include <ListWithHoles>
 #include <arch.h>
 
 class Task{
 	public:
-		static TaskDescriptor *CurrentTask();
-		static TaskDescriptor TaskDescriptorTable[256];
-		static void SetCurrentTask(int ctask);
-		static int CurrentTaskPid();
+	        static void init();
 		static int SetUid(unsigned int uid);
 		static int SetGid(unsigned int gid);
-		static int NewPID();
-		static bool TaskName(int pid, char * dest, int n);
-		static int MaxUsedTaskPid();
-		static int CreateNewTask(const char *name, bool user);
-	private:
-		static int current_task;
-		static int m_MaxUsedTaskPid;
+		static ProcessControlBlock *CreateNewTask(const char *name);
+                static ProcessControlBlock *NewProcess(const char *name);
+                static ListWithHoles<ProcessControlBlock *> *processes;
 };
 
 #endif

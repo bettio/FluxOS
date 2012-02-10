@@ -20,28 +20,24 @@
  ***************************************************************************/
 
 #include <task/task.h>
+#include <task/scheduler.h>
+#include <filesystem/vnodemanager.h>
 #include <arch.h>
+#include <ListWithHoles>
 
-#include <lib/koof/intkeymap.h>
+ListWithHoles<ProcessControlBlock *> *Task::processes;
 
-#ifdef ARCH_IA32_UMM_LINUX
-#include <arch/umf/core/hostsyscalls.h>
-extern IntKeyMap<int> *Pids;
-#endif
-
-int Task::m_MaxUsedTaskPid;
-
-#warning 256 tasks maximum
-TaskDescriptor Task::TaskDescriptorTable[256];
-int Task::current_task;
-
+void Task::init()
+{
+    processes = new ListWithHoles<ProcessControlBlock *>();
+}
 
 int Task::SetUid(unsigned int uid)
 {
-	TaskDescriptor *task = Task::CurrentTask();
+	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
 
-	if (task->Uid == 0){
-		task->Uid = uid;
+	if (task->uid == 0){
+		task->uid = uid;
 
 		return 0;
 	}else{
@@ -51,10 +47,10 @@ int Task::SetUid(unsigned int uid)
 
 int Task::SetGid(unsigned int gid)
 {
-	TaskDescriptor *task = Task::CurrentTask();
+	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
 
-	if (task->Uid == 0){
-		task->Gid = gid;
+	if (task->uid == 0){
+		task->gid = gid;
 
 		return 0;
 	}else{
@@ -62,79 +58,74 @@ int Task::SetGid(unsigned int gid)
 	}
 }
 
-bool Task::TaskName(int pid, char * dest, int n)
+ProcessControlBlock *Task::CreateNewTask(const char *name)
 {
-	if (pid >= m_MaxUsedTaskPid) return false;
-
-	strncpy(dest, TaskDescriptorTable[pid].TaskName, n);
-
-	return true;
-}
-
-int Task::NewPID(){
-	static int FreePID = -1;
-	
-	FreePID++;
-	m_MaxUsedTaskPid++;
-
-	return FreePID;
-}
-
-TaskDescriptor *Task::CurrentTask()
-{
-    #ifndef ARCH_IA32_UMM_LINUX
-        return &TaskDescriptorTable[current_task];
-    #else
-        if (Pids != 0){
-            return &TaskDescriptorTable[(*Pids)[HostSysCalls::getpid()]];
-        }else{
-            return &TaskDescriptorTable[current_task];
+	ProcessControlBlock *process = new ProcessControlBlock;
+        int newTaskPid = processes->add(process);
+	process->pid = newTaskPid;
+        process->uid = 0;
+	process->gid = 0;
+	process->name = strdup(name);
+        process->parent = 0;
+	process->dataSegmentEnd = (void *) 0xC0000000;
+        process->openFiles = new ListWithHoles<FileDescriptor *>();
+	VNode *ttyNode;
+        int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
+        if (res < 0){
+            printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
+            return 0;
         }
-    #endif
+	//stdin
+        FileDescriptor *fdesc = new FileDescriptor(ttyNode);
+        process->openFiles->add(fdesc);
+	//stdout
+        fdesc = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(ttyNode));
+        process->openFiles->add(fdesc);
+	//stderr
+	fdesc = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(ttyNode));
+	process->openFiles->add(fdesc);
+
+        VNode *cwdNode;
+	res = FileSystem::VFS::RelativePathToVnode(0, "/", &cwdNode);
+        if (res < 0){
+            printk("Cannot find any root filesystem\n");
+            return 0;
+        }
+	    
+	process->currentWorkingDirNode = cwdNode;
+
+        process->status = READY;
+
+	return process;
 }
 
-int Task::MaxUsedTaskPid(){
-	return m_MaxUsedTaskPid;
-}
-
-void Task::SetCurrentTask(int ctask)
+ProcessControlBlock *Task::NewProcess(const char *name)
 {
-	current_task = ctask;
+    ProcessControlBlock *parent = Scheduler::currentThread()->parentProcess;
+
+    ProcessControlBlock *process = new ProcessControlBlock;
+    int newTaskPid = processes->add(process);
+    process->pid = newTaskPid;
+    process->uid = parent->uid;
+    process->gid = parent->gid;
+    process->name = strdup(name);
+    process->parent = parent;
+    process->dataSegmentEnd = (void *) 0xC0000000;
+    process->openFiles = new ListWithHoles<FileDescriptor *>();
+    for (int i = 0; i < parent->openFiles->size(); i++){
+        FileDescriptor *oldFd = parent->openFiles->at(i);
+	if (oldFd != 0){
+            FileDescriptor *newFd = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(oldFd->node));
+            newFd->fpos = oldFd->fpos;
+            process->openFiles->add(newFd);
+        }
+    }
+
+    process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
+
+
+    process->status = READY;
+
+    return process;
 }
 
-int Task::CurrentTaskPid()
-{
-    #ifndef ARCH_IA32_UMM_LINUX
-        return current_task;
-    #else
-        return (*Pids)[HostSysCalls::getpid()];
-    #endif
-}
-
-int Task::CreateNewTask(const char *name, bool user)
-{
-	int newTaskPid = NewPID();
-
-	strncpy(Task::TaskDescriptorTable[newTaskPid].TaskName, name, 64);
-
-	TaskDescriptorTable[newTaskPid].Pid = newTaskPid;
-	TaskDescriptorTable[newTaskPid].Parent = &Task::TaskDescriptorTable[newTaskPid];
-	TaskDescriptorTable[newTaskPid].User = user;
-
-	//TODO: Add stdin and stdout
-	TaskDescriptorTable[newTaskPid].OpenFiles = new ListWithHoles<FileDescriptor *>();
-	VNode *node;
-        FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &node, true);
-        FileDescriptor *fdesc = new FileDescriptor(node);
-        TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
-        fdesc = new FileDescriptor(node);
-        TaskDescriptorTable[newTaskPid].OpenFiles->add(fdesc);
-
-	FileSystem::VFS::RelativePathToVnode(0, "/", &node);
-
-	TaskDescriptorTable[newTaskPid].CwdNode = node;
-
-	TaskDescriptorTable[newTaskPid].Status = READY;
-
-	return newTaskPid;
-}

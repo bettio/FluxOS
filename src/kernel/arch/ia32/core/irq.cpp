@@ -22,6 +22,7 @@
 
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/core/idt.h>
+#include <arch/ia32/core/contextswitcher.h>
 #include <bitutils.h>
 #include <arch/ia32/io.h>
 #include <core/printk.h>
@@ -54,6 +55,8 @@ void IRQ::init()
         }
         setHandler(nullHandler, i);
     }
+    
+    ContextSwitcher::init();
 }
 
 void IRQ::setHandler(void (*func) (), uint8_t irq)
@@ -142,6 +145,8 @@ extern "C"
 
         (*IRQ::handler[irq])();
 
+        ContextSwitcher::schedule((long *) &esp);
+        
         IRQ::endOfIRQ(irq);
     }
 

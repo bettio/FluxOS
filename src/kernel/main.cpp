@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2004 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2004,2011 by Davide Bettio <davide.bettio@kdemail.net>      *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -29,6 +29,11 @@
 
 #include <drivers/chardevicemanager.h>
 #include <drivers/blockdevicemanager.h>
+#include <drivers/diskpart.h>
+#include <drivers/ramdisk.h>
+#include <drivers/fulldev.h>
+#include <drivers/nulldev.h>
+#include <drivers/zerodev.h>
 
 #include <filesystem/procfs/procfs.h>
 #include <filesystem/ext2/ext2.h>
@@ -38,12 +43,9 @@
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
 
-
 #include <core/system.h>
 
-#include <drivers/diskpart.h>
-
-#define BOOT 0
+#define BOOT 1
 
 int main()
 {
@@ -59,7 +61,11 @@ int main()
 	CharDeviceManager::Init();
 	BlockDeviceManager::Init();
 	FileSystem::DevFS::Init();
+        FullDev::init();
+        NullDev::init();
+        ZeroDev::init();
 	DiskPart::Init();
+        RamDisk::init();
 
 	FileSystem::VFS::Init();
 
@@ -82,7 +88,7 @@ int main()
     }
     FileSystem::VNodeManager::PutVnode(node);
     #else
-	FileSystem::VFS::Mount("/dev/fd0", "/", "ext2", 0, 0);
+	FileSystem::VFS::Mount("/dev/ramd0", "/", "ext2", 0, 0);
 	#endif
 
 	FileSystem::VFS::Mount("null", "/dev/", "devfs", 0, 0);
@@ -92,13 +98,10 @@ int main()
 
 	ArchManager::InitMultitasking();
 
-	SetHostName("flux_host", 9);
-	SetDomainName("flux_domain", 11);
-
 	printk("Starting Init...\n");
 
 #if BOOT == 1
-    ArchManager::StartInit();
+        ArchManager::StartInit();
 #endif
     
 	while(1);

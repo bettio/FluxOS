@@ -20,31 +20,56 @@
  *   Date: 05/09/2006                                                      *
  ***************************************************************************/
 
+#include <task/task.h>
 #include <core/printk.h>
 #include <core/archmanager.h>
 #include <drivers/vt.h>
 #include <arch/ia32/core/idt.h>
+#include <arch/ia32/core/syscallsmanager.h>
+#include <arch/ia32/drivers/ata.h>
+#include <arch/ia32/drivers/keyboard.h>
+#include <arch/ia32/drivers/ps2mouse.h>
+#include <arch/ia32/drivers/timer.h>
 #include <arch/ia32/drivers/video.h>
+#include <arch/ia32/drivers/vesafb.h>
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/core/gdt.h>
 #include <arch/ia32/core/pci.h>
+#include <arch/ia32/core/userprocsmanager.h>
+#include <arch/ia32/boot/multiboot.h>
+#include <arch/ia32/boot/multibootinfo.h>
+#include <boot/bootloaderinfo.h>
+#include <arch/ia32/mm/pagingmanager.h>
 
 void ArchManager::Init()
 {
+    //initmem();
     GDT::init();
 
-    Video::init();
+    if (MultiBootInfo::infoBlock->flags & MULTIBOOT_INFO_VIDEO_INFO){
+        VesaFB::init(MultiBootInfo::infoBlock->vbe_mode_info);
+    }else{
+        Video::init();
+    }
     Out = Vt::Device();
 }
 
 void ArchManager::InitArch()
 {
     IDT::init();
+    #ifndef NO_MMU
+        PagingManager::init();
+        VesaFB::mapPhysicalMem();
+    #endif
+    Task::init();
     IRQ::init();
+    SyscallsManager::init();
+    
+    PCI::init();
 
     asm("sti");
     
-    PCI::init();
+    Timer::init();
 }
 
 void ArchManager::InitMemoryManagment()
@@ -57,9 +82,28 @@ void ArchManager::InitMultitasking()
 
 void ArchManager::InitHardware()
 {
+    Vt::ReInit();
+    Keyboard::init();
+    ATA::init();
+    PS2Mouse::init();
+    VesaFB::registerDevice();
 }
 
 void ArchManager::StartInit()
 {
+    UserProcsManager::createInitProcess();
+}
+
+//try to triple fault to reset the CPU
+void ArchManager::reboot()
+{
+    char c;
+    unsigned long int idtReg[2];
+    idtReg[0] = 0;
+    idtReg[1] = (unsigned long int) &c;
+    asm volatile ("lidt (%0)": :"g" ((char *) idtReg + 2));
+    //this should work, but it causes a null point error on qem: asm volatile ("lidt 0"); 
+    asm("int $0x80");
+    while (1);   
 }
 

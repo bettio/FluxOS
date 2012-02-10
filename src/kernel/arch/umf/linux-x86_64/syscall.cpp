@@ -21,6 +21,7 @@
  ***************************************************************************/
 
 #include <task/task.h>
+#include <task/scheduler.h>
 #include <arch/umf/core/hostsyscalls.h>
 
 #include <core/printk.h>
@@ -55,14 +56,16 @@ uint64_t write(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t 
 
 	long retVal = write((int) ebx, tmpBuf, edx);
 
-	free(tmpBuf);
+	if (edx > TMP_FAST_BUF_SIZE){
+        free(tmpBuf);
+    }
 
 	return retVal;
 }
 
 uint64_t readlink(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	char *tmpBufPath = (char *) malloc(TMP_FAST_BUF_SIZE);
+	char *tmpBufPath = (char *) malloc(TMP_FAST_BUF_SIZE); //TODO: check this
 	char *tmpBufLink = (char *) malloc(edx);
 
 	StrNCpyFromUserToKernel(tmpBufPath, (const char *) ebx, TMP_FAST_BUF_SIZE, cpid);
@@ -147,22 +150,22 @@ uint64_t uname(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t 
 
 uint64_t getppid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	return Task::CurrentTask()->Parent->Pid;
+	return Scheduler::currentThread()->parentProcess->parent->pid;
 }
 
 uint64_t getpid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	return Task::CurrentTask()->Pid;
+	return Scheduler::currentThread()->parentProcess->pid;
 }
 
 uint64_t getgid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	return Task::CurrentTask()->Gid;
+	return Scheduler::currentThread()->parentProcess->gid;
 }
 
 uint64_t getuid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-	return Task::CurrentTask()->Uid;
+	return Scheduler::currentThread()->parentProcess->uid;
 }
 
 uint64_t setgid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
@@ -331,6 +334,10 @@ uint64_t read(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t e
 
 	MemCpyFromKernelToUser((void *) ecx, tmpBuf, edx, cpid);
 
+    if (edx > TMP_FAST_BUF_SIZE){
+        free(tmpBuf);
+    }
+    
 	return retVal;
 }
 
@@ -353,7 +360,7 @@ uint64_t execve(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t
 
 uint64_t waitpid(uint64_t ebx, uint64_t ecx, uint64_t edx, uint64_t esi, uint64_t edi)
 {
-    while (Task::TaskDescriptorTable[ebx].Status != TERMINATED);
+        while (Task::processes->at(ebx)->status != TERMINATED);
 
 	return 0;
 }
@@ -511,7 +518,7 @@ uint64_t CreateProcess(uint64_t ebx, uint64_t ecx, uint64_t, uint64_t, uint64_t)
     char *tmpProcParams = (char *) malloc(TMP_FAST_BUF_SIZE);
     StrNCpyFromUserToKernel(tmpProcParams, (const char *) ecx, TMP_FAST_BUF_SIZE, cpid);
     
-    int newPid = Task::MaxUsedTaskPid();
+    int newPid = Task::processes->size(); //HACK
     int oldPidsSize = Pids->Size();
     
     HostSysCalls::newThread((int (*)(void*)) CreateNewProcess, tmpProcName, tmpProcParams);
@@ -520,7 +527,7 @@ uint64_t CreateProcess(uint64_t ebx, uint64_t ecx, uint64_t, uint64_t, uint64_t)
     
     while(oldPidsSize == Pids->Size());
 
-    Task::TaskDescriptorTable[newPid].CwdNode = Task::CurrentTask()->CwdNode;
+    Task::processes->at(newPid)->currentWorkingDirNode = Scheduler::currentThread()->parentProcess->currentWorkingDirNode;
 
     return newPid;
 }

@@ -20,13 +20,15 @@
  *   Date: 02/01/2006                                                      *
  ***************************************************************************/
 
-#include <arch/ia32/boot/multiboot.h>
+#include <arch/ia32/boot/multibootinfo.h>
 #include <main.h>
 
 extern "C"
 {
     void ia32_start(unsigned long magic, multiboot_info *info)
     {
-        main();
+        if (MultiBootInfo::init(magic, info)){
+            main();
+        }
     }
 }

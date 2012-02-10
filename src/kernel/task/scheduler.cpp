@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,43 +16,34 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: taskdescriptor.h                                                *
- *   Date: 24/10/2007                                                      *
+ *   Name: scheduler.cpp                                                   *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_TASKDESCRIPTOR_H
-#define _TASK_TASKDESCRIPTOR_H
-#include <KOOFCore>
-#include <filesystem/vfs.h>
-#include <filesystem/filedescriptor.h>
-#include <kdef.h>
+#include <task/scheduler.h>
 
-#include <ListWithHoles>
+#include <stdint.h>
+#include <cstdlib.h>
 
-enum TaskStatus{
-    NOT_STARTED,
-	READY,
-	WAITING,
-	SLEEPING,
-	RUNNING,
-	TERMINATED
-};
+QList<ThreadControlBlock *> *Scheduler::threads;
+int Scheduler::s_currentThread = 0;
 
-class TaskDescriptor
+void Scheduler::init()
 {
-	public:
-		char TaskName[64];
-		unsigned int Pid;
-		unsigned int Uid;
-		unsigned int Gid;
-		TaskDescriptor *Parent;
-		TaskStatus Status;
-		ListWithHoles <FileDescriptor *> *OpenFiles;
-		VNode *CwdNode;
-		int User;
-		int Nice;
+    threads = new QList<ThreadControlBlock *>();
+}
 
-		long EndDataSegment;
-};
+ThreadControlBlock *Scheduler::nextThread()
+{
+    ThreadControlBlock *tB;
+    do {
+        s_currentThread = (s_currentThread + 1) % threads->size();
+        tB = threads->at(s_currentThread);
+    } while (tB->status != Running);
+    return tB;
+}
 
-#endif
+ThreadControlBlock *Scheduler::currentThread()
+{    
+    return threads->at(s_currentThread);
+}

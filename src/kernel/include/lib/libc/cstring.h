@@ -20,12 +20,16 @@
  *   Date: 19/09/2010                                                      *
  ***************************************************************************/
 
+#ifndef _CSTRING_H_
+#define _CSTRING_H_
+
 #include <gccattributes.h>
+#include <stddef.h>
 
-typedef unsigned int size_t;
-
+#if __cplusplus
 extern "C"
 {
+#endif
     void *memchr(const void *buffer, int ch, size_t count) NON_NULL_ARGS;
 
     int memcmp(const void *buf1, const void *buf2, size_t count) MUST_CHECK NON_NULL_ARGS;
@@ -75,4 +79,8 @@ extern "C"
     size_t strlcpy(char *dst, const char *src, size_t size) NON_NULL_ARGS;
     
     char *rawstrcpy(char *dest, const char *src, size_t destSize, size_t srcSize) NON_NULL_ARGS;
+#if __cplusplus
 }
+#endif
+
+#endif

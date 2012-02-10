@@ -21,6 +21,8 @@
  ***************************************************************************/
 
 #include <task/task.h>
+#include <task/scheduler.h>
+#include <task/archthreadsmanager.h>
 #include <arch/umf/core/hostsyscalls.h>
 #include <filesystem/vnodemanager.h>
 #include <cctype.h>
@@ -77,7 +79,12 @@ int copyToHost(const char *path, const char *hostPath)
     if (hostFd < 0){
         return hostFd;
     }
-    int res = FileSystem::VFS::RelativePathToVnode(Task::CurrentTask()->CwdNode, path, &node);
+    int res;
+    if (path[0] == '/'){
+        res = FileSystem::VFS::RelativePathToVnode(0, path, &node);
+    }else{
+        res = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &node);
+    }
     if (res < 0){
         HostSysCalls::close(hostFd);
         return res;
@@ -137,7 +144,13 @@ void CreateNewProcess(char *tmpProcName, char *tmpProcParams)
         HostSysCalls::execve(execName, args, NULL);
 
     }else{
-        Pids->Add(HostSysCalls::getpid(), Task::CreateNewTask(fileName(tmpProcName), true));
+        ProcessControlBlock *process = Task::CreateNewTask(fileName(tmpProcName));
+	ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(0, 0, 0);
+        thread->parentProcess = process;
+	int nextTid = Scheduler::threads->size();
+	Scheduler::threads->append(thread);
+        Pids->Add(HostSysCalls::getpid(), nextTid);
+
 
         SyscallsLoop(child, execName);
     }
@@ -164,7 +177,12 @@ void UMMStartInit()
 
     }else{
         Pids = new IntKeyMap<int>();
-        Pids->Add(HostSysCalls::getpid(), Task::CreateNewTask(fileName(tmpProcName), true));
+        ProcessControlBlock *process = Task::CreateNewTask(fileName(tmpProcName));
+	ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(0, 0, 0);
+        thread->parentProcess = process;
+	int nextTid = Scheduler::threads->size();
+	Scheduler::threads->append(thread);
+        Pids->Add(HostSysCalls::getpid(), nextTid);
 
         SyscallsLoop(child, execName);
     }

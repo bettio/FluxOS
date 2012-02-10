@@ -49,7 +49,14 @@ int BlockDeviceManager::Register(BlockDevice *bd)
         return 0;
     }
 
-    BlockDevices.insert(DevId(bd->Major, bd->Minor), bd);
+    DevId blkId(bd->Major, bd->Minor);
+    BlockDevice *existingDev = BlockDevices.value(blkId);
+    if (existingDev != 0){
+       printk("Error: Major and Minor already used by /dev/%s\n", existingDev->name);
+       return 0;
+    }
+ 
+    BlockDevices.insert(blkId, bd);
     BlockDevicesByName.insert(bd->name, bd);
 
     FileSystem::DevFS::Mknod(0, bd->name, S_IFBLK, (bd->Major << 16) | bd->Minor);

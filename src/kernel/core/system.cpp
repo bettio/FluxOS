@@ -22,17 +22,19 @@
 #include <core/system.h>
 
 #include <task/task.h>
+#include <task/scheduler.h>
 #include <filesystem/errors.h>
 #include <defs.h>
 #include <cstring.h>
 
-char HostName[256];
-char DomainName[256];
+const char *HostName = "flux_host";
+const char *DomainName = "flux_domain";
 
 int SetHostName(const char *name, size_t len)
 {
-    if (Task::CurrentTask()->Uid == 0){
-        strncpy(HostName, name, MAX(len, 256));
+    if (Scheduler::currentThread()->parentProcess->uid == 0){
+        //small memory leak
+        HostName = strndup(name, MAX(len,256));
         return 0;
 
     }else{
@@ -42,8 +44,9 @@ int SetHostName(const char *name, size_t len)
 
 int SetDomainName(const char *name, size_t len)
 {
-    if (Task::CurrentTask()->Uid == 0){
-	    strncpy(DomainName, name, MAX(len, 256));
+    if (Scheduler::currentThread()->parentProcess->uid == 0){
+            //small memory leak
+	    DomainName = strndup(name, MAX(len,256));
         return 0;
 
     }else{
