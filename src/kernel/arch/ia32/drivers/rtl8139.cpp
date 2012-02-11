@@ -23,6 +23,7 @@
 #include <arch/ia32/drivers/rtl8139.h>
 #include <arch/ia32/io.h>
 #include <core/printk.h>
+#include <arch/ia32/mm/pagingmanager.h>
 #include <arch/ia32/core/pci.h>
 #include <arch/ia32/core/irq.h>
 #include <net/net.h>
@@ -54,11 +55,11 @@ bool rtl8139::init(int bus, int slot)
     IRQ::setHandler(receive, irq);
     IRQ::enableIRQ(irq);
 
-    newCard->rx_buff = (uint8_t *) malloc(8192 + 16 + 1500);
-
+    uint32_t physRxBuf = PagingManager::allocPhysicalAndVirtualMemory((void **) &newCard->rx_buff, 8192 + 16 + 1500);
+ 
     outportb(ioBase + 0x52, 0);
     outportb(ioBase + 0x37, 0x10);
-    outport32(ioBase + 0x30, (uint32_t) newCard->rx_buff);
+    outport32(ioBase + 0x30, physRxBuf);
     outport16(ioBase + 0x3C, 0xFFFF); //TODO: change 0xFFFF to something more specific otherwise some reserved bits are written
     printk("rtl8139: RealTek 8139 card found (%x:%x). MAC address: %x:%x:%x:%x:%x:%x\n",
            bus, slot,
@@ -77,6 +78,8 @@ bool rtl8139::init(int bus, int slot)
     newCard->iface->myIP.addrbytes[2] = 1;
     newCard->iface->myIP.addrbytes[3] = 5;
     newCard->iface->send = send;
+
+    newCard->nextDesc = 0;
 
     return true;
 }
@@ -110,10 +113,11 @@ void rtl8139::send(NetIface *iface, const uint8_t *buff, unsigned int siz)
     int ioBase = card->ioBase;
 
     while (1) {
-        for (int i = 0; i < 4; i++){
+        for (int i = card->nextDesc; i < 4; i++){
             if (inport32(ioBase + 0x10 + i*4) & (1 << 13)){
-                outport32(ioBase + 0x20 + i*4, (uint32_t) buff);
-                outport32(ioBase + 0x10 + i*4, siz);
+                card->nextDesc = (card->nextDesc + 1) % 4;
+                outport32(ioBase + 0x20 + i*4, PagingManager::physicalAddressOf((void *) buff) + ((uint32_t) buff & 0xFFF));
+                outport32(ioBase + 0x10 + i*4, siz); //size mask: 1FFF
                 return;
             }
         }

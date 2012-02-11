@@ -38,6 +38,7 @@ class rtl8139
         uint8_t *rx_buff;
         uint16_t rxPtr;
         int ioBase;
+        int nextDesc;
         NetIface *iface;
 };
 
