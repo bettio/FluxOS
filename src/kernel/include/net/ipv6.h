@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,24 +16,28 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: ipv6.h                                                          *
+ *   Date: 01/09/2011                                                      *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
-
-#include <net/ip.h>
-#include <net/netiface.h>
-
-#include <stdint.h>
-
-struct ARPPacket;
-
-class Net
+IPv6Addr
 {
-    public:
-
+    uint8_t addr[8];
 };
 
-#endif
+IPv6Header
+{
+    uint32_t head; //Version : 4, traffic class : 8, flow label: 20 
+    uint16_t payloadLen;
+    uint8_t nextHeader;
+    uint8_t hopLimit;
+    IPv6Addr src;
+    IPv6Addr dest;
+};
 
+ICMPv6Packet
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t checksum;
+};

@@ -16,24 +16,57 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: ethernet.cpp                                                         *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#include <net/net.h>
 
+#include <net/netutils.h>
+#include <net/arp.h>
+#include <net/ethernet.h>
 #include <net/ip.h>
-#include <net/netiface.h>
 
-#include <stdint.h>
+#include <cstdlib.h>
 
-struct ARPPacket;
+#define MAC_ADDRESS_LENGTH 6
 
-class Net
+#define ENABLE_DEBUG_MSG 1
+#include <debugmacros.h>
+
+#include <net/ethernet.h>
+#include <net/netutils.h>
+
+void Ethernet::processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size)
 {
-    public:
+    EthernetIIHeader *header = (EthernetIIHeader *) frame;
 
-};
+    switch(ntohs(header->type)){
+        case ETHERTYPE_ARP:
+              ARP::processARPPacket(iface, frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
-#endif
+              break;
 
+        case ETHERTYPE_IP:
+              IP::processIPPacket(iface, frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
+
+              break;
+
+        case ETHERTYPE_IPV6:
+              DEBUG_MSG("ProcessEthernetIIFrame: Unsupported IPv6 packet.\n");
+
+              break;
+
+        default:
+              DEBUG_MSG("ProcessEthernetIIFrame: Unknown packet type: type: %x\n", ntohs(header->type));
+
+              break;
+    }
+}
+
+void Ethernet::buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type)
+{
+    EthernetIIHeader *newEth = (EthernetIIHeader *) buffer;
+    memcpy(newEth->destination, destinationMAC, 6);
+    memcpy(newEth->source, iface->myMAC, 6);
+    newEth->type = htons(type);
+}

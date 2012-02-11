@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,24 +16,38 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: netutils.h                                                      *
+ *   Date: 28/08/2011                                                      *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#ifndef _NETUTILS_H_
+#define _NETUTILS_H_
 
-#include <net/ip.h>
-#include <net/netiface.h>
+#include <endian.h>
 
-#include <stdint.h>
-
-struct ARPPacket;
-
-class Net
+inline uint32_t htonl(uint32_t hostlong)
 {
-    public:
+    return HOST_TO_BIG_32(hostlong);
+}
 
-};
+inline int16_t htons(uint16_t hostshort)
+{
+    return HOST_TO_BIG_16(hostshort);
+}
+
+inline uint32_t ntohl(uint32_t netlong)
+{
+    return BIG_TO_HOST_32(netlong);
+}
+
+inline uint16_t ntohs(uint16_t netshort)
+{
+    return BIG_TO_HOST_16(netshort);
+}
+
+uint16_t checksum(uint16_t *data, int size);
+
+void ipv4toString(uint32_t addr, char *str);
 
 #endif
 

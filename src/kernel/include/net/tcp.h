@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,24 +16,33 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: tcp.h                                                           *
+ *   Date:28/08/2011                                                       *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
-
-#include <net/ip.h>
-#include <net/netiface.h>
+#ifndef _TCP_H_
+#define _TCP_H_
 
 #include <stdint.h>
 
-struct ARPPacket;
+struct TCPHeader
+{
+    uint16_t sourceport;
+    uint16_t destport;
+    uint32_t seqnumber;
+    uint32_t acknumber;
+    uint16_t flags;
+    uint16_t window;
+    uint32_t misc[2];
+} __attribute__ ((packed));
 
-class Net
+struct NetIface;
+
+class TCP
 {
     public:
-
+        static void processTCPPacket(NetIface *iface, uint8_t *packet, int size);
 };
 
-#endif
 
+#endif

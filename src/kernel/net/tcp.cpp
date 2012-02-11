@@ -16,24 +16,18 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: tcp.cpp                                                         *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#include <net/tcp.h>
 
-#include <net/ip.h>
-#include <net/netiface.h>
+#include <net/net.h>
+#include <net/netutils.h>
 
-#include <stdint.h>
+#define ENABLE_DEBUG_MSG 1
+#include <debugmacros.h>
 
-struct ARPPacket;
-
-class Net
+void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size)
 {
-    public:
 
-};
-
-#endif
-
+}

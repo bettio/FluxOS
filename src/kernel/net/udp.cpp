@@ -16,24 +16,20 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: udp.cpp                                                         *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#include <net/net.h>
 
-#include <net/ip.h>
-#include <net/netiface.h>
+#include <net/netutils.h>
+#include <net/udp.h>
 
-#include <stdint.h>
+#define ENABLE_DEBUG_MSG 1
+#include <debugmacros.h>
 
-struct ARPPacket;
-
-class Net
+void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 {
-    public:
+    UDPHeader *header = (UDPHeader *) packet;
 
-};
-
-#endif
-
+    DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
+}

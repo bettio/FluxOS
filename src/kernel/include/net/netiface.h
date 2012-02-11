@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,24 +16,30 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: netiface.h                                                      *
+ *   Date: 28/08/2011                                                      *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#ifndef _NETIFACE_H_
+#define _NETIFACE_H_
 
 #include <net/ip.h>
-#include <net/netiface.h>
 
 #include <stdint.h>
+#include <QHash>
 
-struct ARPPacket;
-
-class Net
+inline int qHash(uint32_t v)
 {
-    public:
+    return (int) v;
+} 
 
+struct NetIface
+{
+    uint8_t myMAC[6];
+    QHash<uint32_t, uint64_t> macCache;
+    ipaddr myIP;
+    void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);
+    void *card;
 };
 
 #endif
-

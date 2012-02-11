@@ -16,24 +16,37 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.h                                                           *
+ *   Name: netutils.cpp                                                    *
  ***************************************************************************/
 
-#ifndef _NET_H_
-#define _NET_H_
+#include <net/net.h>
 
-#include <net/ip.h>
-#include <net/netiface.h>
+#include <net/netutils.h>
 
+#include <cstdlib.h>
 #include <stdint.h>
 
-struct ARPPacket;
-
-class Net
+void ipv4toString(uint32_t addr, char *str)
 {
-    public:
+    ipaddr address;
+    address.addr = addr;
 
-};
+    int l = uitoaz(address.addrbytes[0], &str[0], 10);
+    str[l] = '.';
+    l += uitoaz(address.addrbytes[1], &str[l + 1], 10);
+    str[l] = '.';
+    l += uitoaz(address.addrbytes[2], &str[l + 1], 10);
+    str[l] = '.';
+    uitoaz(address.addrbytes[3], &str[l + 1], 10);
+}
 
-#endif
+uint16_t checksum(uint16_t *data, int size)
+{
+    uint32_t sum = 0;
 
+    for (int i = 0; i < size / 2; i++){
+        sum += ntohs(data[i]);
+    }
+
+    return htons(~((sum & 0xFFFF) + (sum >> 16)));
+}
