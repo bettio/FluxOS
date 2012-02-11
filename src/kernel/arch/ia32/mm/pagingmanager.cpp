@@ -173,6 +173,19 @@ void *PagingManager::mapPhysicalMemory(uint32_t physAddr, int physLen)
     return virtMemPtr;
 }
 
+/*
+ * TODO: workaround, not safe when interrupts are disabled
+ * TODO: it doesn't guarantee anything about contiguity
+ */
+uint32_t PagingManager::allocPhysicalAndVirtualMemory(void **ptr, int len)
+{
+    if (posix_memalign(ptr, PAGE_BOUNDARY, len)){
+        return 0;
+    }
+    memset(*ptr, 0, len); //HACK
+    return physicalAddressOf(*ptr);
+}
+
 void PagingManager::newPage(uint32_t addr)
 {
    int di = addrToPageDirIndex(addr);
