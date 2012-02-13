@@ -49,7 +49,8 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 
 void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
 {
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size);
+    int packetSize = sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size;
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(packetSize);
 
     uint64_t macAddr = iface->macCache.value(destIp.addr);
     Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
@@ -60,6 +61,7 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
     newUDPHeader->destport = htons(89);
     newUDPHeader->length = htons(size + sizeof(UDPHeader));
     newUDPHeader->checksum = 0;
+
     memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader), packet, size);
 
     UDPFakeHeader udpFake;
@@ -70,6 +72,6 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
     udpFake.udpLen = htons(sizeof(UDPHeader) + size);
     newUDPHeader->checksum = udpChecksum((uint16_t *) &udpFake, sizeof(udpFake), (uint16_t *) newUDPHeader, size + sizeof(UDPHeader));
 
-    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size);
+    iface->send(iface, (const uint8_t *) newPacket, packetSize);
 }
 
