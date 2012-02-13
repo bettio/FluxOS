@@ -23,9 +23,13 @@
 
 #include <net/netutils.h>
 #include <net/udp.h>
+#include <net/ethernet.h>
+#include <net/ip.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
+
+#define netBuffMalloc malloc
 
 void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 {
@@ -33,3 +37,22 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }
+
+void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
+{
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size);
+
+    uint64_t macAddr = iface->macCache.value(destIp.addr);
+    Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
+    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, PROTOCOL_UDP, sizeof(IPHeader) + sizeof(UDPHeader) + size);
+
+    UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
+    newUDPHeader->sourceport = htons(555);
+    newUDPHeader->destport = htons(89);
+    newUDPHeader->length = htons(size + sizeof(UDPHeader));
+    newUDPHeader->checksum = 0;
+    memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader), packet, size);
+
+    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size);
+}
+
