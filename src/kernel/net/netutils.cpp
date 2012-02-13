@@ -50,3 +50,24 @@ uint16_t checksum(uint16_t *data, int size)
 
     return htons(~((sum & 0xFFFF) + (sum >> 16)));
 }
+
+uint16_t udpChecksum(uint16_t *fakeHeader, int fakeSize, uint16_t *data, int size){
+    uint32_t sum = 0;
+
+    for (int i = 0; i < fakeSize / 2; i++){
+        sum += ntohs(fakeHeader[i]);
+    }
+
+    int i;
+    for (i = 0; i < size / 2; i++){
+        sum += ntohs(data[i]);
+    }
+    if (size % 2){
+        uint16_t oddTmp = data[i];
+        ((uint8_t *) &oddTmp)[1] = 0;
+        sum += ntohs(oddTmp);
+    }
+
+    return htons(~((sum & 0xFFFF) + (sum >> 16)));
+}
+

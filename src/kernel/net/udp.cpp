@@ -31,6 +31,15 @@
 
 #define netBuffMalloc malloc
 
+struct UDPFakeHeader
+{
+    ipaddr saddr;
+    ipaddr daddr;
+    uint8_t zero;
+    uint8_t protocol;
+    uint16_t udpLen;
+};
+
 void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     UDPHeader *header = (UDPHeader *) packet;
@@ -52,6 +61,14 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
     newUDPHeader->length = htons(size + sizeof(UDPHeader));
     newUDPHeader->checksum = 0;
     memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader), packet, size);
+
+    UDPFakeHeader udpFake;
+    udpFake.saddr = iface->myIP;
+    udpFake.daddr = destIp;
+    udpFake.zero = 0;
+    udpFake.protocol = PROTOCOL_UDP;
+    udpFake.udpLen = htons(sizeof(UDPHeader) + size);
+    newUDPHeader->checksum = udpChecksum((uint16_t *) &udpFake, sizeof(udpFake), (uint16_t *) newUDPHeader, size + sizeof(UDPHeader));
 
     iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size);
 }

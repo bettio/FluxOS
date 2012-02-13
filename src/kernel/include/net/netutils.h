@@ -49,5 +49,7 @@ uint16_t checksum(uint16_t *data, int size);
 
 void ipv4toString(uint32_t addr, char *str);
 
+uint16_t udpChecksum(uint16_t *fakeHeader, int fakeSize, uint16_t *data, int size);
+
 #endif
 
