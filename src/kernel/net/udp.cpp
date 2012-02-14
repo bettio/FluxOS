@@ -51,7 +51,7 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }
 
-void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
+void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
 {
     int packetSize = sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size;
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(packetSize);
@@ -61,8 +61,8 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
     IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, PROTOCOL_UDP, sizeof(IPHeader) + sizeof(UDPHeader) + size);
 
     UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
-    newUDPHeader->sourceport = htons(555);
-    newUDPHeader->destport = htons(89);
+    newUDPHeader->sourceport = srcPort;
+    newUDPHeader->destport = destPort;
     newUDPHeader->length = htons(size + sizeof(UDPHeader));
     newUDPHeader->checksum = 0;
 
