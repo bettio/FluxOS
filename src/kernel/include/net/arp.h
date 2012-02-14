@@ -48,6 +48,7 @@ class ARP
     public:
         static void processARPPacket(NetIface *iface, uint8_t *packet, int size);
         static void sendARPReply(NetIface *iface, const ARPPacket *arpPacket);
+        static void sendARPRequest(NetIface *iface, ipaddr ip);
 };
 
 #endif

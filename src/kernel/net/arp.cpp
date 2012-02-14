@@ -83,3 +83,25 @@ void ARP::sendARPReply(NetIface *iface, const ARPPacket *arpPacket)
 
     iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
 }
+
+void ARP::sendARPRequest(NetIface *iface, ipaddr ip)
+{
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(ARPPacket));
+
+    uint8_t broadcastMAC[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    Ethernet::buildEthernetIIHeader(iface, newPacket, broadcastMAC, ETHERTYPE_ARP);
+
+    ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
+    newArpPacket->hardwareType = htons(1);
+    newArpPacket->protocolType = htons(0x0800);
+    newArpPacket->hardwareSize = 6;
+    newArpPacket->protocolSize = 4;
+    newArpPacket->opcode = htons(ARP_OPCODE_REQUEST);
+    memcpy(newArpPacket->senderMAC, iface->myMAC, 6);
+    newArpPacket->senderIP = iface->myIP.addr;
+    memcpy(newArpPacket->targetMAC, broadcastMAC, 6);
+    newArpPacket->targetIP = ip.addr;
+
+    iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));  
+}
+
