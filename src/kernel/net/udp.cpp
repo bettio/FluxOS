@@ -24,6 +24,7 @@
 #include <net/netutils.h>
 #include <net/udp.h>
 #include <net/ethernet.h>
+#include <net/icmp.h>
 #include <net/ip.h>
 
 #define ENABLE_DEBUG_MSG 1
@@ -42,8 +43,10 @@ struct UDPFakeHeader
 
 void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 {
-    UDPHeader *header = (UDPHeader *) packet;
+    IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
 
+    UDPHeader *header = (UDPHeader *) packet;
+    ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->saddr, 3, 3);
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }
 
