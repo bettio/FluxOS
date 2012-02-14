@@ -44,19 +44,19 @@ void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
     switch(header->protocol){
         case PROTOCOL_ICMP:
             DEBUG_MSG("Net: ICMP packet\n");
-            ICMP::processICMPPacket(iface, packet + header->ihl*4, size - header->ihl*4); //security
+            ICMP::processICMPPacket(iface, packet + header->ihl*4, ntohs(header->tot_len) - header->ihl*4); //security
 
             break;
 
         case PROTOCOL_TCP:
             DEBUG_MSG("Net: TCP packet\n");
-            TCP::processTCPPacket(iface, packet + header->ihl*4, size - header->ihl*4);
+            TCP::processTCPPacket(iface, packet + header->ihl*4, ntohs(header->tot_len) - header->ihl*4);
 
             break;
 
         case PROTOCOL_UDP:
             DEBUG_MSG("Net: UDP packet\n");
-            UDP::processUDPPacket(iface, packet + header->ihl*4, size - header->ihl*4); //security
+            UDP::processUDPPacket(iface, packet + header->ihl*4, ntohs(header->tot_len) - header->ihl*4); //security
 
             break;
 
