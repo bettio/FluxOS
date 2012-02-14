@@ -35,9 +35,9 @@ struct ARPPacket
   uint8_t hardwareSize;
   uint8_t protocolSize;
   uint16_t opcode;
-  uint8_t senderMAC[6];
+  macaddr senderMAC;
   uint32_t senderIP;
-  uint8_t targetMAC[6];
+  macaddr targetMAC;
   uint32_t targetIP;
 } __attribute__ ((packed));
 

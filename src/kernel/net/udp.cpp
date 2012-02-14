@@ -26,6 +26,7 @@
 #include <net/ethernet.h>
 #include <net/icmp.h>
 #include <net/ip.h>
+#include <net/arp.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
@@ -55,8 +56,8 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint8_t *packet, int size)
     int packetSize = sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size;
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(packetSize);
 
-    uint64_t macAddr = iface->macCache.value(destIp.addr);
-    Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
+    macaddr macAddr = iface->macCache.value(destIp.addr);
+    Ethernet::buildEthernetIIHeader(iface, newPacket, macAddr, ETHERTYPE_IP);
     IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, PROTOCOL_UDP, sizeof(IPHeader) + sizeof(UDPHeader) + size);
 
     UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));

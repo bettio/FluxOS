@@ -71,7 +71,7 @@ bool rtl8139::init(int bus, int slot)
     newCard->iface = new NetIface;
     newCard->iface->card = newCard;
     for (int i = 0; i < 6; i++){
-        newCard->iface->myMAC[i] = inportb(ioBase + i);
+        newCard->iface->myMAC.addrbytes[i] = inportb(ioBase + i);
     }
     newCard->iface->myIP.addrbytes[0] = 192;
     newCard->iface->myIP.addrbytes[1] = 168;

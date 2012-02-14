@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,31 +16,16 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: netiface.h                                                      *
- *   Date: 28/08/2011                                                      *
+ *   Name: mac.h                                                           *
+ *   Date: 14/02/2012                                                      *
  ***************************************************************************/
 
-#ifndef _NETIFACE_H_
-#define _NETIFACE_H_
+#ifndef _MAC_H_
+#define _MAC_H_
 
-#include <net/ip.h>
-#include <net/mac.h>
-
-#include <stdint.h>
-#include <QHash>
-
-inline int qHash(uint32_t v)
-{
-    return (int) v;
-} 
-
-struct NetIface
-{
-    macaddr myMAC;
-    QHash<uint32_t, macaddr> macCache;
-    ipaddr myIP;
-    void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);
-    void *card;
-};
+union macaddr{
+    uint8_t addrbytes[6];
+}  __attribute__ ((packed));
 
 #endif
+

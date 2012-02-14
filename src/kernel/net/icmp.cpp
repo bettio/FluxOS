@@ -71,8 +71,8 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
 
     uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
 
-    uint64_t macAddr = iface->macCache.value(destIp.addr);
-    Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
+    macaddr macAddr = iface->macCache.value(destIp.addr);
+    Ethernet::buildEthernetIIHeader(iface, newPacket, macAddr, ETHERTYPE_IP);
     IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, 0x01, sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));

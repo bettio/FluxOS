@@ -28,8 +28,6 @@
 
 #include <cstdlib.h>
 
-#define MAC_ADDRESS_LENGTH 6
-
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
@@ -63,10 +61,10 @@ void Ethernet::processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size)
     }
 }
 
-void Ethernet::buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type)
+void Ethernet::buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, macaddr destinationMAC, uint16_t type)
 {
     EthernetIIHeader *newEth = (EthernetIIHeader *) buffer;
-    memcpy(newEth->destination, destinationMAC, 6);
-    memcpy(newEth->source, iface->myMAC, 6);
+    newEth->destination = destinationMAC;
+    newEth->source = iface->myMAC;
     newEth->type = htons(type);
 }

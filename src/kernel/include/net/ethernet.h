@@ -23,6 +23,7 @@
 #ifndef _ETHERNET_H_
 #define _ETHERNET_H_
 
+#include <net/mac.h>
 #include <stdint.h>
 
 #define ETHERTYPE_IP 0x0800
@@ -31,8 +32,8 @@
 
 struct EthernetIIHeader
 {
-  uint8_t destination[6];
-  uint8_t source[6];
+  macaddr destination;
+  macaddr source;
   uint16_t type;
 } __attribute__ ((packed));;
 
@@ -42,7 +43,7 @@ class Ethernet
 {
     public:
         static void processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size);
-        static void buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, const uint8_t *destinationMAC, uint16_t type);
+        static void buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, macaddr destinationMAC, uint16_t type);
 };
 
 #endif
