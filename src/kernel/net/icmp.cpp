@@ -57,20 +57,40 @@ void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
     }
 }
 
-void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp)
+void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type, int code)
 {
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 80); //HARDCODED
+    int additionalSize = 0;
+    switch (type){
+        case 3:
+            additionalSize = 4;
+            break;
+
+        default:
+            additionalSize = 0;
+    }
+
+    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
 
     uint64_t macAddr = iface->macCache.value(destIp.addr);
     Ethernet::buildEthernetIIHeader(iface, newPacket, (uint8_t *) &macAddr, ETHERTYPE_IP);
-    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, 0x01, 0x54);
+    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, 0x01, sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
-    newICMPHeader->type = 0;
-    newICMPHeader->code = 0;
+    newICMPHeader->type = type;
+    newICMPHeader->code = code;
     newICMPHeader->checksum = 0;
-    memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader), data, 60);
-    newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, 64);
 
-    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + 60);
+    switch (type){
+        case 3:
+            memset((uint8_t *) newICMPHeader + 4, 0, 4);
+            break;
+
+        default:
+            additionalSize = 0;
+    }
+
+    memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize, data, size);
+    newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, sizeof(ICMPHeader) + additionalSize + size);
+
+    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
 }
