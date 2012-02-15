@@ -78,6 +78,8 @@ bool rtl8139::init(int bus, int slot)
     newCard->iface->myIP.addrbytes[2] = 1;
     newCard->iface->myIP.addrbytes[3] = 5;
     newCard->iface->send = send;
+    newCard->iface->allocPacketFor = Ethernet::allocPacketFor;
+    newCard->iface->sendTo = Ethernet::sendTo;
 
     newCard->nextDesc = 0;
 

@@ -23,15 +23,11 @@
 
 #include <net/netutils.h>
 #include <net/udp.h>
-#include <net/ethernet.h>
 #include <net/icmp.h>
 #include <net/ip.h>
-#include <net/arp.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
-
-#define netBuffMalloc malloc
 
 struct UDPFakeHeader
 {
@@ -53,20 +49,16 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
 
 void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
 {
-    int packetSize = sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader) + size;
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(packetSize);
+    int payloadOffset;
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, packet, sizeof(UDPHeader) + size, destIp, PROTOCOL_UDP, &payloadOffset);
 
-    macaddr macAddr = iface->macCache.value(destIp.addr);
-    Ethernet::buildEthernetIIHeader(iface, newPacket, macAddr, ETHERTYPE_IP);
-    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, PROTOCOL_UDP, sizeof(IPHeader) + sizeof(UDPHeader) + size);
-
-    UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
+    UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + payloadOffset);
     newUDPHeader->sourceport = srcPort;
     newUDPHeader->destport = destPort;
     newUDPHeader->length = htons(size + sizeof(UDPHeader));
     newUDPHeader->checksum = 0;
 
-    memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(UDPHeader), packet, size);
+    memcpy(newPacket + payloadOffset + sizeof(UDPHeader), packet, size);
 
     UDPFakeHeader udpFake;
     udpFake.saddr = iface->myIP;
@@ -76,6 +68,6 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t dest
     udpFake.udpLen = htons(sizeof(UDPHeader) + size);
     newUDPHeader->checksum = udpChecksum((uint16_t *) &udpFake, sizeof(udpFake), (uint16_t *) newUDPHeader, size + sizeof(UDPHeader));
 
-    iface->send(iface, (const uint8_t *) newPacket, packetSize);
+    IP::sendTo(iface, newPacket, sizeof(UDPHeader) + size, destIp, PROTOCOL_UDP);
 }
 

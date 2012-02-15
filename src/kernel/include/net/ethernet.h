@@ -42,6 +42,8 @@ struct NetIface;
 class Ethernet
 {
     public:
+        static void *allocPacketFor(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol, int *offset);
+        static void sendTo(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol);
         static void processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size);
         static void buildEthernetIIHeader(NetIface *iface, uint8_t *buffer, macaddr destinationMAC, uint16_t type);
 };

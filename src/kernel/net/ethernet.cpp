@@ -34,6 +34,20 @@
 #include <net/ethernet.h>
 #include <net/netutils.h>
 
+void *Ethernet::allocPacketFor(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol, int *offset)
+{
+    void *newPacket = malloc(sizeof(EthernetIIHeader) + size);
+    *offset = sizeof(EthernetIIHeader);
+
+    return newPacket;
+}
+
+void Ethernet::sendTo(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol)
+{
+    Ethernet::buildEthernetIIHeader(iface, (uint8_t *) buf, destMAC, protocol);
+    iface->send(iface, (uint8_t *) buf, sizeof(EthernetIIHeader) + size);
+}
+
 void Ethernet::processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size)
 {
     EthernetIIHeader *header = (EthernetIIHeader *) frame;

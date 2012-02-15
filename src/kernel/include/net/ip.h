@@ -54,6 +54,9 @@ class IP
     public:
         static void processIPPacket(NetIface *iface, uint8_t *packet, int size);
         static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
+        static void *allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset);
+        static void sendTo(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol);
 };
 
 #endif
+

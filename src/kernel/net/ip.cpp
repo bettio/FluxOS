@@ -26,11 +26,10 @@
 #include <net/netutils.h>
 #include <net/tcp.h>
 #include <net/udp.h>
+#include <net/ethernet.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
-
-#define netBuffMalloc malloc
 
 void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
 {
@@ -83,3 +82,20 @@ void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, u
     newIPHeader->daddr = destinationIP;
     newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
 }
+
+void *IP::allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset)
+{
+    macaddr macAddr = iface->macCache.value(destIP.addr);
+    void *tmp = iface->allocPacketFor(iface, buf, size + sizeof(IPHeader), macAddr, ETHERTYPE_IP, offset);
+    *offset += sizeof(IPHeader);
+
+    return tmp;
+}
+
+void IP::sendTo(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol)
+{
+    macaddr macAddr = iface->macCache.value(destIP.addr);
+    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), destIP, protocol, sizeof(IPHeader) + size);
+    iface->sendTo(iface, buf, sizeof(IPHeader) + size, macAddr, ETHERTYPE_IP);
+}
+

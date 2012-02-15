@@ -33,8 +33,6 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-#define netBuffMalloc malloc
-
 void ARP::processARPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     ARPPacket *arp = (ARPPacket *) packet;
@@ -64,31 +62,30 @@ void ARP::processARPPacket(NetIface *iface, uint8_t *packet, int size)
 
 void ARP::sendARPReply(NetIface *iface, const ARPPacket *arpPacket)
 {
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(ARPPacket));
+    int payloadOffset;
+    uint8_t *newPacket = (uint8_t *) iface->allocPacketFor(iface, 0, sizeof(ARPPacket), arpPacket->senderMAC, ETHERTYPE_ARP, &payloadOffset);
 
-    Ethernet::buildEthernetIIHeader(iface, newPacket, arpPacket->senderMAC, ETHERTYPE_ARP);
-
-    ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
+    ARPPacket *newArpPacket = (ARPPacket *) (newPacket + payloadOffset);
     newArpPacket->hardwareType = htons(1);
     newArpPacket->protocolType = htons(0x0800);
     newArpPacket->hardwareSize = 6;
     newArpPacket->protocolSize = 4;
-    newArpPacket->opcode = htons(0x0002);
+    newArpPacket->opcode = htons(ARP_OPCODE_REPLY);
     newArpPacket->senderMAC = iface->myMAC;
     newArpPacket->senderIP = arpPacket->targetIP;
     newArpPacket->targetMAC = arpPacket->senderMAC;
     newArpPacket->targetIP = arpPacket->senderIP;
 
-    iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));
+    iface->sendTo(iface, newPacket, sizeof(ARPPacket), arpPacket->senderMAC, ETHERTYPE_ARP);
 }
 
 void ARP::sendARPRequest(NetIface *iface, ipaddr ip)
 {
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(ARPPacket));
-
     macaddr broadcastMAC;
     broadcastMAC.addrbytes = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-    Ethernet::buildEthernetIIHeader(iface, newPacket, broadcastMAC, ETHERTYPE_ARP);
+
+    int payloadOffset;
+    uint8_t *newPacket = (uint8_t *) iface->allocPacketFor(iface, 0, sizeof(ARPPacket), broadcastMAC, ETHERTYPE_ARP, &payloadOffset);
 
     ARPPacket *newArpPacket = (ARPPacket *) (newPacket + sizeof(EthernetIIHeader));
     newArpPacket->hardwareType = htons(1);
@@ -101,6 +98,6 @@ void ARP::sendARPRequest(NetIface *iface, ipaddr ip)
     newArpPacket->targetMAC = broadcastMAC;
     newArpPacket->targetIP = ip.addr;
 
-    iface->send(iface, newPacket, sizeof(EthernetIIHeader) + sizeof(ARPPacket));  
+    iface->sendTo(iface, newPacket, sizeof(ARPPacket), broadcastMAC, ETHERTYPE_ARP);
 }
 

@@ -30,8 +30,6 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-#define netBuffMalloc malloc
-
 void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     ICMPHeader *header = (ICMPHeader *) packet;
@@ -69,13 +67,10 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
             additionalSize = 0;
     }
 
-    uint8_t *newPacket = (uint8_t *) netBuffMalloc(sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
+    int payloadOffset;
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, data, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP, &payloadOffset);
 
-    macaddr macAddr = iface->macCache.value(destIp.addr);
-    Ethernet::buildEthernetIIHeader(iface, newPacket, macAddr, ETHERTYPE_IP);
-    IP::buildIPHeader(iface, newPacket + sizeof(EthernetIIHeader), destIp, 0x01, sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
-
-    ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader));
+    ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + payloadOffset);
     newICMPHeader->type = type;
     newICMPHeader->code = code;
     newICMPHeader->checksum = 0;
@@ -89,8 +84,8 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
             additionalSize = 0;
     }
 
-    memcpy(newPacket + sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize, data, size);
+    memcpy(newPacket + payloadOffset + sizeof(ICMPHeader) + additionalSize, data, size);
     newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, sizeof(ICMPHeader) + additionalSize + size);
 
-    iface->send(iface, (const uint8_t *) newPacket, sizeof(EthernetIIHeader) + sizeof(IPHeader) + sizeof(ICMPHeader) + additionalSize + size);
+    IP::sendTo(iface, newPacket, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP);
 }
