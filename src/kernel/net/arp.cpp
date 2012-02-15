@@ -38,7 +38,7 @@ void ARP::processARPPacket(NetIface *iface, uint8_t *packet, int size)
     ARPPacket *arp = (ARPPacket *) packet;
 
     if ((arp->hardwareSize != MAC_ADDRESS_LENGTH) || (arp->protocolSize != IP_ADDRESS_LENGTH)){
-        DEBUG_MSG("Unsupported address size: hardware: %i, protocol: %i\n", arp->hardwareSize, arp->protocolSize); 
+        DEBUG_MSG("ARP: unsupported address size: hardware: %i, protocol: %i\n", arp->hardwareSize, arp->protocolSize); 
     }
 
     iface->macCache.insert(arp->senderIP, arp->senderMAC);

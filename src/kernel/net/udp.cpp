@@ -43,6 +43,21 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
     IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
 
     UDPHeader *header = (UDPHeader *) packet;
+
+    if ((ntohs(header->length) < sizeof(UDPHeader)) || ((uint16_t) size < sizeof(UDPHeader))){
+        DEBUG_MSG("UDP: packet length is smaller than header size: %i, reported size: %i.\n", ntohs(header->length), size);
+        return;
+    }
+    //TODO: should I discard every UDP packet with a different size?
+    if (ntohs(header->length) > size){
+        DEBUG_MSG("UDP: packet length is bigger than size reported from IP header: udp size: %i, reported size: %i.\n", ntohs(header->length), size);
+        return;
+    }
+    if (header->destport == 0){
+        DEBUG_MSG("UDP: packet destination port is set to 0.\n");
+        return;
+    }
+
     ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->saddr, 3, 3);
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }

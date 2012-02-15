@@ -30,10 +30,28 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
+inline int icmpHeaderAdditionalSize(int type)
+{
+    switch (type){
+        case 3:
+            return 4;
+
+        default:
+            return 0;
+    }
+}
+
+
 void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     ICMPHeader *header = (ICMPHeader *) packet;
     IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
+
+    int additionalSize = icmpHeaderAdditionalSize(header->type);
+    if ((unsigned int) size < sizeof(ICMPHeader) + additionalSize){
+        DEBUG_MSG("ICMP: packet size is smaller than ICMP header (size: %i).\n", size);
+        return;
+    }
 
     switch(header->type){
         case ECHO_REPLY:
@@ -57,15 +75,7 @@ void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
 
 void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type, int code)
 {
-    int additionalSize = 0;
-    switch (type){
-        case 3:
-            additionalSize = 4;
-            break;
-
-        default:
-            additionalSize = 0;
-    }
+    int additionalSize = icmpHeaderAdditionalSize(type);
 
     int payloadOffset;
     uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, data, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP, &payloadOffset);
