@@ -43,6 +43,8 @@
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
 
+#include <net/ip.h>
+
 #include <core/system.h>
 
 #define BOOT 1
@@ -53,7 +55,9 @@ int main()
     
 	printk("I'm vmflux kernel.\n");
 	printk("FluxOS 0.1\n");
-    
+   
+    IP::init();
+
 	ArchManager::InitArch();
 
 	ArchManager::InitMemoryManagment();

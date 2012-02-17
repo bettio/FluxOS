@@ -78,7 +78,7 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
     int additionalSize = icmpHeaderAdditionalSize(type);
 
     int payloadOffset;
-    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, data, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP, &payloadOffset);
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(data, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP, &payloadOffset);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + payloadOffset);
     newICMPHeader->type = type;
@@ -97,5 +97,5 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
     memcpy(newPacket + payloadOffset + sizeof(ICMPHeader) + additionalSize, data, size);
     newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, sizeof(ICMPHeader) + additionalSize + size);
 
-    IP::sendTo(iface, newPacket, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP);
+    IP::sendTo(newPacket, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP);
 }

@@ -83,6 +83,26 @@ bool rtl8139::init(int bus, int slot)
 
     newCard->nextDesc = 0;
 
+    ipaddr dest;
+    dest.addrbytes[0] = 192;
+    dest.addrbytes[1] = 168;
+    dest.addrbytes[2] = 1;
+    dest.addrbytes[3] = 0;
+
+    ipaddr mask;
+    mask.addrbytes[0] = 255;
+    mask.addrbytes[1] = 255;
+    mask.addrbytes[2] = 255;
+    mask.addrbytes[3] = 0;
+
+    ipaddr gateway;
+    gateway.addrbytes[0] = 0;
+    gateway.addrbytes[1] = 0;
+    gateway.addrbytes[2] = 0;
+    gateway.addrbytes[3] = 0;
+
+    IP::addRoute(dest, mask, gateway, newCard->iface);
+
     return true;
 }
 
