@@ -172,7 +172,7 @@ void IP::forwardPacket(uint8_t *packet)
     macaddr macAddr;
     NetIface *iface;
     if (!route(header->daddr, &iface, &macAddr)){
-        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), header->saddr, 3, 0);
+        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), header->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_NET);
         return;
     }
 

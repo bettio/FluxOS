@@ -54,14 +54,14 @@ void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
     }
 
     switch(header->type){
-        case ECHO_REPLY:
+        case ICMP_ECHO_REPLY:
             DEBUG_MSG("PING REPLY\n");
 
-        case ECHO_REQUEST:
+        case ICMP_ECHO_REQUEST:
             DEBUG_MSG("PING REQUEST\n");
 
             if (ipHeader->daddr.addr == iface->myIP.addr){
-                ICMP::sendICMPReply(iface, packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr);
+                ICMP::sendICMPReply(iface, packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr, ICMP_ECHO_REPLY, 0);
             }
 
             break;

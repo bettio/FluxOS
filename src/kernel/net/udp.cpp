@@ -58,7 +58,7 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
         return;
     }
 
-    ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->saddr, 3, 3);
+    ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }
 

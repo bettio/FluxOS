@@ -25,8 +25,23 @@
 
 #include <stdint.h>
 
-#define ECHO_REPLY 0
-#define ECHO_REQUEST 8
+#define ICMP_ECHO_REPLY 0
+#define ICMP_UNREACHABLE 3
+#define ICMP_REDIRECT 5
+#define ICMP_ECHO_REQUEST 8
+#define ICMP_TIME_EXCEEDED 11
+#define ICMP_TIMESTAMP_REQUEST 13
+#define ICMP_TIMESTAMP_REPLY 14
+
+#define ICMP_UNREACHABLE_NET 0
+#define ICMP_UNREACHABLE_HOST 1
+#define ICMP_UNREACHABLE_PROTOCOL 2
+#define ICMP_UNREACHABLE_PORT 3
+#define ICMP_UNREACHABLE_FRAGNEEDED 4
+#define ICMP_UNREACHABLE_SOURCEROUTE 5
+
+#define ICMP_TIME_EXCEEDED_TTL 0
+#define ICMP_TIME_EXCEEDED__REASSEMBLY 1
 
 struct ICMPHeader
 {
@@ -41,7 +56,7 @@ class ICMP
 {
     public:
         static void processICMPPacket(NetIface *iface, uint8_t *packet, int size);
-        static void sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type = 0, int code = 0);
+        static void sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type, int code);
 };
 
 #endif
