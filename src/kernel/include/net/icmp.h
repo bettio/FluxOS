@@ -55,7 +55,7 @@ struct NetIface;
 class ICMP
 {
     public:
-        static void processICMPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void processICMPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType);
         static void sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type, int code);
 };
 

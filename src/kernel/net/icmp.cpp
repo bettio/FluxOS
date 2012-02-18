@@ -42,10 +42,10 @@ inline int icmpHeaderAdditionalSize(int type)
 }
 
 
-void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size)
+void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
 {
     ICMPHeader *header = (ICMPHeader *) packet;
-    IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
+    IPHeader *ipHeader = (IPHeader *) previousHeader;
 
     int additionalSize = icmpHeaderAdditionalSize(header->type);
     if ((unsigned int) size < sizeof(ICMPHeader) + additionalSize){

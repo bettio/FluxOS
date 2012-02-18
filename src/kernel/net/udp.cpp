@@ -38,9 +38,9 @@ struct UDPFakeHeader
     uint16_t udpLen;
 };
 
-void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size)
+void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
 {
-    IPHeader *ipHeader = (IPHeader *) (packet - sizeof(IPHeader)); //FIXME
+    IPHeader *ipHeader = (IPHeader *) previousHeader;
 
     UDPHeader *header = (UDPHeader *) packet;
 

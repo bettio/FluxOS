@@ -41,7 +41,7 @@ struct NetIface;
 class TCP
 {
     public:
-        static void processTCPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType);
 };
 
 

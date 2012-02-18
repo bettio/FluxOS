@@ -27,7 +27,7 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size)
+void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
 {
 
 }
