@@ -143,6 +143,7 @@ Route *IP::route(ipaddr destIP)
     return defaultRoute; 
 }
 
+//TODO: add support for unreachable host
 bool IP::route(ipaddr destIP, NetIface **destIf, macaddr *destMac)
 {
     Route *rt = route(destIP);
@@ -180,9 +181,14 @@ void IP::forwardPacket(uint8_t *packet)
     uint8_t *newPacket = (uint8_t *) iface->allocPacketFor(iface, packet, ntohs(header->tot_len), macAddr, ETHERTYPE_IP, &offset);
     memcpy(newPacket + offset, packet, ntohs(header->tot_len));
     IPHeader *newIPHeader = (IPHeader *) (newPacket + offset);
-    newIPHeader->ttl--;
-    newIPHeader->check = 0;
-    newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
+    if (newIPHeader->ttl > 1){
+        newIPHeader->ttl--;
+        newIPHeader->check = 0;
+        newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
+    }else{
+        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), header->saddr, ICMP_TIME_EXCEEDED, ICMP_TIME_EXCEEDED_TTL);
+        return;
+    }
 
     iface->sendTo(iface, newPacket, ntohs(header->tot_len), macAddr, ETHERTYPE_IP);
     DEBUG_MSG("IP: packet forwarded\n");
