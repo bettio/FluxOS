@@ -39,6 +39,7 @@ struct NetIface
     macaddr myMAC;
     QHash<uint32_t, macaddr> macCache;
     ipaddr myIP;
+    int mtu;
     void *(*allocPacketFor)(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol, int *offset);
     void (*sendTo)(NetIface *iface, void *buf, int size, macaddr destMAC, int protocol);
     void (*send)(NetIface *iface, const uint8_t *packet, unsigned int size);

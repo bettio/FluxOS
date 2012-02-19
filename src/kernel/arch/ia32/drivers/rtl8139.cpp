@@ -83,6 +83,8 @@ bool rtl8139::init(int bus, int slot)
 
     newCard->nextDesc = 0;
 
+    newCard->iface->mtu = 1500;
+
     ipaddr dest;
     dest.addrbytes[0] = 192;
     dest.addrbytes[1] = 168;
