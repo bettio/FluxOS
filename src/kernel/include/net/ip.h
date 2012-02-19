@@ -31,6 +31,8 @@
 #define PROTOCOL_TCP 6
 #define PROTOCOL_UDP 17
 
+#define IP_FLAGS_DF 0x4000
+
 union ipaddr{
     uint32_t addr;
     uint8_t addrbytes[4];
@@ -64,6 +66,7 @@ class IP
     public:
         static void init();
         static void processIPPacket(NetIface *iface, uint8_t *packet, int size);
+        static void processIPFragment(NetIface *iface, uint8_t *packet, int size);
         static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
         static void *allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset);
         static void *allocPacketFor(void *buf, int size, ipaddr destIP, int protocol, int *offset);

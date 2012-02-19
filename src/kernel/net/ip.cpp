@@ -86,6 +86,11 @@ void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
         }
     }
 
+    if (ntohs(header->frag_off) && !(ntohs(header->frag_off) & IP_FLAGS_DF)){
+        processIPFragment(iface, packet, size);
+        return;
+    }
+
     switch(header->protocol){
         case PROTOCOL_ICMP:
             DEBUG_MSG("Net: ICMP packet\n");
@@ -110,6 +115,12 @@ void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
 
             break;
     }
+}
+
+
+void IP::processIPFragment(NetIface *iface, uint8_t *packet, int size)
+{
+    return;
 }
 
 void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen)
