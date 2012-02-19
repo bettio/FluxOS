@@ -119,7 +119,7 @@ void rtl8139::receive()
 
             outport16(ioBase + RTL8139_INTRSTATUS, 1);
 
-            Ethernet::processEthernetIIFrame(card->iface, card->rx_buff + card->rxPtr + 4, *((uint16_t *) card->rx_buff + card->rxPtr + 2));
+            Ethernet::processEthernetIIFrame(card->iface, card->rx_buff + card->rxPtr + 4, *((uint16_t *) (card->rx_buff + card->rxPtr + 2)) - 4);
 
             card->rxPtr = nextRxPtr;
             outport16(ioBase + 0x38, card->rxPtr - 0x10);
