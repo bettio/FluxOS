@@ -56,12 +56,10 @@ void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     IPHeader *header = (IPHeader *) packet;
 
-#if 0
     if ((uint16_t) size < sizeof(IPHeader)){
         DEBUG_MSG("IP: packet length is smaller than min header size. (reported size: %i).\n", size);
         return;
     }
-#endif
     if (header->version != 4){
         DEBUG_MSG("Not supported IP version.\n");
         return;
@@ -70,12 +68,10 @@ void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
         DEBUG_MSG("IP: packet header len is smaller than min header size. (size: %i).\n", header->ihl*4);
         return;
     }
-#if 0
     if (ntohs(header->tot_len) > size){
         DEBUG_MSG("IP: discarded packet: wrong total len\n");
         return;
     }
-#endif
     if (header->ihl*4 > ntohs(header->tot_len)){
         DEBUG_MSG("IP: discarded packet: packet header is bigger than packet\n");
         return;
