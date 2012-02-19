@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,44 +16,60 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: ipv6.h                                                          *
- *   Date: 01/09/2011                                                      *
+ *   Name: icmpv6.h                                                        *
+ *   Date: 19/02/2012                                                      *
  ***************************************************************************/
 
-#ifndef _IPV6_H_
-#define _IPV6_H_
+#ifndef _ICMP_H_
+#define _ICMP_H_
 
 #include <stdint.h>
+#include <net/mac.h>
+#include <net/ipv6.h>
 
-#define PROTOCOL_ICMPV6 58
+#define ICMPV6_ECHO_REQUEST 128
+#define ICMPV6_ECHO_REPLY 129
+#define ICMPV6_NDP_NEIGHBOR_SOLICITATION 135
+#define ICMPV6_NDP_NEIGHBOR_ADVERTISEMENT 136
+
+struct ICMPv6Header
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t checksum;
+} __attribute__ ((packed));
+
+struct NDPNeighborSolicitation
+{
+    uint32_t reserved;
+    IPv6Addr targetAddress;
+} __attribute__ ((packed));
+
+struct NDPNeighborAdvertisement
+{
+    uint32_t flags;
+    IPv6Addr targetAddress;
+} __attribute__ ((packed));
+
+struct NDPLinkLayerAddressOption
+{
+    uint8_t type;
+    uint8_t len;
+    macaddr linkLayerAddress;
+} __attribute__ ((packed));
+
+struct ICMPv6Echo
+{
+    uint16_t id;
+    uint16_t seqN;
+} __attribute__ ((packed));
 
 struct NetIface;
 
-struct IPv6Addr
-{
-    uint8_t addrbytes[16];
-};
-
-struct IPv6Header
-{
-    uint32_t head; //Version : 4, traffic class : 8, flow label: 20 
-    uint16_t payloadLen;
-    uint8_t nextHeader;
-    uint8_t hopLimit;
-    IPv6Addr saddr;
-    IPv6Addr daddr;
-};
-
-class IPv6
+class ICMPv6
 {
     public:
-        static void init();
-        static void processIPv6Packet(NetIface *iface, uint8_t *packet, int size);
-        static void buildIPv6Header(NetIface *iface, uint8_t *buffer, IPv6Addr *destinationIP, uint8_t protocol, uint16_t dataLen);
-        static void *allocPacketFor(NetIface *iface, void *buf, int size, IPv6Addr *destIP, int protocol, int *offset);
-        static void sendTo(NetIface *iface, void *buf, int size, IPv6Addr *destIP, int protocol);
- 
+        static void processICMPv6Packet(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType);
 };
 
 #endif
-

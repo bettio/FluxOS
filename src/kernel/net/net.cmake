@@ -7,4 +7,6 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     net/icmp.cpp
     net/udp.cpp
     net/tcp.cpp
+    net/ipv6.cpp
+    net/icmpv6.cpp
 )

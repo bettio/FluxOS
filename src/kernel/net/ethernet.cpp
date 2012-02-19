@@ -25,6 +25,7 @@
 #include <net/arp.h>
 #include <net/ethernet.h>
 #include <net/ip.h>
+#include <net/ipv6.h>
 
 #include <cstdlib.h>
 
@@ -64,7 +65,7 @@ void Ethernet::processEthernetIIFrame(NetIface *iface, uint8_t *frame, int size)
               break;
 
         case ETHERTYPE_IPV6:
-              DEBUG_MSG("ProcessEthernetIIFrame: Unsupported IPv6 packet.\n");
+              IPv6::processIPv6Packet(iface, frame + sizeof(EthernetIIHeader), size - sizeof(EthernetIIHeader));
 
               break;
 
