@@ -24,6 +24,16 @@
 #define _TCP_H_
 
 #include <stdint.h>
+#include <net/ip.h>
+
+#define TCP_FLAGS_FIN 1
+#define TCP_FLAGS_SYN 2
+#define TCP_FLAGS_RST 4
+#define TCP_FLAGS_PSH 8
+#define TCP_FLAGS_ACK 16
+#define TCP_FLAGS_URG 32
+#define TCP_FLAGS_ECE 64
+#define TCP_FLAGS_CWR 128
 
 struct TCPHeader
 {
@@ -32,8 +42,9 @@ struct TCPHeader
     uint32_t seqnumber;
     uint32_t acknumber;
     uint16_t flags;
-    uint16_t window;
-    uint32_t misc[2];
+    uint16_t windowSize;
+    uint16_t checksum;
+    uint16_t urgentPtr;
 } __attribute__ ((packed));
 
 struct NetIface;
@@ -42,6 +53,7 @@ class TCP
 {
     public:
         static void processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType);
+        static void sendTCPPacket(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t destPort, int flags, int acknumber, int seqnumber, uint8_t *packet, int size);
 };
 
 
