@@ -43,7 +43,7 @@
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
 
-#include <net/ip.h>
+#include <net/net.h>
 
 #include <core/system.h>
 
@@ -56,7 +56,7 @@ int main()
 	printk("I'm vmflux kernel.\n");
 	printk("FluxOS 0.1\n");
    
-    IP::init();
+    Net::init();
 
 	ArchManager::InitArch();
 

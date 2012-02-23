@@ -38,6 +38,11 @@ struct UDPFakeHeader
     uint16_t udpLen;
 };
 
+void UDP::init()
+{
+
+}
+
 void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
 {
     IPHeader *ipHeader = (IPHeader *) previousHeader;

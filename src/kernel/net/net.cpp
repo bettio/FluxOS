@@ -20,9 +20,20 @@
  ***************************************************************************/
 
 #include <net/net.h>
+#include <net/ip.h>
+#include <net/udp.h>
+#include <net/tcp.h>
 
 #include <core/printk.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
+
+void Net::init()
+{
+    IP::init();
+    IPv6::init();
+    UDP::init();
+    TCP::init();
+}
 

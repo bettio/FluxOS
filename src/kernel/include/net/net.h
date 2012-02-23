@@ -32,7 +32,7 @@ struct ARPPacket;
 class Net
 {
     public:
-
+        static void init();
 };
 
 #endif

@@ -47,6 +47,11 @@ uint16_t checksum(ipaddr saddr, ipaddr daddr, void *header, int size)
     return udpChecksum((uint16_t *) &tcpFake, sizeof(tcpFake), (uint16_t *) header, size);
 }
 
+void TCP::init()
+{
+
+}
+
 void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
 {
     IPHeader *ipHeader = (IPHeader *) previousHeader;
