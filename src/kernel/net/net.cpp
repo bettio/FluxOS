@@ -44,5 +44,44 @@ void Net::init()
 void Net::registerInterface(NetIface *iface)
 {
     int id = interfaces->append(iface);
+
+    ipaddr ip;
+    ip.addrbytes[0] = 192;
+    ip.addrbytes[1] = 168;
+    ip.addrbytes[2] = 1;
+    ip.addrbytes[3] = 5 + id;
+
+    IP::addAddressToInterface(iface, ip);
+
+    ipaddr dest;
+    dest.addrbytes[0] = 192;
+    dest.addrbytes[1] = 168;
+    dest.addrbytes[2] = 1;
+    dest.addrbytes[3] = 0;
+
+    ipaddr mask;
+    mask.addrbytes[0] = 255;
+    mask.addrbytes[1] = 255;
+    mask.addrbytes[2] = 255;
+    mask.addrbytes[3] = 0;
+
+    ipaddr gateway;
+    gateway.addrbytes[0] = 0;
+    gateway.addrbytes[1] = 0;
+    gateway.addrbytes[2] = 0;
+    gateway.addrbytes[3] = 0;
+
+    IP::addRoute(dest, mask, gateway, iface);
+
+    memset(iface->myIP6.addrbytes, 0, sizeof(IPv6Addr));
+    iface->myIP6.addrbytes[0] = 0x20;
+    iface->myIP6.addrbytes[1] = 0x01;
+    iface->myIP6.addrbytes[2] = 0x04;
+    iface->myIP6.addrbytes[3] = 0x70;
+    iface->myIP6.addrbytes[4] = 0x00;
+    iface->myIP6.addrbytes[5] = 0x6C;
+    iface->myIP6.addrbytes[6] = 0x00;
+    iface->myIP6.addrbytes[7] = 0x7E;
+    iface->myIP6.addrbytes[15] = 0x3 + id;
 }
 
