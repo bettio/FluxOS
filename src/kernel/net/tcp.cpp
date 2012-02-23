@@ -27,26 +27,6 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-struct TCPFakeHeader
-{
-    ipaddr saddr;
-    ipaddr daddr;
-    uint8_t zero;
-    uint8_t protocol;
-    uint16_t tcpLen;
-};
-
-uint16_t checksum(ipaddr saddr, ipaddr daddr, void *header, int size)
-{
-    TCPFakeHeader tcpFake;
-    tcpFake.saddr = saddr;
-    tcpFake.daddr = daddr;
-    tcpFake.zero = 0;
-    tcpFake.protocol = PROTOCOL_TCP;
-    tcpFake.tcpLen = htons(size);
-    return udpChecksum((uint16_t *) &tcpFake, sizeof(tcpFake), (uint16_t *) header, size);
-}
-
 void TCP::init()
 {
 
@@ -97,7 +77,7 @@ void TCP::sendTCPPacket(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16
     newTCPHeader->windowSize = htons(256);
     newTCPHeader->checksum = 0;
     newTCPHeader->urgentPtr = 0;
-    newTCPHeader->checksum = checksum(iface->myIP, destIp, newTCPHeader, sizeof(TCPHeader));
+    newTCPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_TCP, newTCPHeader, sizeof(TCPHeader));
 
     IP::sendTo(iface, newPacket, sizeof(TCPHeader) + size, destIp, PROTOCOL_TCP);
 }

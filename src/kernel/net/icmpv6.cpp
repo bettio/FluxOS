@@ -72,14 +72,7 @@ void ICMPv6::processICMPv6Packet(NetIface *iface, uint8_t *packet, int size, voi
             advOpt->len = 1;
             advOpt->linkLayerAddress = iface->myMAC;
 
-            ICMPv6FakeHeader icmpFake;
-            memcpy(&icmpFake.saddr, &iface->myIP6, sizeof(IPv6Addr));
-            memcpy(&icmpFake.daddr, &ipHeader->saddr, sizeof(IPv6Addr));
-            icmpFake.zeros0 = 0;
-            icmpFake.zeros1 = 0;
-            icmpFake.nextHeader = 58;
-            icmpFake.len = htonl(sizeof(ICMPv6Header) + sizeof(NDPNeighborAdvertisement) + sizeof(NDPLinkLayerAddressOption));
-            newHeader->checksum = udpChecksum((uint16_t *) &icmpFake, sizeof(ICMPv6FakeHeader), (uint16_t *) newHeader, sizeof(ICMPv6Header) + sizeof(NDPNeighborAdvertisement) + sizeof(NDPLinkLayerAddressOption));
+            newHeader->checksum = IPv6::upperLayerChecksum(&iface->myIP6, &ipHeader->saddr, PROTOCOL_ICMPV6, newHeader, sizeof(ICMPv6Header) + sizeof(NDPNeighborAdvertisement) + sizeof(NDPLinkLayerAddressOption));
 
             IPv6::sendTo(iface, newPacket, sizeof(ICMPv6Header) + sizeof(NDPNeighborAdvertisement) + sizeof(NDPLinkLayerAddressOption), &ipHeader->saddr, PROTOCOL_ICMPV6);
         }
@@ -105,14 +98,7 @@ void ICMPv6::processICMPv6Packet(NetIface *iface, uint8_t *packet, int size, voi
 
             memcpy((uint8_t *) reply + sizeof(ICMPv6Echo), (uint8_t *) echo + sizeof(ICMPv6Echo), replyDataSize);
 
-            ICMPv6FakeHeader icmpFake;
-            memcpy(&icmpFake.saddr, &iface->myIP6, sizeof(IPv6Addr));
-            memcpy(&icmpFake.daddr, &ipHeader->saddr, sizeof(IPv6Addr));
-            icmpFake.zeros0 = 0;
-            icmpFake.zeros1 = 0;
-            icmpFake.nextHeader = 58;
-            icmpFake.len = htonl(sizeof(ICMPv6Header) + sizeof(ICMPv6Echo) + replyDataSize);
-            newHeader->checksum = udpChecksum((uint16_t *) &icmpFake, sizeof(ICMPv6FakeHeader), (uint16_t *) newHeader, sizeof(ICMPv6Header) + sizeof(ICMPv6Echo) + replyDataSize);
+            newHeader->checksum = IPv6::upperLayerChecksum(&iface->myIP6, &ipHeader->saddr, PROTOCOL_ICMPV6, newHeader, sizeof(ICMPv6Header) + sizeof(ICMPv6Echo) + replyDataSize);
 
             IPv6::sendTo(iface, newPacket, sizeof(ICMPv6Header) + sizeof(ICMPv6Echo) + replyDataSize, &ipHeader->saddr, PROTOCOL_ICMPV6);
 

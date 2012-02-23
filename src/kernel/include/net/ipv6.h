@@ -44,12 +44,23 @@ struct IPv6Header
     IPv6Addr daddr;
 };
 
+struct IPv6FakeHeader
+{
+    IPv6Addr saddr;
+    IPv6Addr daddr;
+    uint32_t len;
+    uint16_t zeros0;
+    uint8_t zeros1;
+    uint8_t nextHeader;
+};
+
 class IPv6
 {
     public:
         static void init();
         static void processIPv6Packet(NetIface *iface, uint8_t *packet, int size);
         static void buildIPv6Header(NetIface *iface, uint8_t *buffer, IPv6Addr *destinationIP, uint8_t protocol, uint16_t dataLen);
+        static uint16_t upperLayerChecksum(IPv6Addr *saddr, IPv6Addr *daddr, int protocol, void *header, int size);
         static void *allocPacketFor(NetIface *iface, void *buf, int size, IPv6Addr *destIP, int protocol, int *offset);
         static void sendTo(NetIface *iface, void *buf, int size, IPv6Addr *destIP, int protocol);
  

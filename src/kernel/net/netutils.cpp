@@ -57,7 +57,7 @@ uint16_t checksum(uint16_t *data, int size)
     return htons(~((sum & 0xFFFF) + (sum >> 16)));
 }
 
-uint16_t udpChecksum(uint16_t *fakeHeader, int fakeSize, uint16_t *data, int size){
+uint16_t checksum(uint16_t *fakeHeader, int fakeSize, uint16_t *data, int size){
     uint32_t sum = 0;
 
     for (int i = 0; i < fakeSize / 2; i++){

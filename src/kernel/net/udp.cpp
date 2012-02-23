@@ -29,15 +29,6 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
-struct UDPFakeHeader
-{
-    ipaddr saddr;
-    ipaddr daddr;
-    uint8_t zero;
-    uint8_t protocol;
-    uint16_t udpLen;
-};
-
 void UDP::init()
 {
 
@@ -80,16 +71,10 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t dest
     newUDPHeader->destport = destPort;
     newUDPHeader->length = htons(size + sizeof(UDPHeader));
     newUDPHeader->checksum = 0;
-
+    
     memcpy(newPacket + payloadOffset + sizeof(UDPHeader), packet, size);
 
-    UDPFakeHeader udpFake;
-    udpFake.saddr = iface->myIP;
-    udpFake.daddr = destIp;
-    udpFake.zero = 0;
-    udpFake.protocol = PROTOCOL_UDP;
-    udpFake.udpLen = htons(sizeof(UDPHeader) + size);
-    newUDPHeader->checksum = udpChecksum((uint16_t *) &udpFake, sizeof(udpFake), (uint16_t *) newUDPHeader, size + sizeof(UDPHeader));
+    newUDPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_UDP, newUDPHeader, size + sizeof(UDPHeader));
 
     IP::sendTo(iface, newPacket, sizeof(UDPHeader) + size, destIp, PROTOCOL_UDP);
 }

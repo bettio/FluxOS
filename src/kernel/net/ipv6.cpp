@@ -100,6 +100,18 @@ void IPv6::buildIPv6Header(NetIface *iface, uint8_t *buffer, IPv6Addr *destinati
     memcpy(&newIPHeader->saddr, &iface->myIP6, sizeof(IPv6Addr));
 }
 
+uint16_t IPv6::upperLayerChecksum(IPv6Addr *saddr, IPv6Addr *daddr, int protocol, void *header, int size)
+{
+    IPv6FakeHeader ipFake;
+    memcpy(&ipFake.saddr, saddr, sizeof(IPv6Addr));
+    memcpy(&ipFake.daddr, daddr, sizeof(IPv6Addr));
+    ipFake.zeros0 = 0;
+    ipFake.zeros1 = 0;
+    ipFake.nextHeader = protocol;
+    ipFake.len = htonl(size);
+    return checksum((uint16_t *) &ipFake, sizeof(IPv6FakeHeader), (uint16_t *) header, size);
+}
+
 void *IPv6::allocPacketFor(NetIface *iface, void *buf, int size, IPv6Addr *destIP, int protocol, int *offset)
 {
     macaddr macAddr = iface->macCache6.value(destIP);

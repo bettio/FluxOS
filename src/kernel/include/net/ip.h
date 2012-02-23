@@ -51,6 +51,15 @@ struct IPHeader {
    ipaddr       daddr;
 } __attribute__ ((packed));
 
+struct IPFakeHeader
+{
+    ipaddr saddr;
+    ipaddr daddr;
+    uint8_t zero;
+    uint8_t protocol;
+    uint16_t payloadLen;
+};
+
 struct NetIface;
 
 struct Route
@@ -67,6 +76,7 @@ class IP
         static void init();
         static void processIPPacket(NetIface *iface, uint8_t *packet, int size);
         static void processIPFragment(NetIface *iface, uint8_t *packet, int size);
+        static uint16_t upperLayerChecksum(ipaddr saddr, ipaddr daddr, int protocol, void *header, int size);
         static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
         static void *allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset);
         static void *allocPacketFor(void *buf, int size, ipaddr destIP, int protocol, int *offset);

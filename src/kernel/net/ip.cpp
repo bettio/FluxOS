@@ -140,6 +140,18 @@ void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, u
     newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
 }
 
+
+uint16_t IP::upperLayerChecksum(ipaddr saddr, ipaddr daddr, int protocol, void *header, int size)
+{
+    IPFakeHeader ipFake;
+    ipFake.saddr = saddr;
+    ipFake.daddr = daddr;
+    ipFake.zero = 0;
+    ipFake.protocol = protocol;
+    ipFake.payloadLen = htons(size);
+    return checksum((uint16_t *) &ipFake, sizeof(IPFakeHeader), (uint16_t *) header, size);
+}
+
 Route *IP::route(ipaddr destIP)
 {
     for (int i = 0; i < routes->size(); i++){
