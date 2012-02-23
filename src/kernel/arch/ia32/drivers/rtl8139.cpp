@@ -68,42 +68,19 @@ bool rtl8139::init(int bus, int slot)
     outport32(ioBase + 0x44, 0xF | (1 << 7));
     outportb(ioBase + 0x37, 0x0C);
 
+    newCard->nextDesc = 0;
+
     newCard->iface = new NetIface;
     newCard->iface->card = newCard;
     for (int i = 0; i < 6; i++){
         newCard->iface->myMAC.addrbytes[i] = inportb(ioBase + i);
     }
-    newCard->iface->myIP.addrbytes[0] = 192;
-    newCard->iface->myIP.addrbytes[1] = 168;
-    newCard->iface->myIP.addrbytes[2] = 1;
-    newCard->iface->myIP.addrbytes[3] = 5;
     newCard->iface->send = send;
     newCard->iface->allocPacketFor = Ethernet::allocPacketFor;
     newCard->iface->sendTo = Ethernet::sendTo;
-
-    newCard->nextDesc = 0;
-
     newCard->iface->mtu = 1500;
 
-    ipaddr dest;
-    dest.addrbytes[0] = 192;
-    dest.addrbytes[1] = 168;
-    dest.addrbytes[2] = 1;
-    dest.addrbytes[3] = 0;
-
-    ipaddr mask;
-    mask.addrbytes[0] = 255;
-    mask.addrbytes[1] = 255;
-    mask.addrbytes[2] = 255;
-    mask.addrbytes[3] = 0;
-
-    ipaddr gateway;
-    gateway.addrbytes[0] = 0;
-    gateway.addrbytes[1] = 0;
-    gateway.addrbytes[2] = 0;
-    gateway.addrbytes[3] = 0;
-
-    IP::addRoute(dest, mask, gateway, newCard->iface);
+    Net::registerInterface(newCard->iface);
 
     return true;
 }

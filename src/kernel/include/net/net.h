@@ -25,6 +25,8 @@
 #include <net/ip.h>
 #include <net/netiface.h>
 
+#include <QList>
+
 #include <stdint.h>
 
 struct ARPPacket;
@@ -33,6 +35,10 @@ class Net
 {
     public:
         static void init();
+        static void registerInterface(NetIface *iface);
+
+    private:
+        static QList<NetIface *> *interfaces;
 };
 
 #endif

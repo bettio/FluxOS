@@ -29,11 +29,20 @@
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
+QList<NetIface *> *Net::interfaces;
+
 void Net::init()
 {
+    interfaces = new QList<NetIface *>;
+
     IP::init();
     IPv6::init();
     UDP::init();
     TCP::init();
+}
+
+void Net::registerInterface(NetIface *iface)
+{
+    int id = interfaces->append(iface);
 }
 

@@ -85,6 +85,7 @@ class IP
         static Route *route(ipaddr destIP);
         static bool route(ipaddr destIP, NetIface **destIf, macaddr *destMac);
         static void addRoute(ipaddr dest, ipaddr mask, ipaddr gateway, NetIface *iface);
+        static void addAddressToInterface(NetIface *iface, ipaddr addr);
         static void forwardPacket(uint8_t *packet);
 
 

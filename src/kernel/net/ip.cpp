@@ -52,6 +52,11 @@ void IP::addRoute(ipaddr dest, ipaddr mask, ipaddr gateway, NetIface *iface)
     routes->append(route);
 }
 
+void IP::addAddressToInterface(NetIface *iface, ipaddr addr)
+{
+    iface->myIP = addr;
+}
+
 void IP::processIPPacket(NetIface *iface, uint8_t *packet, int size)
 {
     IPHeader *header = (IPHeader *) packet;
