@@ -26,6 +26,9 @@
 
 #define QHASH_DEFAULT_CAPACITY 2
 
+/**
+ * NOTE: don't use a pointer as Key because keys are compared using == operator.
+ */
 template <typename Key, typename T> class QHash
 {
     private:
