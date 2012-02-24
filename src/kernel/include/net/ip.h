@@ -38,6 +38,8 @@ union ipaddr{
     uint8_t addrbytes[4];
 }  __attribute__ ((packed));
 
+#define INADDR_ANY 0
+
 struct IPHeader {
    uint8_t   ihl:4, version:4;
    uint8_t      tos;
@@ -77,11 +79,11 @@ class IP
         static void processIPPacket(NetIface *iface, uint8_t *packet, int size);
         static void processIPFragment(NetIface *iface, uint8_t *packet, int size);
         static uint16_t upperLayerChecksum(ipaddr saddr, ipaddr daddr, int protocol, void *header, int size);
-        static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
-        static void *allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset);
-        static void *allocPacketFor(void *buf, int size, ipaddr destIP, int protocol, int *offset);
-        static void sendTo(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol);
-        static void sendTo(void *buf, int size, ipaddr destIP, int protocol);      
+        static void buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr sourceIP, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen);
+        static void *allocPacketFor(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset);
+        static void *allocPacketFor(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset);
+        static void sendTo(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol);
+        static void sendTo(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol);      
         static Route *route(ipaddr destIP);
         static bool route(ipaddr destIP, NetIface **destIf, macaddr *destMac);
         static void addRoute(ipaddr dest, ipaddr mask, ipaddr gateway, NetIface *iface);

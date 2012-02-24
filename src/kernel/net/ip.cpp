@@ -128,7 +128,7 @@ void IP::processIPFragment(NetIface *iface, uint8_t *packet, int size)
     return;
 }
 
-void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen)
+void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr sourceIP, ipaddr destinationIP, uint8_t protocol, uint16_t dataLen)
 {
     IPHeader *newIPHeader = (IPHeader *) buffer;
     newIPHeader->version = 4;
@@ -140,7 +140,7 @@ void IP::buildIPHeader(NetIface *iface, uint8_t *buffer, ipaddr destinationIP, u
     newIPHeader->ttl = 64;
     newIPHeader->protocol = protocol;
     newIPHeader->check = 0;
-    newIPHeader->saddr = iface->myIP;
+    newIPHeader->saddr = sourceIP;
     newIPHeader->daddr = destinationIP;
     newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
 }
@@ -197,7 +197,7 @@ void IP::forwardPacket(uint8_t *packet)
     macaddr macAddr;
     NetIface *iface;
     if (!route(header->daddr, &iface, &macAddr)){
-        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), header->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_NET);
+        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), iface->myIP, header->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_NET);
         return;
     }
 
@@ -210,7 +210,7 @@ void IP::forwardPacket(uint8_t *packet)
         newIPHeader->check = 0;
         newIPHeader->check = checksum((uint16_t *) newIPHeader, sizeof(IPHeader));
     }else{
-        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), header->saddr, ICMP_TIME_EXCEEDED, ICMP_TIME_EXCEEDED_TTL);
+        ICMP::sendICMPReply(iface, packet, ntohs(header->tot_len), iface->myIP, header->saddr, ICMP_TIME_EXCEEDED, ICMP_TIME_EXCEEDED_TTL);
         return;
     }
 
@@ -218,7 +218,7 @@ void IP::forwardPacket(uint8_t *packet)
     DEBUG_MSG("IP: packet forwarded\n");
 }
 
-void *IP::allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol, int *offset)
+void *IP::allocPacketFor(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset)
 {
     macaddr macAddr = iface->macCache.value(destIP.addr);
     void *tmp = iface->allocPacketFor(iface, buf, size + sizeof(IPHeader), macAddr, ETHERTYPE_IP, offset);
@@ -227,7 +227,7 @@ void *IP::allocPacketFor(NetIface *iface, void *buf, int size, ipaddr destIP, in
     return tmp;
 }
 
-void *IP::allocPacketFor(void *buf, int size, ipaddr destIP, int protocol, int *offset)
+void *IP::allocPacketFor(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset)
 {
     macaddr macAddr;
     NetIface *iface;
@@ -235,20 +235,24 @@ void *IP::allocPacketFor(void *buf, int size, ipaddr destIP, int protocol, int *
         return 0;
     }
 
+    if (srcIP.addr == INADDR_ANY){
+        srcIP = iface->myIP;
+    }
+
     void *tmp = iface->allocPacketFor(iface, buf, size + sizeof(IPHeader), macAddr, ETHERTYPE_IP, offset);
     *offset += sizeof(IPHeader);
 
     return tmp;
 }
 
-void IP::sendTo(NetIface *iface, void *buf, int size, ipaddr destIP, int protocol)
+void IP::sendTo(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol)
 {
     macaddr macAddr = iface->macCache.value(destIP.addr);
-    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), destIP, protocol, sizeof(IPHeader) + size);
+    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), srcIP, destIP, protocol, sizeof(IPHeader) + size);
     iface->sendTo(iface, buf, sizeof(IPHeader) + size, macAddr, ETHERTYPE_IP);
 }
 
-void IP::sendTo(void *buf, int size, ipaddr destIP, int protocol)
+void IP::sendTo(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol)
 {
     macaddr macAddr;
     NetIface *iface;
@@ -256,7 +260,11 @@ void IP::sendTo(void *buf, int size, ipaddr destIP, int protocol)
         return;
     }
 
-    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), destIP, protocol, sizeof(IPHeader) + size);
+    if (srcIP.addr == INADDR_ANY){
+        srcIP = iface->myIP;
+    }
+
+    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), srcIP, destIP, protocol, sizeof(IPHeader) + size);
     iface->sendTo(iface, buf, sizeof(IPHeader) + size, macAddr, ETHERTYPE_IP);
 }
 

@@ -61,7 +61,7 @@ void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size, void *p
             DEBUG_MSG("PING REQUEST\n");
 
             if (ipHeader->daddr.addr == iface->myIP.addr){
-                ICMP::sendICMPReply(iface, packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->saddr, ICMP_ECHO_REPLY, 0);
+                ICMP::sendICMPReply(iface, packet + sizeof(ICMPHeader), size - sizeof(ICMPHeader), ipHeader->daddr, ipHeader->saddr, ICMP_ECHO_REPLY, 0);
             }
 
             break;
@@ -73,12 +73,12 @@ void ICMP::processICMPPacket(NetIface *iface, uint8_t *packet, int size, void *p
     }
 }
 
-void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp, int type, int code)
+void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr srcIP, ipaddr destIP, int type, int code)
 {
     int additionalSize = icmpHeaderAdditionalSize(type);
 
     int payloadOffset;
-    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(data, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP, &payloadOffset);
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(data, sizeof(ICMPHeader) + additionalSize + size, srcIP, destIP, PROTOCOL_ICMP, &payloadOffset);
 
     ICMPHeader *newICMPHeader = (ICMPHeader *) (newPacket + payloadOffset);
     newICMPHeader->type = type;
@@ -97,5 +97,5 @@ void ICMP::sendICMPReply(NetIface *iface, uint8_t *data, int size, ipaddr destIp
     memcpy(newPacket + payloadOffset + sizeof(ICMPHeader) + additionalSize, data, size);
     newICMPHeader->checksum = checksum((uint16_t *) newICMPHeader, sizeof(ICMPHeader) + additionalSize + size);
 
-    IP::sendTo(newPacket, sizeof(ICMPHeader) + additionalSize + size, destIp, PROTOCOL_ICMP);
+    IP::sendTo(newPacket, sizeof(ICMPHeader) + additionalSize + size, srcIP, destIP, PROTOCOL_ICMP);
 }

@@ -55,16 +55,17 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *pre
     }
 
     if (previousHeaderType == 4){
-        ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
+        //TODO: check compiliancy
+        ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->daddr, ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
     }
 
     DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
 }
 
-void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
+void UDP::sendTo(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
 {
     int payloadOffset;
-    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, packet, sizeof(UDPHeader) + size, destIp, PROTOCOL_UDP, &payloadOffset);
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, packet, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP, &payloadOffset);
 
     UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + payloadOffset);
     newUDPHeader->sourceport = srcPort;
@@ -76,6 +77,6 @@ void UDP::sendTo(NetIface *iface, ipaddr destIp, uint16_t srcPort, uint16_t dest
 
     newUDPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_UDP, newUDPHeader, size + sizeof(UDPHeader));
 
-    IP::sendTo(iface, newPacket, sizeof(UDPHeader) + size, destIp, PROTOCOL_UDP);
+    IP::sendTo(iface, newPacket, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP);
 }
 
