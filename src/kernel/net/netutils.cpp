@@ -26,20 +26,6 @@
 #include <cstdlib.h>
 #include <stdint.h>
 
-void ipv4toString(uint32_t addr, char *str)
-{
-    ipaddr address;
-    address.addr = addr;
-
-    int l = uitoaz(address.addrbytes[0], &str[0], 10);
-    str[l] = '.';
-    l += uitoaz(address.addrbytes[1], &str[l + 1], 10);
-    str[l] = '.';
-    l += uitoaz(address.addrbytes[2], &str[l + 1], 10);
-    str[l] = '.';
-    uitoaz(address.addrbytes[3], &str[l + 1], 10);
-}
-
 uint16_t checksum(uint16_t *data, int size)
 {
     uint32_t sum = 0;

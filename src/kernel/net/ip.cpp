@@ -42,6 +42,20 @@ void IP::init()
     defaultRoute = 0;
 }
 
+void IP::ipv4toString(uint32_t addr, char *str)
+{
+    ipaddr address;
+    address.addr = addr;
+
+    int l = uitoaz(address.addrbytes[0], &str[0], 10);
+    str[l] = '.';
+    l += uitoaz(address.addrbytes[1], &str[l + 1], 10);
+    str[l] = '.';
+    l += uitoaz(address.addrbytes[2], &str[l + 1], 10);
+    str[l] = '.';
+    uitoaz(address.addrbytes[3], &str[l + 1], 10);
+}
+
 void IP::addRoute(ipaddr dest, ipaddr mask, ipaddr gateway, NetIface *iface)
 {
     Route *route = new Route;
@@ -218,15 +232,6 @@ void IP::forwardPacket(uint8_t *packet)
     DEBUG_MSG("IP: packet forwarded\n");
 }
 
-void *IP::allocPacketFor(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset)
-{
-    macaddr macAddr = iface->macCache.value(destIP.addr);
-    void *tmp = iface->allocPacketFor(iface, buf, size + sizeof(IPHeader), macAddr, ETHERTYPE_IP, offset);
-    *offset += sizeof(IPHeader);
-
-    return tmp;
-}
-
 void *IP::allocPacketFor(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol, int *offset)
 {
     macaddr macAddr;
@@ -243,13 +248,6 @@ void *IP::allocPacketFor(void *buf, int size, ipaddr srcIP, ipaddr destIP, int p
     *offset += sizeof(IPHeader);
 
     return tmp;
-}
-
-void IP::sendTo(NetIface *iface, void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol)
-{
-    macaddr macAddr = iface->macCache.value(destIP.addr);
-    buildIPHeader(iface, ((uint8_t *) buf) + sizeof(EthernetIIHeader), srcIP, destIP, protocol, sizeof(IPHeader) + size);
-    iface->sendTo(iface, buf, sizeof(IPHeader) + size, macAddr, ETHERTYPE_IP);
 }
 
 void IP::sendTo(void *buf, int size, ipaddr srcIP, ipaddr destIP, int protocol)

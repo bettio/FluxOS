@@ -65,7 +65,7 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *pre
 void UDP::sendTo(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
 {
     int payloadOffset;
-    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, packet, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP, &payloadOffset);
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(packet, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP, &payloadOffset);
 
     UDPHeader *newUDPHeader = (UDPHeader *) (newPacket + payloadOffset);
     newUDPHeader->sourceport = srcPort;
@@ -77,6 +77,6 @@ void UDP::sendTo(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort,
 
     newUDPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_UDP, newUDPHeader, size + sizeof(UDPHeader));
 
-    IP::sendTo(iface, newPacket, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP);
+    IP::sendTo(newPacket, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP);
 }
 

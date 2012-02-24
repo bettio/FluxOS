@@ -64,7 +64,7 @@ void TCP::processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *pre
 void TCP::sendTCPPacket(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort, uint16_t destPort, int flags, int acknumber, int seqnumber, uint8_t *packet, int size)
 {
     int payloadOffset;
-    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(iface, packet, sizeof(TCPHeader) + size, srcIP, destIp, PROTOCOL_TCP, &payloadOffset);
+    uint8_t *newPacket = (uint8_t *) IP::allocPacketFor(packet, sizeof(TCPHeader) + size, srcIP, destIp, PROTOCOL_TCP, &payloadOffset);
 
     memcpy(newPacket + payloadOffset + sizeof(TCPHeader), packet, size);
 
@@ -79,6 +79,6 @@ void TCP::sendTCPPacket(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t s
     newTCPHeader->urgentPtr = 0;
     newTCPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_TCP, newTCPHeader, sizeof(TCPHeader));
 
-    IP::sendTo(iface, newPacket, sizeof(TCPHeader) + size, srcIP, destIp, PROTOCOL_TCP);
+    IP::sendTo(newPacket, sizeof(TCPHeader) + size, srcIP, destIp, PROTOCOL_TCP);
 }
 
