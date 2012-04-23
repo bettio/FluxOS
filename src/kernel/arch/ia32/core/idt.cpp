@@ -61,7 +61,6 @@ void IDT::setHandler(void (*func)(), int index, int dpl)
     uint32_t addr_func = (uint32_t)func;
     
     bool present = true;
-    int ring = dpl;
     bool size32 = true;
     
     uint64_t tmp;
@@ -76,7 +75,7 @@ void IDT::setHandler(void (*func)(), int index, int dpl)
     if (present) tmp |=  0x0000800000000000LL;
     
     //Ring
-    tmp |= (((uint64_t)ring) & 0x0000000000000003LL)<<44;
+    tmp |= (((uint64_t) dpl) & 0x0000000000000003LL)<<45;
     
     //Size
     if(size32 == true){
