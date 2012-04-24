@@ -64,7 +64,7 @@ uint32_t (*SyscallsTable[SYSCALL_MAXNUM])(uint32_t ebx, uint32_t ecx, uint32_t e
 
 void SyscallsManager::init()
 {
-    IDT::setHandler(syscallHandler, 128, 0 /* RING_0 */); //TODO: change to ring3
+    IDT::setHandler(syscallHandler, 128, 3);
 
     for(int i = 0; i < SYSCALL_MAXNUM; i++){
         registerSyscall(i, nullSysCallHandler);
