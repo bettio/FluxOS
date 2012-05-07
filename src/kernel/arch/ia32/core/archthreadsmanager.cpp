@@ -67,3 +67,24 @@ ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int fla
 
     return tmpCB;
 }
+
+ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
+{
+    ThreadControlBlock *tmpCB = new ThreadControlBlock;
+    void *tmpStack;
+    allocateKernelStack((void **) &tmpStack);
+    tmpCB->kernelStack = tmpStack;
+
+    return tmpCB;
+}
+
+void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args)
+{
+    RegistersFrame *tmpStack;
+    CB->stack = allocateKernelStack((void **) &tmpStack);
+    CB->currentStackPtr = tmpStack;
+    tmpStack->eip = (uint32_t) fn;
+    tmpStack->cs = 8;
+    tmpStack->eflags = 0x202;
+}
+

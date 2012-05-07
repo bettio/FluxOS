@@ -37,6 +37,7 @@ struct ThreadControlBlock
 {
     void *stack;
     void *currentStackPtr;
+    void *kernelStack;
     ProcessControlBlock *parentProcess;
     ThreadStatus status;
     unsigned int tid;

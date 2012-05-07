@@ -30,3 +30,15 @@ void ThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
     ThreadControlBlock *tCB = ArchThreadsManager::createKernelThread(fn, flags, args);
     Scheduler::threads->append(tCB);  
 }
+
+ThreadControlBlock *ThreadsManager::createUserThread(int flags)
+{
+    ThreadControlBlock *tCB = ArchThreadsManager::createUserThread(flags);
+    Scheduler::threads->append(tCB);  
+    return tCB;
+}
+
+void ThreadsManager::makeExecutable(ThreadControlBlock *tCB, void (*fn)(), int flags, void *args)
+{
+    ArchThreadsManager::makeExecutable(tCB, fn, flags, args);
+}

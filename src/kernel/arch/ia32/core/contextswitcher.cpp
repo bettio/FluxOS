@@ -21,6 +21,7 @@
  ***************************************************************************/
 
 #include <stdint.h>
+#include <arch/ia32/core/tss.h>
 #include <arch/ia32/core/contextswitcher.h>
 #include <arch/ia32/mm/pagingmanager.h>
 #include <task/scheduler.h>
@@ -50,5 +51,7 @@ void ContextSwitcher::schedule(long *esp)
     #ifndef NO_MMU
         PagingManager::changeAddressSpace((volatile uint32_t *) nThread->addressSpaceTable);
     #endif
+    TSS::setKernelStack(nThread->kernelStack);
     *esp = (long) nThread->currentStackPtr;
 }
+

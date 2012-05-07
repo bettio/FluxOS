@@ -34,7 +34,7 @@ char *UserProcsManager::executable;
 char *UserProcsManager::args;
 
 void UserProcsManager::processLoader()
-{   
+{
     ElfLoader loader;
     int res = loader.loadExecutableFile(executable);
     if (res < 0 || !loader.isValid()){
@@ -44,11 +44,25 @@ void UserProcsManager::processLoader()
         Scheduler::currentThread()->parentProcess->status = TERMINATED;
 	while(1);
     }
-    /*This doesn't work: ((int (*)(...)) loader.entryPoint())(executable, args, 0);*/
-    asm("pushl %1\n"
+
+    register long tmpEax asm("%eax");
+
+    asm(
+        "pushl %1\n"
         "pushl %2\n"
         "pushl %3\n"
-        "jmp *%0\n" : : "r" (loader.entryPoint()), "r" (args), "r" (executable), "r" (1 + (strlen(args) != 0)));
+        "movl %%esp, %4\n"
+        "pushl $0x23\n"
+        "pushl %4\n"
+        "pushf\n"
+        "pushl $0x1B\n"
+        "pushl %0\n"
+        "movl $0x23, %4\n"
+        "mov %4, %%ds\n"
+        "mov %4, %%es\n"
+        "mov %4, %%fs\n"
+        "mov %4, %%gs\n"
+        "iret\n" : : "r" (loader.entryPoint()), "r" (args), "r" (executable), "r" (1 + (strlen(args) != 0)), "r" (tmpEax));
     while(1);
 }
 
@@ -57,7 +71,8 @@ void UserProcsManager::createInitProcess()
     executable = strdup("/bin/init");
     args = strdup("");
     ProcessControlBlock *process = Task::CreateNewTask("init");
-    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(UserProcsManager::processLoader, 0, 0);
+    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
+    ArchThreadsManager::makeExecutable(thread, UserProcsManager::processLoader, 0, 0);
     thread->parentProcess = process;
     thread->status = Running;
 
@@ -73,7 +88,8 @@ int UserProcsManager::createProcess(const char *path, const char *a, const char 
     executable = strdup(path);
     args = strdup(a);
     ProcessControlBlock *process = Task::NewProcess((const char *)  a);
-    ThreadControlBlock *thread = ArchThreadsManager::createKernelThread(UserProcsManager::processLoader, 0, 0);
+    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
+    ArchThreadsManager::makeExecutable(thread, UserProcsManager::processLoader, 0, 0);
     thread->parentProcess = process;
 
     thread->addressSpaceTable = (void *) PagingManager::createPageDir();

@@ -37,7 +37,7 @@ enum PageFlags
 };
 
 #define MISSING_PAGE 0
-#define KERNEL_STD_PAGE Present | Write
+#define KERNEL_STD_PAGE Present | Write | User
 
 #define PAGEDIR_ENTRIES 1024
 #define PAGETABLE_ENTRIES 1024

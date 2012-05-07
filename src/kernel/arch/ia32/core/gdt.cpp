@@ -21,7 +21,7 @@
  ***************************************************************************/
 
 #include <arch/ia32/core/gdt.h>
-#include <stdint.h>
+#include <arch/ia32/core/tss.h>
 
 volatile uint64_t GDT::gdt[GDT_SIZE];
 
@@ -54,6 +54,9 @@ void GDT::init()
               "next:\n"
                : : : "%ax"
     );
+
+    TSS::init(gdt + 5);
+    TSS::ltr(5);
 }
 
 void GDT::setGDTR(volatile uint64_t *base, int numDesc)
