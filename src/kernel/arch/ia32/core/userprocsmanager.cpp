@@ -45,9 +45,12 @@ void UserProcsManager::processLoader()
 	while(1);
     }
 
+    memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
+    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0);
+
     register long tmpEax asm("%eax");
 
-    asm(
+    asm("movl $0xD0000000, %%esp\n" /* 0xD0000000 = USER_DEFAULT_STACK_ADDR */ 
         "pushl %1\n"
         "pushl %2\n"
         "pushl %3\n"

@@ -39,5 +39,9 @@ extern unsigned long kernel_heap_free_pos;
 #define NULL_POINTERS_REGION_SIZE 4096
 
 #define KERNEL_SPACE_UPPER_LIMIT 0x08000000
+#define USERSPACE_LOWER_ADDR 0x08000000
+#define USERSPACE_LEN 0xF8000000
+
+#define USER_DEFAULT_STACK_ADDR 0xD0000000 
 
 #endif
