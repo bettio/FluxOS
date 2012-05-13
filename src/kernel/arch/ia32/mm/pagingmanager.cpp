@@ -230,6 +230,30 @@ void PagingManager::changeAddressSpace(volatile uint32_t *pageDir, bool forceUpd
     setCR3((uint32_t) physicalAddressOf((void *) pageDir));
 }
 
+void PagingManager::changeRegionFlags(uint32_t virtAddr, uint32_t len, uint32_t setBits,
+                                      uint32_t resetBits, uint32_t conditionMask, bool updatePageDirectory)
+{
+    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+    for (unsigned int i = addrToPageDirIndex(virtAddr); i < addrToPageDirIndex(virtAddr + len - 1); i++){
+        uint32_t tmpDirEntry = pageDir[i];
+        if (updatePageDirectory && (tmpDirEntry & conditionMask)){
+            pageDir[i] = (tmpDirEntry & ~resetBits) | setBits;
+        }
+
+        if (tmpDirEntry & Present){
+            volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (i << 12));
+            unsigned int startIndex = (i == addrToPageDirIndex(virtAddr)) ? addrToPageTableIndex(virtAddr) : 0;
+            unsigned int endIndex = (i == addrToPageDirIndex(virtAddr + len)) ? addrToPageTableIndex(virtAddr + len - 1) : 1024;
+            for (unsigned int j = startIndex; j < endIndex; j++){
+                uint32_t tmpPageEntry = pageTable[j];
+                if (tmpPageEntry & conditionMask){
+                    pageTable[j] = (tmpPageEntry & ~resetBits) | setBits;
+                }
+            }
+        }
+    }
+}
+
 #define hasMemoryPermissions(a, b) (1)
 #define isMissingPageError(errorCode) ( !(errorCode & 1) )
 #define GET_FAULT_EIP() *((uint32_t *) ((char *) &faultAddress + 32))
