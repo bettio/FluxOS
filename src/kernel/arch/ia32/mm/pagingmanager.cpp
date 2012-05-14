@@ -67,6 +67,17 @@ volatile uint32_t *PagingManager::createEmptyPageDir()
     return pageDir;
 }
 
+volatile uint32_t *PagingManager::clonePageDir()
+{
+    volatile uint32_t *currentPageDir = (volatile uint32_t *) 0xFFFFF000;
+    volatile uint32_t *newPD = createEmptyPageDir();
+    for (int i = 0; i < 1023; i++){
+        newPD[i] = currentPageDir[i];
+    }
+
+    return newPD;
+}
+
 volatile uint32_t *PagingManager::createEmptyPageTable()
 {
     volatile uint32_t *pageTable;
@@ -278,8 +289,43 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 	}
     }else{
         const char *errorString = (errorCode & 2) ? "write" : "read";
-        printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
-        while (1);
+        //printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
+   int di = PagingManager::addrToPageDirIndex(faultAddress & 0xFFFFF000);
+   int ti = PagingManager::addrToPageTableIndex(faultAddress & 0xFFFFF000);
+
+   volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+   volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+#if 1
+   //printk("PD: %x\n", pageDir[di]);
+   //printk("PT: %x\n", pageTable[ti]);
+
+   if (!(pageDir[di] & Write)){
+       //while (1);
+       void *newPage;
+       posix_memalign(&newPage, 4096, 4096);
+       //PagingManager::newPage((uint32_t) newPage);
+       memcpy(newPage, (const void *) pageTable, 4096);
+       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);     
+       pageTable = (volatile uint32_t *) newPage;
+       //while (1);
+   }
+
+   if (!(pageTable[ti] & Write)){
+       //while (1);
+       void *newPage;
+       posix_memalign(&newPage, 4096, 4096);
+       //PagingManager::newPage((uint32_t) newPage);
+       memcpy(newPage, (const void *) (faultAddress & 0xFFFFF000), 4096);
+       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);
+   }
+   //while (1);
+#endif
+
+   pageDir[di] |= (User);
+   pageTable[ti] |= (User);
+
+        //while (1);
     }
 }
 

@@ -37,7 +37,7 @@ enum PageFlags
 };
 
 #define MISSING_PAGE 0
-#define KERNEL_STD_PAGE Present | Write | User
+#define KERNEL_STD_PAGE Present | Write
 
 #define PAGEDIR_ENTRIES 1024
 #define PAGETABLE_ENTRIES 1024
@@ -51,6 +51,7 @@ class PagingManager
         inline static void setCR3(uint32_t cr3reg) { asm volatile("movl %0, %%cr3\n" : : "r"(cr3reg)); }
         static void mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len);
         static volatile uint32_t *createEmptyPageDir();
+        static volatile uint32_t *clonePageDir();
         static volatile uint32_t *createEmptyPageTable();
         static volatile uint32_t *createPageDir();
         static void newPage(uint32_t addr);
@@ -63,9 +64,10 @@ class PagingManager
         static uint32_t allocPhysicalAndVirtualMemory(void **ptr, int len);
         static void changeRegionFlags(uint32_t virtAddr, uint32_t len, uint32_t setBits,
                                       uint32_t resetBits, uint32_t conditionMask = 0xFFFFFFFF, bool updatePageDirectory = true);
-
-    private:
-        static void enable();
         inline static uint32_t pageTableEntry(uint32_t address, unsigned int flags) { return address | flags; }
         inline static uint32_t pageDirectoryEntry(uint32_t address, unsigned int flags) { return address | flags; }
+
+   private:
+        static void enable();
 };
+

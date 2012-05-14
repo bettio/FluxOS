@@ -95,7 +95,11 @@ uint32_t SyscallsManager::nullSysCallHandler(uint32_t ebx, uint32_t ecx, uint32_
     
 extern "C" uint32_t doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
 {
-    if (eax < 256){
+    //TODO: remove this workaround: add esp parameter to all the syscalls
+    if (eax == 2){
+        return UserProcsManager::fork((void *) esp);
+
+    }else if (eax < 256){
         return SyscallsTable[eax](ebx, ecx, edx, esi, edi);
     
     }else{
@@ -157,14 +161,6 @@ uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t
 {
     ArchManager::reboot();
     return -EPERM;
-}
-
-uint32_t fork(uint32_t, uint32_t, uint32_t, uint32_t esi, uint32_t edi)
-{
-    printk("Not implemented syscall: fork\n");
-    while(1);
-
-    return 0;
 }
 
 uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
@@ -420,7 +416,6 @@ uint32_t mmap(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 void SyscallsManager::registerDefaultSyscalls()
 {
     registerSyscall(1, exit);
-    registerSyscall(2, fork);
     registerSyscall(3, read);
     registerSyscall(4, write);
     registerSyscall(5, open);

@@ -32,6 +32,7 @@
 
 char *UserProcsManager::executable;
 char *UserProcsManager::args;
+void *regs;
 
 void UserProcsManager::processLoader()
 {
@@ -102,3 +103,35 @@ int UserProcsManager::createProcess(const char *path, const char *a, const char 
 
     return process->pid;
 }
+
+void UserProcsManager::setupChild()
+{
+    asm("movl %0, %%esp\n"
+        "addl $32, %0\n" 
+        "movl %0, 12(%%esp)\n"
+        "popa\n"
+        "movl $0, %%eax\n"
+        "iret\n" : : "r" (regs));
+
+}
+
+int UserProcsManager::fork(void *stack)
+{
+    posix_memalign(&regs, 4096, 32+20 + 500);
+    memcpy(regs, stack, 32+20);
+    regs = (void *) (((char *) regs));
+
+    ProcessControlBlock *process = Task::CreateNewTask("ufork");
+    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
+    ArchThreadsManager::makeExecutable(thread, setupChild, 0, 0);
+    thread->parentProcess = process;
+    thread->status = Running;
+
+    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2);
+    thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
+
+    Scheduler::threads->append(thread);
+
+    return process->pid;
+}
+

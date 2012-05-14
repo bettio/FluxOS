@@ -28,6 +28,8 @@ class UserProcsManager
     public:
         static void createInitProcess();
         static int createProcess(const char *path, const char *args, const char *envp);
+        static int fork(void *stack);
+        static void setupChild();
 
     private:
         static void processLoader();
