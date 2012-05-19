@@ -127,7 +127,7 @@ int UserProcsManager::fork(void *stack)
     thread->parentProcess = process;
     thread->status = Running;
 
-    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2);
+    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2, 1);
     thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
 
     Scheduler::threads->append(thread);
@@ -135,3 +135,43 @@ int UserProcsManager::fork(void *stack)
     return process->pid;
 }
 
+int UserProcsManager::execve(const char *_filename, char *const _argv[], char *const _envp[])
+{
+    const char *filename = strdup(_filename);
+
+    PagingManager::cleanUserspace();
+
+    ElfLoader loader;
+    int res = loader.loadExecutableFile(filename);
+    if (res < 0 || !loader.isValid()){
+        printk("Cannot load executable file: %s error: %i\n", executable, res);
+        //exit
+        Scheduler::currentThread()->status = UWaiting;
+        Scheduler::currentThread()->parentProcess->status = TERMINATED;
+        while(1);
+    }
+
+    memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
+    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0, 1);
+
+    register long tmpEax asm("%eax");
+
+    asm("movl $0xD0000000, %%esp\n" /* 0xD0000000 = USER_DEFAULT_STACK_ADDR */ 
+        "pushl %1\n"
+        "pushl %2\n"
+        "pushl %3\n"
+        "movl %%esp, %4\n"
+        "pushl $0x23\n"
+        "pushl %4\n"
+        "pushf\n"
+        "pushl $0x1B\n"
+        "pushl %0\n"
+        "movl $0x23, %4\n"
+        "mov %4, %%ds\n"
+        "mov %4, %%es\n"
+        "mov %4, %%fs\n"
+        "mov %4, %%gs\n"
+        "iret\n" : : "r" (loader.entryPoint()), "r" ("test"), "r" (filename), "r" (1 + (strlen("test") != 0)), "r" (tmpEax));
+
+    return 0;
+}

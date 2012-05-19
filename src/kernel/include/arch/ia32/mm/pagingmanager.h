@@ -66,6 +66,8 @@ class PagingManager
                                       uint32_t resetBits, uint32_t conditionMask = 0xFFFFFFFF, bool updatePageDirectory = true);
         inline static uint32_t pageTableEntry(uint32_t address, unsigned int flags) { return address | flags; }
         inline static uint32_t pageDirectoryEntry(uint32_t address, unsigned int flags) { return address | flags; }
+        static void cleanUserspace();
+
 
    private:
         static void enable();

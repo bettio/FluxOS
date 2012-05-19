@@ -215,7 +215,7 @@ uint32_t close(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 
 uint32_t execve(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
-    return 0;
+    return UserProcsManager::execve((char *) ebx, (char **) ecx, (char **) edx);
 }
 
 uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)

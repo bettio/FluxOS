@@ -30,6 +30,7 @@ class UserProcsManager
         static int createProcess(const char *path, const char *args, const char *envp);
         static int fork(void *stack);
         static void setupChild();
+        static int execve(const char *filename, char *const argv[], char *const envp[]);
 
     private:
         static void processLoader();
