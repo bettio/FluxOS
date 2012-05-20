@@ -25,6 +25,5 @@
 #include <unistd.h>
 
 extern reboot(int magic, int magic2, int cmd, void *arg);
-extern pid_t CreateProcess(char *namep, char *params);
 
 #endif

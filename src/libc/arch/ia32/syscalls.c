@@ -182,32 +182,6 @@ pid_t fork(void)
 	RETURN(result);
 }
 
-pid_t CreateProcess(char *name, char *params)
-{
-	#if 1
-	/* Parameters */
-	register unsigned int syscall asm("%eax") = 220;
-	register unsigned int _name asm("%ebx") = (unsigned int) name;
-	register unsigned int _params asm("%ecx") = (unsigned int) params;
-
-	/* Result */
-	register unsigned int result asm("%eax");
-
-	asm volatile("int $0x80" : "=r" (result) : "r" (syscall), "r" (_name), "r" (_params));
-
-	RETURN(result);
-	#endif
-
-	#if 0
-	pid_t pid = fork();
-
-	char *params_[] = {"", 0};
-	char *env[] = {"", 0};
-
-	if (!pid) execve(name, params_, env);
-	#endif
-}
-
 ssize_t read(int fd, void *buf, size_t count)
 {
 	/* Parameters */
