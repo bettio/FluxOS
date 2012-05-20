@@ -41,16 +41,22 @@
 #include <boot/bootloaderinfo.h>
 #include <arch/ia32/mm/pagingmanager.h>
 
+#define ENABLE_VESAFB 1
+#define ENABLE_EXPERIMENTAL_DRIVERS 1
+
 void ArchManager::Init()
 {
-    //initmem();
     GDT::init();
 
+#if ENABLE_VESAFB
     if (MultiBootInfo::infoBlock->flags & MULTIBOOT_INFO_VIDEO_INFO){
         VesaFB::init(MultiBootInfo::infoBlock->vbe_mode_info);
     }else{
+#endif
         Video::init();
+#if ENABLE_VESAFB
     }
+#endif
     Out = Vt::Device();
 }
 
@@ -59,7 +65,9 @@ void ArchManager::InitArch()
     IDT::init();
     #ifndef NO_MMU
         PagingManager::init();
+        #if ENABLE_VESAFB
         VesaFB::mapPhysicalMem();
+        #endif
     #endif
     Task::init();
     IRQ::init();
@@ -84,9 +92,13 @@ void ArchManager::InitHardware()
 {
     Vt::ReInit();
     Keyboard::init();
+#if ENABLE_EXPERIMENTAL_DRIVERS
     ATA::init();
     PS2Mouse::init();
+#endif
+#if ENABLE_VESAFB
     VesaFB::registerDevice();
+#endif
 }
 
 void ArchManager::StartInit()
