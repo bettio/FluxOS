@@ -138,6 +138,7 @@ int UserProcsManager::fork(void *stack)
 int UserProcsManager::execve(const char *_filename, char *const _argv[], char *const _envp[])
 {
     const char *filename = strdup(_filename);
+    const char *argv = strdup(_argv[1]);
 
     PagingManager::cleanUserspace();
 
@@ -150,6 +151,9 @@ int UserProcsManager::execve(const char *_filename, char *const _argv[], char *c
         Scheduler::currentThread()->parentProcess->status = TERMINATED;
         while(1);
     }
+
+    strncpy((char *) USER_DEFAULT_ARGS_ADDR, argv, 4096);
+    char *arg = (char *) USER_DEFAULT_ARGS_ADDR;
 
     memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
     PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0, 1);
@@ -171,7 +175,7 @@ int UserProcsManager::execve(const char *_filename, char *const _argv[], char *c
         "mov %4, %%es\n"
         "mov %4, %%fs\n"
         "mov %4, %%gs\n"
-        "iret\n" : : "r" (loader.entryPoint()), "r" ("test"), "r" (filename), "r" (1 + (strlen("test") != 0)), "r" (tmpEax));
+        "iret\n" : : "r" (loader.entryPoint()), "r" (arg), "r" (filename), "r" (1 + (strlen(arg) != 0)), "r" (tmpEax));
 
     return 0;
 }

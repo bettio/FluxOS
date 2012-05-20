@@ -43,5 +43,6 @@ extern unsigned long kernel_heap_free_pos;
 #define USERSPACE_LEN (0xF8000000 - 4096*1024)
 
 #define USER_DEFAULT_STACK_ADDR 0xD0000000 
+#define USER_DEFAULT_ARGS_ADDR 0xCFC00000 
 
 #endif
