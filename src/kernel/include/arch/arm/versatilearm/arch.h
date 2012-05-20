@@ -27,8 +27,11 @@
 
 #define NEW_DEFAULT_TYPE unsigned int
 
+extern unsigned long kernel_heap_free_pos;
 #define KERNEL_HEAP_START 0x2800000
-#define USER_START 0x4600000
+#define KERNEL_HEAP_END 0x4600000
+#define KERNEL_HEAP_FREE_POS kernel_heap_free_pos
+#define KERNEL_SPACE_UPPER_LIMIT 0x4600000
 
 #define LITTLE_ENDIAN 1234
 

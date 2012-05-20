@@ -34,13 +34,19 @@
 #include <arch/arm/drivers/vectoredinterruptcontroller.h>
 #include <arch/arm/drivers/interruptcontroller.h>
 
+#define ENABLE_FRAMEBUFFER 1
+
 void enableInterrupts();
 
 void ArchManager::Init()
 {
+#if ENABLE_FRAMEBUFFER
     Pl110Fb::init();
-    //Serial::Init();  
     Out = Vt::Device();
+#else
+    Serial::Init();  
+    Out = Serial::Device();
+#endif
 }
 
 void enableInterrupts()
@@ -77,3 +83,15 @@ void ArchManager::InitHardware()
 void ArchManager::StartInit()
 {
 }
+
+//TODO: please, move away this stuff
+unsigned long kernel_heap_free_pos = KERNEL_HEAP_START;
+extern "C" void __aeabi_unwind_cpp_pr0()
+{
+
+}
+extern "C" void raise()
+{
+
+}
+

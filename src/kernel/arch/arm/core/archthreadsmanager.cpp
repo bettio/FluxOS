@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,32 +16,32 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: serial.h                                                        *
- *   Date: 27/09/2010                                                      *
+ *   Name: archthreadsmanager.cpp                                          *
+ *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _ARCH_ARM_SERIAL_H_
-#define _ARCH_ARM_SERIAL_H_
+#include <task/archthreadsmanager.h>
 
-#include <filesystem/vfs.h>
+#include <cstdlib.h>
+#include <cstring.h>
+#include <stdint.h>
 
-struct CharDevice;
-struct VNode;
+void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
+{
+    return 0;
+}
 
-class Serial{
-    public:
-        static void Init();
-        static void ReInit();
-        static CharDevice *Device();
-        static int Write(CharDevice *cd, const char *buffer, int count);
-        static int Read(CharDevice *cd, char *buffer, int count);
-        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
-        static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
-        static int ioctl(VNode *node, int request, long arg);
-        static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);
+ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
+{
+    return 0;
+}
 
-    private:
-        static CharDevice serial_tty;
-};
+ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
+{
+    return 0;
+}
 
-#endif
+void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args)
+{
+}
+

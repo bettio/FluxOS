@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,32 +16,27 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: serial.h                                                        *
- *   Date: 27/09/2010                                                      *
+ *   Name: bootloaderinfo_multiboot1.cpp                                   *
+ *   Date: 18/11/2011                                                      *
  ***************************************************************************/
 
-#ifndef _ARCH_ARM_SERIAL_H_
-#define _ARCH_ARM_SERIAL_H_
+#include <arch/ia32/boot/multibootinfo.h>
+#include <boot/bootloaderinfo.h>
+#include <arch/ia32/boot/multiboot.h>
+#include <defs.h>
+#include <core/elf.h>
 
-#include <filesystem/vfs.h>
+void *BootLoaderInfo::module(int i)
+{
+    return 0;
+}
 
-struct CharDevice;
-struct VNode;
+long unsigned int BootLoaderInfo::moduleSize(int)
+{
+    return 0;
+}
 
-class Serial{
-    public:
-        static void Init();
-        static void ReInit();
-        static CharDevice *Device();
-        static int Write(CharDevice *cd, const char *buffer, int count);
-        static int Read(CharDevice *cd, char *buffer, int count);
-        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
-        static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
-        static int ioctl(VNode *node, int request, long arg);
-        static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);
-
-    private:
-        static CharDevice serial_tty;
-};
-
-#endif
+int BootLoaderInfo::modulesCount()
+{
+    return 0;
+}

@@ -34,6 +34,7 @@ elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     include(CMakeASMInformation)
     enable_language(ASM)
     set(can_use_assembler TRUE)
+    SET(CMAKE_ASM_COMPILER "${COMPILER_PREFIX}g++" )
 
     SET(CMAKE_C_FLAGS "-mcpu=arm926ej-s -g -fomit-frame-pointer -nostdlib -nostdinc -Wall -fno-builtin -g" )
     SET(CMAKE_CXX_FLAGS "-mcpu=arm926ej-s -g -fomit-frame-pointer -nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-threadsafe-statics -fno-rtti -g" )
