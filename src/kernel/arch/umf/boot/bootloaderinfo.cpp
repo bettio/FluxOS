@@ -31,7 +31,7 @@ void *BootLoaderInfo::module(int i)
     return 0;
 }
 
-void *BootLoaderInfo::moduleSize(int i)
+long unsigned int BootLoaderInfo::moduleSize(int)
 {
     return 0;
 }

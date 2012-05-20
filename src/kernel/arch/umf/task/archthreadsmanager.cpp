@@ -37,3 +37,13 @@ ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int fla
     ThreadControlBlock *tmpCB = new ThreadControlBlock;
     return tmpCB;
 }
+
+ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
+{
+    return 0;
+}
+
+void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args)
+{
+}
+

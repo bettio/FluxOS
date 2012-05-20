@@ -92,7 +92,7 @@ int Console::ioctl(VNode *node, int request, long arg)
 	return -EINVAL;
 }
 
-void *Console::mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)
+void *Console::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
 	return (void *) -ENODEV;
 }
