@@ -163,11 +163,6 @@ uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t
     return -EPERM;
 }
 
-uint32_t CreateProcess(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return UserProcsManager::createProcess((const char *) ebx, (const char *) ecx, 0);
-}
-
 uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return Scheduler::currentThread()->parentProcess->parent->pid;
@@ -478,6 +473,5 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(182, chown);
     registerSyscall(183, getcwd);
     //187 sendfile
-    registerSyscall(220, CreateProcess);
 }
 

@@ -87,23 +87,6 @@ void UserProcsManager::createInitProcess()
     Scheduler::threads->append(thread);
 }
 
-int UserProcsManager::createProcess(const char *path, const char *a, const char *envp)
-{
-    executable = strdup(path);
-    args = strdup(a);
-    ProcessControlBlock *process = Task::NewProcess((const char *)  a);
-    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
-    ArchThreadsManager::makeExecutable(thread, UserProcsManager::processLoader, 0, 0);
-    thread->parentProcess = process;
-
-    thread->addressSpaceTable = (void *) PagingManager::createPageDir();
-
-    thread->status = Running;
-    Scheduler::threads->append(thread);
-
-    return process->pid;
-}
-
 void UserProcsManager::setupChild()
 {
     asm("movl %0, %%esp\n"
