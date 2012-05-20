@@ -46,13 +46,18 @@ int main(int argc, char *argv[])
     init_setdomainname();
 #endif
     
-    printf("\n\nStarting the shell...\n\n");
+    while (1){
+        printf("\n\nStarting the shell...\n\n");
 
-    int status;
+        int status;
+        int pid = fork();
+        if (!pid){
+            char *a[] = {"/bin/fluxsh", "", 0};
+            execve("/bin/fluxsh", a, 0);
+        }
 
-    waitpid(CreateProcess("/bin/fluxsh", ""), &status, 0);
-
-    while(1);
+        waitpid(pid, &status, 0);
+    }
 
     return 0;
 }

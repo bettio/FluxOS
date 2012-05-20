@@ -104,7 +104,14 @@ void command_switch(const char *c)
 		if (oe < 0){
 			printf("FluxSH: %s: command not found\n", myc);
 		}else{
-			waitpid(CreateProcess(tmp, myargs), &status, 0);
+            int status;
+            int pid = fork();
+            if (!pid){
+                char *a[] = {tmp, myargs, 0};
+                execve(tmp, a, 0);
+            }
+
+			waitpid(pid, &status, 0);
 		}
 	}
 }
