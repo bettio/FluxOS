@@ -111,6 +111,30 @@ extern int errno;
         } \
     }
 
+#define SYSCALL_4(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3) \
+    { \
+        register long syscall asm("r7") = num; \
+        register long _arg0 asm("r0") = (long) arg0; \
+        register long _arg1 asm("r1") = (long) arg1; \
+        register long _arg2 asm("r2") = (long) arg2; \
+        register long _arg3 asm("r3") = (long) arg3; \
+        \
+        register long result asm("r0"); \
+        \
+        asm volatile("svc 0x0" \
+                     : "=r" (result) \
+                     : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (_arg3)); \
+        \
+        if (((int) result) >= 0){ \
+            return result; \
+        }else{ \
+            errno = -result; \
+            return -1; \
+        } \
+    }
+
+
 #define SYSCALL_5(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) \
     retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3, arg4_t arg4) \
     { \
@@ -141,12 +165,14 @@ extern int errno;
 #define __NR_OPEN 5
 #define __NR_CREAT 8
 #define __NR_UNLINK 10
+#define __NR_EXECVE 11
 #define __NR_CHDIR 12
 #define __NR_TIME 13
 #define __NR_GETUID 24
 #define __NR_MKDIR 39
 #define __NR_RMDIR 40
 #define __NR_READLINK 85
+#define __NR_REBOOT 88
 #define __NR_LSTAT 107
 #define __NR_GETDENTS 141
 #define __NR_GETCWD 183
@@ -159,6 +185,7 @@ SYSCALL_3(open, __NR_OPEN, int, const char *, int, mode_t)
 SYSCALL_3(creat, __NR_CREAT, int, const char *, int, mode_t)
 SYSCALL_1(close, 6, int, int)
 SYSCALL_1(unlink, __NR_UNLINK, int, const char *)
+SYSCALL_3(execve, __NR_EXECVE, int, const char *, char *const *, char *const *)
 SYSCALL_1(chdir, __NR_CHDIR, int, const char *)
 SYSCALL_1(time, __NR_TIME, time_t, time_t *)
 SYSCALL_0(getuid, __NR_GETUID, uid_t)
@@ -177,6 +204,7 @@ SYSCALL_3(getdents, __NR_GETDENTS, int, unsigned int, struct dirent *, unsigned 
 
 
 SYSCALL_2(rename, 82, int, const char *, const char *)
+SYSCALL_4(reboot, __NR_REBOOT, int, int, int, int, void *)
 SYSCALL_2(chmod, 90, int, const char *, mode_t)
 SYSCALL_2(fchmod, 91, int, int, mode_t)
 SYSCALL_3(chown, 92, int, const char *, uid_t, gid_t)
@@ -193,3 +221,14 @@ char *getcwd(char *buf, size_t size)
 {
     //SYSCALL_2_BODY(getcwd, __NR_GETCWD, int, retVal, char *, size_t)
 }
+
+//TODO: please, move away this stuff
+void __aeabi_unwind_cpp_pr0()
+{
+
+}
+void raise()
+{
+
+}
+

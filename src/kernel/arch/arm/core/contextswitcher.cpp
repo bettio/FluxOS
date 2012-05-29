@@ -16,66 +16,39 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archthreadsmanager.cpp                                          *
+ *   Name: contextswitcher.cpp                                             *
  *   Date: 15/11/2011                                                      *
  ***************************************************************************/
 
-#include <task/archthreadsmanager.h>
-
-#include <cstdlib.h>
-#include <cstring.h>
 #include <stdint.h>
+#include <arch/arm/core/contextswitcher.h>
+#include <task/scheduler.h>
+#include <cstdlib.h>
 
-struct RegistersFrame
+void ContextSwitcher::init()
 {
-    uint32_t spsr;
-    uint32_t _sp;
-    uint32_t _lr;
-    uint32_t r0;
-    uint32_t r1;
-    uint32_t r2;
-    uint32_t r3;
-    uint32_t r4;
-    uint32_t r5;
-    uint32_t r6;
-    uint32_t r7;
-    uint32_t r8;
-    uint32_t r9;
-    uint32_t r10;
-    uint32_t r11;
-    uint32_t r12;
-    uint32_t pc;
-};
-
-void *ArchThreadsManager::allocateKernelStack(void **stackAddr, int size)
-{
-    //size + stack overflow guards (4096 * 2)
-    void *stack = 0;
-    posix_memalign(&stack, 4096, size + 4096*2);
-    memset(stack, 0, size + 4096*2); //This line is not only required to clean the stack, but also to get assured to use an allocated page
-    *stackAddr = (void *) (((uint8_t *) (stack)) + 4096 + size);
-    return stack;
+    Scheduler::init();
+    
+    //We must create at least one thread, this will be replaced by ContextSwitcher::schedule with the current
+    //running thread so it can be restored.
+    ThreadControlBlock *currentThread = new ThreadControlBlock;
+    currentThread->stack = 0;
+    currentThread->currentStackPtr = 0;
+    #ifndef NO_MMU
+        //Here we assume that Physical == Virtual address. this works only for the first task
+        //currentThread->addressSpaceTable = (void *) PagingManager::physicalAddressOf((void *) 0xFFFFF000);
+    #endif
+    Scheduler::threads->append(currentThread);
 }
 
-ThreadControlBlock *ArchThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
-{
-    ThreadControlBlock *tmpCB = new ThreadControlBlock;
-    RegistersFrame *tmpStack;
-    tmpCB->stack = allocateKernelStack((void **) &tmpStack);
-    tmpCB->currentStackPtr = tmpStack;
-    tmpStack->pc = (uint32_t) fn;
-    tmpStack->spsr = 0x1F;
-    tmpStack->_sp = ((uint32_t) malloc(8192)) + 4096;
 
-    return tmpCB;
-}
-
-ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
+extern "C" long doContextSwitch(long sp)
 {
-    return 0;
-}
-
-void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args)
-{
+    Scheduler::currentThread()->currentStackPtr = (void *) sp;
+    ThreadControlBlock *nThread = Scheduler::nextThread(); //Now currentThread points to nextThread.
+    #ifndef NO_MMU
+        //PagingManager::changeAddressSpace((volatile uint32_t *) nThread->addressSpaceTable);
+    #endif
+    return (long) nThread->currentStackPtr;
 }
 

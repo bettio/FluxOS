@@ -118,3 +118,19 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(183, (SYSCALL_FUNCTION_PTR) getcwd);
     //registerSyscall((SYSCALL_FUNCTION_PTR) CreateProcess, 220);
 }
+
+asm(
+    ".global swiHandler\n"
+    "swiHandler:\n"
+    "stmfd sp!, {r0-r12,lr}\n"
+    "mov r7, r7, lsl #2\n"
+    "ldr r8, =SyscallsTable\n"
+    "ldr r8, [r8, r7]\n"
+    "stmfd sp!, {r4-r6}\n"
+    "mov lr, pc\n"
+    "mov pc, r8\n"
+    "ldmfd sp!, {r4-r6}\n"
+    "ldmfd sp!, {r0-r12,lr}\n"
+    "movs pc, lr\n"
+);
+

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2010 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,13 +16,30 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: startup.s                                                       *
- *   Date: 27/09/2010                                                      *
+ *   Name: registers.cpp                                                   *
+ *   Date: 28/05/2012                                                      *
  ***************************************************************************/
 
-.global _start
-_start:
- ldr sp, =stack_top
- bl main
- b .
+#include <arch/arm/core/registers.h>
+
+void enableInterrupts()
+{
+    asm("mrs r0, cpsr\n"
+        "bic r0,r0,#0x80\n"
+        "msr cpsr_c,r0\n"
+        : : : "r0");
+}
+
+void setShadowStackRegister(ARMMode mode, void *sp)
+{
+    asm volatile(
+        "mrs r0, cpsr\n"
+        "bic r1, r0, #0x1F\n"
+        "orr r1, r1, %1\n"
+        "msr cpsr_c, r1\n"
+        "mov sp, %0\n"
+        "msr cpsr_c, r0\n"
+        : : "r" (sp), "r" (mode) : "r0", "r1"
+    );
+}
 

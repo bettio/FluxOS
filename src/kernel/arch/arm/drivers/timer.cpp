@@ -22,9 +22,12 @@
 
 #include <arch/arm/drivers/timer.h>
 
+#include <core/systemtimer.h>
 #include <arch/arm/drivers/vectoredinterruptcontroller.h>
 #include <core/printk.h>
 #include <stdint.h>
+
+#define TICK_FREQ 500
 
 void Timer::init()
 {
@@ -32,11 +35,13 @@ void Timer::init()
     *((volatile uint32_t *) 0x101E2008) = 0x84 | 0x20; //enable timer
     *((volatile uint32_t *) 0x101E2000) = 0xFF;
     *((volatile uint32_t *) 0x101E2004) = 0x10;
-    
+
+    SystemTimer::init(TICK_FREQ);
     VectoredInterruptController::registerAndEnableInterrupt(4, interruptHandler, VectoredInterruptController::IRQ);
 }
 
 void Timer::interruptHandler()
 {
+    SystemTimer::timerTickISR();
     *((volatile uint32_t *) 0x101E200C) = 0; //interrupt clear
 }

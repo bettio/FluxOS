@@ -25,9 +25,11 @@
 
 #include <drivers/vt.h>
 #include <drivers/fbconsole.h>
-#include <arch/arm/drivers/serial.h>
+#include <task/task.h>
 
+#include <arch/arm/drivers/serial.h>
 #include <arch/arm/core/exceptionsvector.h>
+#include <arch/arm/core/registers.h>
 #include <arch/arm/core/syscallsmanager.h>
 #include <arch/arm/drivers/pl110fb.h>
 #include <arch/arm/drivers/timer.h>
@@ -49,16 +51,12 @@ void ArchManager::Init()
 #endif
 }
 
-void enableInterrupts()
-{
-    asm("mrs r0, cpsr\n"
-        "bic r0,r0,#0x80\n"
-        "msr cpsr_c,r0\n");
-}
-
 void ArchManager::InitArch()
 {
+    setShadowStackRegister(IRQMode, (char *) malloc(8192) + 4096);
+    setShadowStackRegister(FIQMode, (char *) malloc(8192) + 4096);
     ExceptionsVector::init();
+    Task::init();
     VectoredInterruptController::init();
     InterruptController::init();
     SyscallsManager::init();

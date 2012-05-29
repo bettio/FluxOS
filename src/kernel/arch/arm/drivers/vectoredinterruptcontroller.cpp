@@ -22,6 +22,7 @@
 
 #include <arch/arm/drivers/vectoredinterruptcontroller.h>
 
+#include <arch/arm/core/contextswitcher.h>
 #include <arch/arm/core/exceptionsvector.h>
 #include <core/printk.h>
 #include <stdint.h>
@@ -32,6 +33,8 @@ extern "C" void defaultHandler();
 
 void VectoredInterruptController::init()
 {
+    ContextSwitcher::init();
+
     ExceptionsVector::setHandler(ExceptionsVector::IRQ, (void *) irqHandler);
     ExceptionsVector::setHandler(ExceptionsVector::FIQ, (void *) fiqHandler);
     
@@ -52,3 +55,43 @@ extern "C" void defaultHandler()
     printk("Error: unknown IRQ/FIQ\n");
     while(1);
 }
+
+asm(
+    ".global irqHandleri\n"
+    "irqHandler:\n"
+    "sub lr, lr, #4\n"
+    "stmfd sp!, {r0-r12,lr}\n"
+    "stmfd sp!, {sp, lr}^\n"
+    "mrs r0, spsr\n"
+    "stmfd sp!, {r0}\n" 
+
+    //call ISR
+    "ldr r0, =0x10140030\n"
+    "mov lr, pc\n"
+    "ldr pc, [r0]\n"
+
+    //call context switcher
+    "mov r0, sp\n"
+    "bl doContextSwitch\n"
+    "mov sp, r0\n"
+
+    "ldmfd sp!, {r0}\n"
+    "msr spsr, r0\n"
+    "ldmfd sp!, {sp, lr}^\n"
+    "ldmfd sp!, {r0-r12,lr}\n"
+    "movs pc, lr\n"
+);
+
+asm(
+    ".global fiqHandler\n"
+    "fiqHandler:\n"
+    "stmfd sp!, {r0-r12,lr}\n"
+    "stmfd sp, {sp}\n"
+    "ldmfd sp, {r0}\n"
+    "ldr r0, =0x10140030\n"
+    "mov lr, pc\n"
+    "ldr pc, [r0]\n"
+    "ldmfd sp!, {r0-r12,lr}\n"
+    "subs pc, r14, #4\n"
+);
+
