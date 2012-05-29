@@ -20,6 +20,10 @@
  *   Date: 27/09/2010                                                      *
  ***************************************************************************/
 
+/*
+ * SP 804 timer driver
+ */
+
 #include <arch/arm/drivers/timer.h>
 
 #include <core/systemtimer.h>
@@ -27,14 +31,12 @@
 #include <core/printk.h>
 #include <stdint.h>
 
-#define TICK_FREQ 500
+#define TICK_FREQ 100
 
 void Timer::init()
 {
-    //Timer stuff
-    *((volatile uint32_t *) 0x101E2008) = 0x84 | 0x20; //enable timer
-    *((volatile uint32_t *) 0x101E2000) = 0xFF;
-    *((volatile uint32_t *) 0x101E2004) = 0x10;
+    *((volatile uint32_t *) 0x101E2008) = 0x80 | 0x20; //enable timer
+    *((volatile uint32_t *) 0x101E2000) = 1000000 / TICK_FREQ;
 
     SystemTimer::init(TICK_FREQ);
     VectoredInterruptController::registerAndEnableInterrupt(4, interruptHandler, VectoredInterruptController::IRQ);
