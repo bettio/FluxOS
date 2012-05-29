@@ -6,3 +6,4 @@ src/libc/getopt-susv3.c from "uClibc" LGPLv2.1
 src/libc/libgen.c from "uClibc" LGPLv2.1
 src/libc/include/sys/mman.h "GNU C Library" LGPLv2.1
 src/libc/include/stdarg.h from "GNU C Library"
+src/coreutils/basename.c
