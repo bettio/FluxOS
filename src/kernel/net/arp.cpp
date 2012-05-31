@@ -82,8 +82,13 @@ void ARP::sendARPReply(NetIface *iface, const ARPPacket *arpPacket)
 void ARP::sendARPRequest(NetIface *iface, ipaddr ip)
 {
     macaddr broadcastMAC;
-    broadcastMAC.addrbytes = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-
+    broadcastMAC.addrbytes[0] = 0xFF;
+    broadcastMAC.addrbytes[1] = 0xFF;
+    broadcastMAC.addrbytes[2] = 0xFF;
+    broadcastMAC.addrbytes[3] = 0xFF;
+    broadcastMAC.addrbytes[4] = 0xFF;
+    broadcastMAC.addrbytes[5] = 0xFF;
+   
     int payloadOffset;
     uint8_t *newPacket = (uint8_t *) iface->allocPacketFor(iface, 0, sizeof(ARPPacket), broadcastMAC, ETHERTYPE_ARP, &payloadOffset);
 
