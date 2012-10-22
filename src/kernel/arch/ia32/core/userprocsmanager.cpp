@@ -104,7 +104,7 @@ int UserProcsManager::fork(void *stack)
     memcpy(regs, stack, 32+20);
     regs = (void *) (((char *) regs));
 
-    ProcessControlBlock *process = Task::CreateNewTask("ufork");
+    ProcessControlBlock *process = Task::NewProcess("ufork");
     ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
     ArchThreadsManager::makeExecutable(thread, setupChild, 0, 0);
     thread->parentProcess = process;
