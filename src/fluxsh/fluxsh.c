@@ -100,6 +100,7 @@ void command_switch(const char *c)
 		int status;
 
                 int oe = open(tmp, 0, 0);
+                close(oe);
 
 		if (oe < 0){
 			printf("FluxSH: %s: command not found\n", myc);
