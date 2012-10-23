@@ -277,6 +277,11 @@ uint32_t dup(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
     return dup((int) ebx);
 }
 
+uint32_t pipe(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return pipe((int *) ebx);
+}
+
 uint32_t brk(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return (uint32_t) brk((void *) ebx);
@@ -442,6 +447,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(39, mkdir);
     registerSyscall(40, rmdir);
     registerSyscall(41, dup);
+    registerSyscall(42, pipe);
     registerSyscall(45, brk);
     registerSyscall(46, setgid);
     registerSyscall(47, getgid);

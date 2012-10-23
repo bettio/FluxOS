@@ -73,6 +73,7 @@ int mknod(const char *pathname, mode_t mode, dev_t dev);
 
 int chmod(const char *path, mode_t mode);
 int dup(int oldfd);
+int pipe(int pipefd[2]);
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 

@@ -6,6 +6,7 @@ include(filesystem/tmpfs/tmpfs.cmake)
 set(KERNEL_SRCS ${KERNEL_SRCS}
     filesystem/filedescriptor.cpp
     filesystem/fscalls.cpp
+    filesystem/pipe.cpp
     filesystem/vfs.cpp
     filesystem/vnodemanager.cpp
 )

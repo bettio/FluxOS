@@ -34,7 +34,10 @@ class VNodeId
         inline VNodeId()
         {
         }
-      
+
+        /**
+         * Don't use 0xFFFFFFFF as mountId.
+         **/
         inline VNodeId(unsigned int _mountId, unsigned long long _id)
         {
             id = _id;

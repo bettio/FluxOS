@@ -47,6 +47,9 @@
 #define FS_CALL(vnode, op) (vnode->mount->fs->op)
 #define FS_MOUNT_CALL(mount, op) (mount->fs->op)
 
+#define RESERVED_MOUNT_IDS 0xFFFFFFF0
+#define PIPE_MOUNTID 0xFFFFFFF1
+
 class QString;
             
 namespace FileSystem

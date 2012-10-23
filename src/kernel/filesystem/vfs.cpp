@@ -22,6 +22,7 @@
 
 #define ENABLE_DEBUG_MSG 0
 
+#include <filesystem/pipe.h>
 #include <filesystem/vnodemanager.h>
 #include <drivers/blockdevicemanager.h>
 #include <core/printk.h>
@@ -49,7 +50,8 @@ QHash<QString, FileSystemInfo *> VFS::FileSystems;
 void VFS::Init()
 {
     FileSystems = QHash<QString, FileSystemInfo *>();
-	VNodeManager::Init();
+    VNodeManager::Init();
+    Pipe::init();
 }
 
 int VFS::RegisterFileSystem(FileSystemInfo *fsinfo)

@@ -29,6 +29,7 @@
 #include <core/printk.h>
 #include <filesystem/filedescriptor.h>
 #include <task/scheduler.h>
+#include <filesystem/pipe.h>
 #include <filesystem/vnodemanager.h>
 
 using namespace FileSystem;
@@ -351,10 +352,11 @@ int read(int fd, void *buf, size_t count)
 
 int lseek(int fd, off_t offset, int whence)
 {
-        CHECK_FOR_EBADF(fd);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return -EBADF;
 
-	if (fdesc == NULL) return -EBADF;
+    //TODO: we should check here if it is possible to lseek (seek on pipes is not possible)
 
 	if (whence == SEEK_SET){ 
 		fdesc->fpos = offset;
@@ -762,10 +764,21 @@ int dup2(int oldfd, int newfd)
     return -EINVAL;
 }
 
-//TODO: Implement pipe
+//TODO: check pipefd address
 int pipe(int pipefd[2])
 {
-    return -EINVAL;
+    VNode *node = Pipe::newPipe();
+    if (node == NULL) return -ENOMEM;
+
+    //read end
+    FileDescriptor *fdesc0 = new FileDescriptor(node);
+    pipefd[0] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc0);
+
+    //write end
+    FileDescriptor *fdesc1 = new FileDescriptor(VNodeManager::ReferenceVnode(node));
+    pipefd[1] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc1);
+
+    return 0;
 }
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
