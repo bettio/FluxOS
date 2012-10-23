@@ -311,17 +311,16 @@ int open(const char *pathname, int flags)
 
 int close(int fd)
 {
-        CHECK_FOR_EBADF(fd);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
-	if (fdesc == NULL) return -EBADF;
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return -EBADF;
+ 
+    Scheduler::currentThread()->parentProcess->openFiles->remove(fd);
 
-	//TODO: Do other things
-    
-	Scheduler::currentThread()->parentProcess->openFiles->remove(fd);
+    VNodeManager::PutVnode(fdesc->node);
+    delete fdesc;
 
-	delete fdesc;
-
-	return 0;
+    return 0;
 }
 
 int write(int fd, const void *buf, size_t count)

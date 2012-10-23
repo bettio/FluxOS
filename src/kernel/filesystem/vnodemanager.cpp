@@ -75,14 +75,19 @@ void VNodeManager::PutVnode(VNode *node)
 
     if (node->refCount == 0){
         DEBUG_MSG("VNodeManager::PutVnode: Deleting VNode: (%i:%lli)\n", node->vnid.mountId, node->vnid.id);
+        //TODO: here we should lock VNodes and we should prevent vnodes creation
         VNodes.remove(node->vnid);
+        ///TODO: here we can unlock VNodes
         if ((node->mount != NULL) && (node->mount->fs != NULL)){
-            ///FS_CALL(node, closevnode)(node);
+            if (FS_CALL(node, closevnode)(node) < 0){
+                //TODO: an error has occoured. we should do something here
+            }
         }
 
-        node->mount = (FSMount *) node->vnid.id;
+        node->mount = (FSMount *) node->vnid.id; //TODO: I can't remember the meaning of this line
         delete node;
-        
+        //TODO: here we can allow vnodes creation again
+
         #if DEBUG == 1
             DEBUG_MSG("Active VNodes:\n");
             foreach (VNode *n, VNodes){
