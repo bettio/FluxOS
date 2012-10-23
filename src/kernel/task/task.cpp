@@ -22,6 +22,7 @@
 #include <task/task.h>
 #include <task/scheduler.h>
 #include <filesystem/vnodemanager.h>
+#include <filesystem/fscalls.h>
 #include <arch.h>
 #include <ListWithHoles>
 
@@ -114,7 +115,7 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->openFiles = new ListWithHoles<FileDescriptor *>();
     for (int i = 0; i < parent->openFiles->size(); i++){
         FileDescriptor *oldFd = parent->openFiles->at(i);
-	if (oldFd != 0){
+	    if (oldFd != 0){
             FileDescriptor *newFd = new FileDescriptor(FileSystem::VNodeManager::ReferenceVnode(oldFd->node));
             newFd->fpos = oldFd->fpos;
             process->openFiles->add(newFd);
@@ -127,5 +128,31 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->status = READY;
 
     return process;
+}
+
+void Task::closeAllFiles(ProcessControlBlock *process)
+{
+    for (int i = 0; i < process->openFiles->size(); i++){
+	    if (process->openFiles->at(i) != NULL){
+            close(i);
+        }
+    }
+}
+
+void Task::exit()
+{
+    ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
+    closeAllFiles(process);
+    FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
+    Scheduler::currentThread()->status = UWaiting;
+    Scheduler::currentThread()->parentProcess->status = TERMINATED;
+    while (1);
+}
+
+int Task::waitpid(unsigned int pid)
+{
+    while (Task::processes->at(pid)->status != TERMINATED); //FIXME: bugs here
+    
+    return 0;
 }
 

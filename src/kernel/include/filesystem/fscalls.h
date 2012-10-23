@@ -26,6 +26,9 @@
 #include <filesystem/vfs.h>
 
 class FileDescriptor;
+class ProcessControlBlock;
+
+int close(ProcessControlBlock *process, int fd);
 
 int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name);
 int creat(const char *pathname, mode_t mode);

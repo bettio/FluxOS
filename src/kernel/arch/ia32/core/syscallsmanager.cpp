@@ -131,9 +131,7 @@ asm(
 
 uint32_t exit(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    Scheduler::currentThread()->status = UWaiting;
-    Scheduler::currentThread()->parentProcess->status = TERMINATED;
-    while (1);
+    Task::exit();
     return 0;
 }
 
@@ -215,8 +213,7 @@ uint32_t execve(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 
 uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
-    while (Task::processes->at(ebx)->status != TERMINATED);
-    return 0;
+    return Task::waitpid(ebx);
 }
 
 uint32_t creat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)

@@ -28,12 +28,15 @@
 
 class Task{
 	public:
-	        static void init();
-		static int SetUid(unsigned int uid);
-		static int SetGid(unsigned int gid);
-		static ProcessControlBlock *CreateNewTask(const char *name);
-                static ProcessControlBlock *NewProcess(const char *name);
-                static ListWithHoles<ProcessControlBlock *> *processes;
+        static void init();
+        static int SetUid(unsigned int uid);
+        static int SetGid(unsigned int gid);
+        static ProcessControlBlock *CreateNewTask(const char *name);
+        static ProcessControlBlock *NewProcess(const char *name);
+        static ListWithHoles<ProcessControlBlock *> *processes;
+        static void closeAllFiles(ProcessControlBlock *process);
+        static void exit();
+        static int waitpid(unsigned int pid);
 };
 
 #endif
