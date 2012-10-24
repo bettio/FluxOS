@@ -37,6 +37,7 @@ class Task{
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);
         static int waitpid(int pid, int *status, int options);
+        static void notify(ProcessControlBlock *p);
 };
 
 #endif

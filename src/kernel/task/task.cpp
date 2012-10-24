@@ -146,6 +146,7 @@ void Task::exit(int exitStatus)
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
     Scheduler::currentThread()->parentProcess->exitStatus = exitStatus;
     Scheduler::currentThread()->parentProcess->status = TERMINATED;
+    notify(Scheduler::currentThread()->parentProcess->parent);
     Scheduler::currentThread()->status = UWaiting;
     while (1);
 }
@@ -183,5 +184,10 @@ int Task::waitpid(int pid, int *status, int options)
     delete p;
 
     return 0;
+}
+
+//TODO: implement notify as soon as waitForEvents is implemented.
+void Task::notify(ProcessControlBlock *p)
+{    
 }
 
