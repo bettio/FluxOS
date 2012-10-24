@@ -35,8 +35,8 @@ class Task{
         static ProcessControlBlock *NewProcess(const char *name);
         static ListWithHoles<ProcessControlBlock *> *processes;
         static void closeAllFiles(ProcessControlBlock *process);
-        static void exit();
-        static int waitpid(unsigned int pid);
+        static void exit(int exitStatus);
+        static int waitpid(int pid, int *status, int options);
 };
 
 #endif

@@ -139,20 +139,49 @@ void Task::closeAllFiles(ProcessControlBlock *process)
     }
 }
 
-void Task::exit()
+void Task::exit(int exitStatus)
 {
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
     closeAllFiles(process);
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
-    Scheduler::currentThread()->status = UWaiting;
+    Scheduler::currentThread()->parentProcess->exitStatus = exitStatus;
     Scheduler::currentThread()->parentProcess->status = TERMINATED;
+    Scheduler::currentThread()->status = UWaiting;
     while (1);
 }
 
-int Task::waitpid(unsigned int pid)
+int Task::waitpid(int pid, int *status, int options)
 {
-    while (Task::processes->at(pid)->status != TERMINATED); //FIXME: bugs here
+    ProcessControlBlock *p;
+
+    if (pid != -1){
+        if ((pid >= Task::processes->size())) return -ECHILD;
     
+        p = Task::processes->at(pid);
+        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) return -ECHILD;
+
+        while (p->status != TERMINATED) Scheduler::waitForEvents();
+    
+    }else{
+        while (1){
+            for (int i = 0; i < Task::processes->size(); i++){
+                p = Task::processes->at(i);
+                if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)) break;
+            }
+            if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)){
+                pid = p->pid;
+                break;
+            }
+            Scheduler::waitForEvents();
+        }
+    }
+
+    *status = p->exitStatus;
+
+    Task::processes->remove(pid);
+    delete p->openFiles;
+    delete p;
+
     return 0;
 }
 

@@ -25,6 +25,7 @@
 #define EPERM 1
 #define ENOENT 2
 #define EBADF 9
+#define ECHILD 10
 #define ENOMEM 12
 #define EACCES 13
 #define EFAULT 14

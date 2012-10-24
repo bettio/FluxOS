@@ -45,6 +45,7 @@ class ProcessControlBlock
         unsigned int uid;
         unsigned int gid;
         TaskStatus status;
+        int exitStatus;
         char *name;
         ProcessControlBlock *parent;
 

@@ -47,3 +47,8 @@ ThreadControlBlock *Scheduler::currentThread()
 {    
     return threads->at(s_currentThread);
 }
+
+void Scheduler::waitForEvents()
+{
+
+}

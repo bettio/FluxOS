@@ -33,6 +33,7 @@ class Scheduler
         static ThreadControlBlock *nextThread();
         static ThreadControlBlock *currentThread();
         static QList<ThreadControlBlock *> *threads;
+        static void waitForEvents();
 
     private:
         static int s_currentThread;

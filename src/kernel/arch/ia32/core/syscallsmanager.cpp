@@ -131,7 +131,7 @@ asm(
 
 uint32_t exit(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    Task::exit();
+    Task::exit(ebx);
     return 0;
 }
 
@@ -213,7 +213,7 @@ uint32_t execve(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 
 uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
-    return Task::waitpid(ebx);
+    return Task::waitpid(ebx, (int *) ecx, edx);
 }
 
 uint32_t creat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
