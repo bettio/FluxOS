@@ -144,12 +144,8 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 	fsmount->privdata = (void *) privdata;
 
 	VNode *root;
-	VNodeManager::GetVnode(fsmount->mountId, 1, &root);
-
+	VNodeManager::GetVnode(fsmount->mountId, 2, &root);
 	root->mount = fsmount;
-	root->vnid.id = 2;
-	root->vnid.mountId = fsmount->mountId;
-
 	fsmount->fsRootVNode = root;
 
 	return 0;
