@@ -32,11 +32,14 @@
 #endif
 #include <string.h>
 
+#include <QMutex>
+
 #include <debugmacros.h>
 
 using namespace FileSystem;
 
 QHash<VNodeId, VNode *>  VNodeManager::VNodes;
+QMutex VNodesMutex;
 
 void VNodeManager::Init()
 {
@@ -53,7 +56,9 @@ VNode *VNodeManager::LookupVnode(unsigned int mountId, unsigned long long id)
 }
 
 void VNodeManager::GetVnode(unsigned int mount_id, unsigned long long id, VNode **node)
-{ 
+{
+
+    VNodesMutex.lock();
 	*node = LookupVnode(mount_id, id);
 
 	if (*node == NULL){
@@ -63,6 +68,7 @@ void VNodeManager::GetVnode(unsigned int mount_id, unsigned long long id, VNode 
 	if (*node != NULL) (*node)->refCount++;
 	
 	DEBUG_MSG("VNodeManager::GetVnode: (%i:%lli): new refcount: %i\n", mount_id, id, (*node)->refCount);
+    VNodesMutex.unlock();
 }
 
 //FIXME: it might remove vnodes that are still in use
@@ -75,9 +81,8 @@ void VNodeManager::PutVnode(VNode *node)
 
     if (node->refCount == 0){
         DEBUG_MSG("VNodeManager::PutVnode: Deleting VNode: (%i:%lli)\n", node->vnid.mountId, node->vnid.id);
-        //TODO: here we should lock VNodes and we should prevent vnodes creation
+        VNodesMutex.lock();
         VNodes.remove(node->vnid);
-        ///TODO: here we can unlock VNodes
         if ((node->mount != NULL) && (node->mount->fs != NULL)){
             if (FS_CALL(node, closevnode)(node) < 0){
                 //TODO: an error has occoured. we should do something here
@@ -86,7 +91,7 @@ void VNodeManager::PutVnode(VNode *node)
 
         node->mount = (FSMount *) node->vnid.id; //TODO: I can't remember the meaning of this line
         delete node;
-        //TODO: here we can allow vnodes creation again
+        VNodesMutex.unlock();
 
         #if DEBUG == 1
             DEBUG_MSG("Active VNodes:\n");
