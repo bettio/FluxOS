@@ -283,30 +283,26 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
     return result;
 }
 
-#define O_CREAT		   0100	/* not fcntl */
-
-//TODO: implementare la modalita` append
 int open(const char *pathname, int flags)
 {
-	int result;
+    int result;
+    VNode *node;
+    result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, &node, true);
 
-	VNode *node;
-
-	result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, &node, true);
-
-	if (result < 0){
+    if (result < 0){
         if (flags & O_CREAT){
-			createNewFile(pathname, flags, &node); //le stesse flag?
+            createNewFile(pathname, flags, &node);
+
         }else{
-		    DEBUG_MSG("Failed to open %s\n", pathname);
-
-		    return result;
+            DEBUG_MSG("Failed to open %s\n", pathname);
+            return result;
         }
-	}
+    }
+    
+    FileDescriptor *fdesc = new FileDescriptor(node);
+    fdesc->flags = flags;
 
-	FileDescriptor *fdesc = new FileDescriptor(node);
-
-	return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
+    return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
 int close(ProcessControlBlock *process, int fd)
@@ -330,28 +326,30 @@ int close(int fd)
 
 int write(int fd, const void *buf, size_t count)
 {
-        CHECK_FOR_EBADF(fd);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
-	if (fdesc == NULL) return -EBADF;
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return -EBADF;
+    if ((fdesc->flags & O_ACCMODE) == O_RDONLY) return -EBADF;
 
-	int ret = FS_CALL(fdesc->node, write)(fdesc->node, fdesc->fpos, (char *) buf, count);
+    int ret = FS_CALL(fdesc->node, write)(fdesc->node, fdesc->fpos, (char *) buf, count);
 
-	if (ret > 0) fdesc->fpos += ret;
+    if (ret > 0) fdesc->fpos += ret;
 
-	return ret;
+    return ret;
 }
 
 int read(int fd, void *buf, size_t count)
 {
-        CHECK_FOR_EBADF(fd);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
-	if (fdesc == NULL) return -EBADF;
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return -EBADF;
+    if ((fdesc->flags & O_ACCMODE) == O_WRONLY) return -EBADF;
 
-	int ret = FS_CALL(fdesc->node, read)(fdesc->node, fdesc->fpos, (char *) buf, count);
+    int ret = FS_CALL(fdesc->node, read)(fdesc->node, fdesc->fpos, (char *) buf, count);
 
-	if (ret > 0) fdesc->fpos += ret;
+    if (ret > 0) fdesc->fpos += ret;
 
-	return ret;
+    return ret;
 }
 
 int lseek(int fd, off_t offset, int whence)
@@ -757,6 +755,7 @@ int dup(int oldfd)
     if (oldFdesc == NULL) return -EBADF;
     
     FileDescriptor *fdesc = new FileDescriptor(VNodeManager::ReferenceVnode(oldFdesc->node));
+    fdesc->flags = oldFdesc->flags;
     fdesc->fpos = oldFdesc->fpos;
     
     return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
@@ -776,10 +775,12 @@ int pipe(int pipefd[2])
 
     //read end
     FileDescriptor *fdesc0 = new FileDescriptor(node);
+    fdesc0->flags = O_RDONLY;
     pipefd[0] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc0);
 
     //write end
     FileDescriptor *fdesc1 = new FileDescriptor(VNodeManager::ReferenceVnode(node));
+    fdesc1->flags = O_WRONLY;
     pipefd[1] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc1);
 
     return 0;
@@ -795,4 +796,3 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 
     return ret;
 }
-
