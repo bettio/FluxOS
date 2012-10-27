@@ -276,7 +276,7 @@ uint32_t dup(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 
 uint32_t pipe(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    return pipe((int *) ebx);
+    return pipe2((int *) ebx, 0);
 }
 
 uint32_t brk(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
@@ -435,10 +435,13 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(23, setuid);
     registerSyscall(24, getuid);
     registerSyscall(25, stime);
+    //26 ptrace
+    //27 alarm
     registerSyscall(28, fstat);
     //30 utime
     //33 access
     //34 nice
+    //36 sync
     registerSyscall(37, kill);
     registerSyscall(38, rename);
     registerSyscall(39, mkdir);
@@ -448,33 +451,86 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(45, brk);
     registerSyscall(46, setgid);
     registerSyscall(47, getgid);
+    //48 sys_signal
+    //49 geteuid
+    //50 getegid
     //52 umount2
     registerSyscall(54, ioctl);
     registerSyscall(55, fcntl);
     //57 setpgid
     //60 umask
-    //61 ustat
+    //61 chroot
+    //62 ustat
     //63 dup2
     registerSyscall(64, getppid);
+    //65 getpgrp
+    //66 setsid
+    //67 sigaction
+    //68 sgetmask
+    //69 ssetmask
+    //70 setreuid
+    //71 setregid
+    //72 sigsuspend
+    //73 sigpending
     registerSyscall(74, sethostname);
+    //gettimeofday 78
+    //settimeofday 79
     registerSyscall(83, symlink);
+    //84 lstat
     registerSyscall(85, readlink);
+    //86 uselib
     registerSyscall(88, reboot);
     registerSyscall(90, mmap);
+    //91 munmap
     registerSyscall(92, truncate);
     registerSyscall(93, ftruncate);
     registerSyscall(94, fchmod);
     registerSyscall(95, fchown);
+    //96 getpriority
+    //97 setpriority
+    //99 statfs
+    //100 fstatfs
+    //102 socketcall
+    //104 setitimer
+    //105 getitimer
     registerSyscall(107, lstat);
+    //114 wait4
     registerSyscall(118, fsync);
+    //119 sigreturn
+    //120 clone
     registerSyscall(121, setdomainname);
     registerSyscall(122, uname);
+    //125 mprotect
+    //126 sigprocmask
+    //132 getpgid
+    //133 fchdir
+    //138 setfsuid
+    //139 setfsgid 
     registerSyscall(141, getdents);
+    //142 select
+    //143 flock
+    //144 msync
+    //145 readv
+    //146 writev
+    //147 sys_getsid
     registerSyscall(148, fdatasync);
+    //149 sysctl
+    //150 mlock
+    //151 munlock
+    //152 mlockall
+    //153 munlockall
+    //162 nanosleep
+    //163 mremap
+    //164 setresuid
+    //165 getresuid
+    //168 poll
+    //170 setresid
+    //171 getresid
     registerSyscall(180, pread);
     registerSyscall(181, pwrite);
     registerSyscall(182, chown);
     registerSyscall(183, getcwd);
+    //186 sigaltstack
     //187 sendfile
 }
 

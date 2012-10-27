@@ -768,19 +768,19 @@ int dup2(int oldfd, int newfd)
 }
 
 //TODO: check pipefd address
-int pipe(int pipefd[2])
+int pipe2(int pipefd[2], int flags)
 {
     VNode *node = Pipe::newPipe();
     if (node == NULL) return -ENOMEM;
 
     //read end
     FileDescriptor *fdesc0 = new FileDescriptor(node);
-    fdesc0->flags = O_RDONLY;
+    fdesc0->flags = O_RDONLY | flags;
     pipefd[0] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc0);
 
     //write end
     FileDescriptor *fdesc1 = new FileDescriptor(VNodeManager::ReferenceVnode(node));
-    fdesc1->flags = O_WRONLY;
+    fdesc1->flags = O_WRONLY | flags;
     pipefd[1] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc1);
 
     return 0;
