@@ -47,6 +47,7 @@ int lstat(const char *path, struct stat *buf);
 int stat64(const char *path, struct stat64 *buf);
 int fstat64(int filedes, struct stat64 *buf);
 int lstat64(const char *path, struct stat64 *buf);
+int access(const char *pathname, int mode);
 
 int fsync(int fd);
 int fdatasync(int fd);

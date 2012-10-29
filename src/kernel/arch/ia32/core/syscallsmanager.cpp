@@ -339,6 +339,11 @@ uint32_t fstat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
     return fstat((int) ebx, (struct stat *) ecx);
 }
 
+uint32_t access(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return access((const char *) ebx, (int) ecx);
+}
+
 uint32_t fsync(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return fsync((int) ebx);
@@ -439,7 +444,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //27 alarm
     registerSyscall(28, fstat);
     //30 utime
-    //33 access
+    registerSyscall(33, access);
     //34 nice
     //36 sync
     registerSyscall(37, kill);
