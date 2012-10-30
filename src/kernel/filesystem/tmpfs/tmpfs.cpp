@@ -66,6 +66,9 @@ FSModuleInfo *TmpFS::NewFSModuleInfo()
 
     info->umount = Umount;
     info->lookup = Lookup;
+    info->openfd = OpenFD;
+    info->dupfd = DupFD;
+    info->closefd = CloseFD;
     info->closevnode = CloseVNode;
     info->read = Read;
     info->readlink = Readlink;
@@ -88,6 +91,8 @@ FSModuleInfo *TmpFS::NewFSModuleInfo()
     info->rmdir = Rmdir;
     info->creat = Creat;
     info->statfs = StatFS;
+    info->size = Size;
+    info->type = Type;
     info->utime = Utime;
     info->fcntl = Fcntl;
     info->ioctl = Ioctl;
@@ -144,6 +149,21 @@ int TmpFS::Umount(VNode *root)
     root->mount = 0;
     
     return 0; //TODO: We must return a good value
+}
+
+int TmpFS::OpenFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int TmpFS::CloseFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int TmpFS::DupFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
 }
 
 int TmpFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
@@ -491,6 +511,22 @@ int TmpFS::StatFS(VNode *directory, struct statfs *buf)
     //f_fsid;
     buf->f_namelen = 256;
   
+    return 0;
+}
+
+int TmpFS::Size(VNode *node, int64_t *size)
+{
+    TmpInode *inode = Inode(node);
+    *size = inode->Size;
+
+    return 0;
+}
+
+int TmpFS::Type(VNode *node, int *type)
+{
+    TmpInode *inode = Inode(node);
+    *type = inode->Mode & S_IFMT;
+
     return 0;
 }
 

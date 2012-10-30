@@ -31,17 +31,27 @@
 
 class VNode;
 struct dirent;
+class FileDescriptor;
 
 struct FSModuleInfo
 {
     MUST_CHECK int (*umount)(VNode *root);
-    MUST_CHECK int (*lookup)(VNode *node, const char *name, VNode **vnd, unsigned int *ntype);
+
+    MUST_CHECK int (*openfd)(VNode *node, FileDescriptor *fdesc);
+    MUST_CHECK int (*closefd)(VNode *node, FileDescriptor *fdesc);
+    MUST_CHECK int (*dupfd)(VNode *node, FileDescriptor *fdesc);
     MUST_CHECK int (*closevnode)(VNode *node);
+
+    MUST_CHECK int (*socketcall)(VNode *node, int call, unsigned long *args);
+
+    MUST_CHECK int (*lookup)(VNode *node, const char *name, VNode **vnd, unsigned int *ntype);
     MUST_CHECK int (*read)(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
     MUST_CHECK int (*readlink)(VNode *linknode, char *buf, size_t bufsize);
     MUST_CHECK int (*write)(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
     MUST_CHECK int (*getdents)(VNode *node, dirent *dirp, unsigned int count);
     MUST_CHECK int (*stat)(VNode *node, struct stat *buf);
+    MUST_CHECK int (*size)(VNode *node, int64_t *size);
+    MUST_CHECK int (*type)(VNode *node, int *type);
     MUST_CHECK int (*name)(VNode *directory, VNode *node, char **name, int *len);
     MUST_CHECK int (*access)(VNode *node, int mode, int uid, int gid);
     MUST_CHECK int (*chmod)(VNode *node, mode_t mode);

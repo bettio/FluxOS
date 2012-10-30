@@ -90,6 +90,9 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 		return -ENOMEM;
 	}
     info->umount = Umount;
+    info->openfd = OpenFD;
+    info->dupfd = DupFD;
+    info->closefd = CloseFD;
     info->lookup = Lookup;
     info->closevnode = CloseVNode;
     info->read = Read;
@@ -113,6 +116,8 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
     info->rmdir = Rmdir;
     info->creat = Creat;
     info->statfs = StatFS;
+    info->size = Size;
+    info->type = Type;
     info->utime = Utime;
     info->fcntl = Fcntl;
     info->ioctl = Ioctl;
@@ -149,6 +154,21 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 	fsmount->fsRootVNode = root;
 
 	return 0;
+}
+
+int Ext2::OpenFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int Ext2::CloseFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int Ext2::DupFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
 }
 
 //If I return a pointer I can't do easily distinctions between different errors
@@ -742,6 +762,22 @@ int Ext2::Creat(VNode *directory, const char *name, mode_t mode)
 
 int Ext2::StatFS(VNode *directory, struct statfs *buf)
 {
+    return 0;
+}
+
+int Ext2::Size(VNode *node, int64_t *size)
+{
+    ext2_inode *inode = ReadInode(node);
+    *size = inode->i_size;
+
+    return 0;
+}
+
+int Ext2::Type(VNode *node, int *type)
+{
+    ext2_inode *inode = ReadInode(node);
+    *type = inode->i_mode & S_IFMT;
+
     return 0;
 }
 

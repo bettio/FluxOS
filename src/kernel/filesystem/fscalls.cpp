@@ -358,15 +358,34 @@ int lseek(int fd, off_t offset, int whence)
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
     if (fdesc == NULL) return -EBADF;
 
-    //TODO: we should check here if it is possible to lseek (seek on pipes is not possible)
+    int type;
+    int ret = FS_CALL(fdesc->node, type)(fdesc->node, &type);
+    if (ret < 0) return ret;
+    if (type & (S_IFIFO | S_IFSOCK)) return -ESPIPE;
 
-	if (whence == SEEK_SET){ 
-		fdesc->fpos = offset;
-	}else if (whence == SEEK_CUR){
-		fdesc->fpos += offset;
-	}else if (whence == SEEK_END){
-		//TODO: Size - offset
-	}
+    int64_t size;
+    ret = FS_CALL(fdesc->node, size)(fdesc->node, &size);
+    if (ret < 0) return ret;
+
+    switch (whence){
+        case SEEK_SET:
+            if ((int64_t) offset > size || offset < 0) return -EINVAL;
+            fdesc->fpos = offset;
+            break;
+
+        case SEEK_CUR:
+            if ((int64_t) fdesc->fpos + offset > size || fdesc->fpos + offset < 0) return -EINVAL;
+		    fdesc->fpos += offset;
+            break;
+
+        case SEEK_END:
+            if ((int64_t) size + offset > size) return -EINVAL;
+            fdesc->fpos = size + offset;
+            break;
+
+        default:
+            return -EINVAL;
+    }
 
 	return fdesc->fpos;
 }

@@ -33,6 +33,9 @@ namespace FileSystem
 		public:
 			static int Init();
 			static int Mount(FSMount *fsmount, BlockDevice *blkdev);
+            static int OpenFD(VNode *node, FileDescriptor *fdesc);
+            static int CloseFD(VNode *node, FileDescriptor *fdesc);
+            static int DupFD(VNode *node, FileDescriptor *fdesc);
 			static int ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
 			static ext2_inode *ReadInode(VNode *node);
@@ -44,6 +47,8 @@ namespace FileSystem
 			static int ReadDoubleIndirectBlocksData(ext2_inode *inode, uint32_t *doubleIndirectBlock, VNode *node, uint32_t pos, char *buffer, unsigned int bufsize);
 			static int ReadTripleIndirectBlocksData(ext2_inode *inode, uint32_t *tripleIndirectBlock, VNode *node, uint32_t pos, char *buffer, unsigned int bufsize);
 			static int Access(VNode *node, int aMode, int uid, int gid);
+            static int Size(VNode *node, int64_t *size);
+            static int Type(VNode *node, int *type); 
 			static int Name(VNode *directory, VNode *node, char **name, int *len);
 			static int Chmod(VNode *node, mode_t mode);
 			static int Chown(VNode *node, uid_t uid, gid_t gid);

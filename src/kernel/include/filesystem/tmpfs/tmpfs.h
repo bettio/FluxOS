@@ -61,6 +61,9 @@ namespace FileSystem
             static int Init();
             static int Mount(FSMount *fsmount, BlockDevice *blkdev);
             static int Umount(VNode *root);
+            static int OpenFD(VNode *node, FileDescriptor *fdesc);
+            static int CloseFD(VNode *node, FileDescriptor *fdesc);
+            static int DupFD(VNode *node, FileDescriptor *fdesc);	
             static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
             static int CloseVNode(VNode *node);
             static int Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
@@ -85,6 +88,8 @@ namespace FileSystem
             static int Creat(VNode *directory, const char *name, mode_t mode);
             static int Creat(VNode *directory, const char *name, mode_t mode, TmpInode **inode);
             static int StatFS(VNode *directory, struct statfs *buf);
+            static int Size(VNode *node, int64_t *size);
+            static int Type(VNode *node, int *type); 
             static int Utime(VNode *node, const struct utimbuf *buf);
             static int Fcntl(VNode *node, int cmd, long arg);
             static int Ioctl(VNode *node, int request, long arg);

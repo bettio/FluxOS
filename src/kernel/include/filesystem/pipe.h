@@ -36,6 +36,9 @@ namespace FileSystem
             static int init();
             static VNode *newPipe();
             static int Umount(VNode *root);
+            static int OpenFD(VNode *node, FileDescriptor *fdesc);
+            static int CloseFD(VNode *node, FileDescriptor *fdesc);
+            static int DupFD(VNode *node, FileDescriptor *fdesc);
             static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
             static int CloseVNode(VNode *node);
             static int Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
@@ -43,6 +46,8 @@ namespace FileSystem
             static int Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
             static int GetDEnts(VNode *node, dirent *dirp, unsigned int count);
             static int Stat(VNode *node, struct stat *buf);
+            static int Size(VNode *node, int64_t *size);
+            static int Type(VNode *node, int *type); 
             static int Access(VNode *node, int aMode, int uid, int gid);
             static int Name(VNode *directory, VNode *node, char **name, int *len);
             static int Chmod(VNode *node, mode_t mode);

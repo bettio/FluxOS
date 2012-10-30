@@ -78,6 +78,10 @@ FSModuleInfo *Pipe::NewFSModuleInfo()
     if (info == NULL) return 0;
 
     info->umount = Umount;
+    info->openfd = OpenFD;
+    info->closefd = CloseFD;
+    info->dupfd = DupFD;
+    info->socketcall = 0;
     info->lookup = Lookup;
     info->closevnode = CloseVNode;
     info->read = Read;
@@ -85,6 +89,8 @@ FSModuleInfo *Pipe::NewFSModuleInfo()
     info->write = Write;
     info->getdents = GetDEnts;
     info->stat = Stat;
+    info->size = Size;
+    info->type = Type;
     info->name = Name;
     info->access = Access;
     info->chmod = Chmod;
@@ -112,6 +118,21 @@ FSModuleInfo *Pipe::NewFSModuleInfo()
 int Pipe::Umount(VNode *root)
 {
     return -EINVAL;
+}
+
+int Pipe::OpenFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int Pipe::CloseFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
+}
+
+int Pipe::DupFD(VNode *node, FileDescriptor *fdesc)
+{
+    return 0;
 }
 
 int Pipe::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
@@ -282,6 +303,17 @@ int Pipe::Name(VNode *directory, VNode *node, char **name, int *len)
 int Pipe::StatFS(VNode *directory, struct statfs *buf)
 {  
     return -EINVAL;
+}
+
+int Pipe::Size(VNode *node, int64_t *size)
+{  
+    return -EINVAL;
+}
+
+int Pipe::Type(VNode *node, int *type)
+{
+    *type = S_IFIFO;
+    return 0;
 }
 
 int Pipe::Utime(VNode *node, const struct utimbuf *buf)
