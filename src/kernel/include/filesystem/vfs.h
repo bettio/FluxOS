@@ -31,7 +31,7 @@
 #include <filesystem/filesysteminfo.h>
 #include <filesystem/stat.h>
 #include <filesystem/stat64.h>
-#include <filesystem/errors.h>
+#include <errors.h>
 
 #include <stdint.h>
 #include <string.h>

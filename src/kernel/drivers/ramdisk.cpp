@@ -23,7 +23,7 @@
 #include <boot/bootloaderinfo.h>
 #include <drivers/blockdevicemanager.h>
 #include <cstdlib.h>
-#include <filesystem/errors.h>
+#include <errors.h>
 
 #include <core/printk.h>
 #include <drivers/ramdisk.h>

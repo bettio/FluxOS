@@ -577,7 +577,7 @@ void *moreheap(long increment)
 #define LACKS_ERRNO_H 1
 #define LACKS_SCHED_H 1
 #define LACKS_TIME_H 1
-#include <filesystem/errors.h>
+#include <errors.h>
 #include <cstring.h>
 #define MALLOC_FAILURE_ACTION ;
 #define NO_MALLOC_STATS 1

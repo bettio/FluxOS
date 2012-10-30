@@ -24,6 +24,7 @@
 
 #define EPERM 1
 #define ENOENT 2
+#define ESRCH 3
 #define EBADF 9
 #define ECHILD 10
 #define ENOMEM 12
@@ -37,6 +38,7 @@
 #define EISDIR 21
 #define EINVAL 22
 #define ENOSPC 28
+#define ESPIPE 29
 #define EROFS 30
 #define ELOOP 40
 

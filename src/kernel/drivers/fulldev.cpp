@@ -22,7 +22,7 @@
 
 #include <drivers/fulldev.h>
 #include <drivers/chardevice.h>
-#include <filesystem/errors.h>
+#include <errors.h>
 
 CharDevice FullDev::fullDev =
 {

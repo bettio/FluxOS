@@ -30,7 +30,7 @@
 #include <drivers/chardevicemanager.h>
 #include <drivers/chardevice.h>
 #include <filesystem/vnode.h>
-#include <filesystem/errors.h>
+#include <errors.h>
 #include <arch/ia32/mm/pagingmanager.h>
 
 struct VBEModeInfoBlock
