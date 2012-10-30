@@ -761,10 +761,38 @@ int dup(int oldfd)
     return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
-//TODO: Implement dup2
 int dup2(int oldfd, int newfd)
 {
-    return -EINVAL;
+    if (newfd == oldfd){
+        return newfd;
+
+    }else{
+        return dup3(oldfd, newfd, 0);
+    }
+}
+
+int dup3(int oldfd, int newfd, int flags)
+{
+    if (newfd < 0) return -EBADF;
+    CHECK_FOR_EBADF(oldfd);
+    FileDescriptor *oldFdesc = Scheduler::currentThread()->parentProcess->openFiles->at(oldfd);
+    if (oldFdesc == NULL) return -EBADF;
+    if (newfd == oldfd) return -EINVAL;
+
+    if (newfd < Scheduler::currentThread()->parentProcess->openFiles->size()){
+        FileDescriptor *closefdesc = Scheduler::currentThread()->parentProcess->openFiles->at(newfd);
+        if (closefdesc != NULL){
+            close(newfd);
+        }
+    }else{
+        Scheduler::currentThread()->parentProcess->openFiles->resize(newfd);
+    }
+
+    FileDescriptor *fdesc = new FileDescriptor(VNodeManager::ReferenceVnode(oldFdesc->node));
+    fdesc->flags = oldFdesc->flags | flags;
+    fdesc->fpos = oldFdesc->fpos;
+    (*Scheduler::currentThread()->parentProcess->openFiles)[newfd] = fdesc;
+    return newfd;
 }
 
 //TODO: check pipefd address

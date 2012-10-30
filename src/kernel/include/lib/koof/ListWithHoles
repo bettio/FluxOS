@@ -79,10 +79,16 @@ template <typename T> class ListWithHoles
             return m_list->at(i);
         }
 
-	inline int size() const
-	{
+       inline int size() const
+	   {
             return m_list->size();
-	}
+	   }
+
+       inline int resize(int size)
+       {
+           m_list->resize(size);
+           return size;
+       }
 };
 
 #endif

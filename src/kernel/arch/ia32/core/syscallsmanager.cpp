@@ -161,6 +161,11 @@ uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t
     return -EPERM;
 }
 
+uint32_t dup2(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return dup2(ebx, ecx);
+}
+
 uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return Scheduler::currentThread()->parentProcess->parent->pid;
@@ -466,7 +471,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //60 umask
     //61 chroot
     //62 ustat
-    //63 dup2
+    registerSyscall(32, dup2);
     registerSyscall(64, getppid);
     //65 getpgrp
     //66 setsid
