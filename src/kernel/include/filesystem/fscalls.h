@@ -32,6 +32,7 @@ int close(ProcessControlBlock *process, int fd);
 
 int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name);
 int creat(const char *pathname, mode_t mode);
+int utime(const char *path, const struct utimbuf *times);
 int readlink(const char *path, char *buf, size_t bufsiz);
 int open(const char *pathname, int flags);
 int close(int fd);
