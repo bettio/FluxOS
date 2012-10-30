@@ -481,7 +481,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //gettimeofday 78
     //settimeofday 79
     registerSyscall(83, symlink);
-    //84 lstat
+    registerSyscall(84, lstat);
     registerSyscall(85, readlink);
     //86 uselib
     registerSyscall(88, reboot);
