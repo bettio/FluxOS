@@ -56,7 +56,7 @@ int CharDeviceManager::Register(CharDevice *cd)
     CharDevices.insert(chrId, cd);
     CharDevicesByName.insert(cd->name, cd);
 
-    FileSystem::DevFS::Mknod(0, cd->name, S_IFCHR, (cd->Major << 16) | cd->Minor);
+    FileSystem::DevFS::mknod(0, cd->name, S_IFCHR, (cd->Major << 16) | cd->Minor);
 
     printk("Registered char device %s.\n", cd->name);
 

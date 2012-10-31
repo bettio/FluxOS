@@ -40,6 +40,8 @@
 
 using namespace FileSystem;
 
+FSCALLS(TmpFS::calls)
+
 inline TmpInode *Inode(const VNode *node)
 {
     TmpFSPrivData *privdata = (TmpFSPrivData *) node->mount->privdata;
@@ -59,52 +61,9 @@ int TmpFS::Init()
     return 0;
 }
 
-FSModuleInfo *TmpFS::NewFSModuleInfo()
-{
-    FSModuleInfo *info = new FSModuleInfo;
-    if (info == NULL) return 0;
-
-    info->umount = Umount;
-    info->lookup = Lookup;
-    info->openfd = OpenFD;
-    info->dupfd = DupFD;
-    info->closefd = CloseFD;
-    info->closevnode = CloseVNode;
-    info->read = Read;
-    info->readlink = Readlink;
-    info->write = Write;
-    info->getdents = GetDEnts;
-    info->stat = Stat;
-    info->name = Name;
-    info->access = Access;
-    info->chmod = Chmod;
-    info->chown = Chown;
-    info->link = Link;
-    info->symlink = Symlink;
-    info->rename = Rename;
-    info->mknod = Mknod;
-    info->mkdir = Mkdir;
-    info->truncate = Truncate;
-    info->fsync = FSync;
-    info->fdatasync = FDataSync;
-    info->unlink = Unlink;
-    info->rmdir = Rmdir;
-    info->creat = Creat;
-    info->statfs = StatFS;
-    info->size = Size;
-    info->type = Type;
-    info->utime = Utime;
-    info->fcntl = Fcntl;
-    info->ioctl = Ioctl;
-    info->mmap = Mmap;
-    
-    return info;
-}
-
 int TmpFS::Mount(FSMount *fsmount, BlockDevice *)
 {
-    fsmount->fs = NewFSModuleInfo();
-    if (fsmount->fs == NULL) return -ENOMEM;
+    fsmount->fs = &calls;
 
     TmpFSPrivData *privdata = new TmpFSPrivData;
     if (privdata == NULL){
@@ -133,7 +92,7 @@ int TmpFS::Mount(FSMount *fsmount, BlockDevice *)
     return 0; //TODO: We must return a good value
 }
 
-int TmpFS::Umount(VNode *root)
+int TmpFS::umount(VNode *root)
 {
     TmpFSPrivData *privdata = (TmpFSPrivData *) root->mount->privdata;
 
@@ -151,22 +110,27 @@ int TmpFS::Umount(VNode *root)
     return 0; //TODO: We must return a good value
 }
 
-int TmpFS::OpenFD(VNode *node, FileDescriptor *fdesc)
+int TmpFS::socketcall(VNode *node, int call, unsigned long *args)
+{
+    return -EINVAL;
+}
+
+int TmpFS::openfd(VNode *node, FileDescriptor *fdesc)
 {
     return 0;
 }
 
-int TmpFS::CloseFD(VNode *node, FileDescriptor *fdesc)
+int TmpFS::closefd(VNode *node, FileDescriptor *fdesc)
 {
     return 0;
 }
 
-int TmpFS::DupFD(VNode *node, FileDescriptor *fdesc)
+int TmpFS::dupfd(VNode *node, FileDescriptor *fdesc)
 {
     return 0;
 }
 
-int TmpFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
+int TmpFS::lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
 {
     TmpFSPrivData *privdata = (TmpFSPrivData *) node->mount->privdata;
     TmpInode *inode = privdata->Inodes[node->vnid.id];
@@ -207,12 +171,12 @@ int TmpFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
     }
 }
 
-int TmpFS::CloseVNode(VNode *node)
+int TmpFS::closevnode(VNode *node)
 {
     return 0;
 }
 
-int TmpFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
+int TmpFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
     TmpInode *inode = Inode(node);
 
@@ -224,7 +188,7 @@ int TmpFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
     return bufsize;
 }
 
-int TmpFS::Readlink(VNode *node, char *buffer, size_t bufsize)
+int TmpFS::readlink(VNode *node, char *buffer, size_t bufsize)
 {
     TmpInode *inode = Inode(node);
 
@@ -236,7 +200,7 @@ int TmpFS::Readlink(VNode *node, char *buffer, size_t bufsize)
     return bufsize;
 }
 
-int TmpFS::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int TmpFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
 {   
     TmpInode *inode = Inode(node);
 
@@ -244,7 +208,7 @@ int TmpFS::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int buf
 
     //TODO: effettuare controlli aggiuntivi, del tipo: la scrittura e` oltre la fine?
     if (bufsize + pos > inode->Size){
-        int ret = Truncate(node, bufsize + pos);
+        int ret = truncate(node, bufsize + pos);
         if (ret < 0) return ret;
     }
 
@@ -254,7 +218,7 @@ int TmpFS::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int buf
 }
 
 //TODO: it doesn't work if the directory is completely empty (without . and ..)
-int TmpFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
+int TmpFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 {
     TmpInode *inode = Inode(node);
 
@@ -275,7 +239,7 @@ int TmpFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
     return bufferUsedBytes;
 }
 
-int TmpFS::Stat(VNode *node, struct stat *buf)
+int TmpFS::stat(VNode *node, struct stat *buf)
 {
     TmpInode *inode = Inode(node);
 
@@ -296,7 +260,7 @@ int TmpFS::Stat(VNode *node, struct stat *buf)
     return 0;
 }
 
-int TmpFS::Access(VNode *node, int aMode, int uid, int gid)
+int TmpFS::access(VNode *node, int aMode, int uid, int gid)
 {
     TmpInode *inode = Inode(node);
 
@@ -320,7 +284,7 @@ int TmpFS::Access(VNode *node, int aMode, int uid, int gid)
     return 0;
 }
 
-int TmpFS::Chmod(VNode *node, mode_t mode)
+int TmpFS::chmod(VNode *node, mode_t mode)
 {
     TmpInode *inode = Inode(node);
 
@@ -329,7 +293,7 @@ int TmpFS::Chmod(VNode *node, mode_t mode)
     return 0;
 }
 
-int TmpFS::Chown(VNode *node, uid_t uid, gid_t gid)
+int TmpFS::chown(VNode *node, uid_t uid, gid_t gid)
 {
     TmpInode *inode = Inode(node);
 
@@ -340,7 +304,7 @@ int TmpFS::Chown(VNode *node, uid_t uid, gid_t gid)
 }
 
 //TODO: We must do some checks
-int TmpFS::Link(VNode *directory, VNode *oldNode, const char *newName)
+int TmpFS::link(VNode *directory, VNode *oldNode, const char *newName)
 {
     TmpInode *inode = Inode(directory);
 
@@ -349,10 +313,10 @@ int TmpFS::Link(VNode *directory, VNode *oldNode, const char *newName)
     return 0;
 }
 
-int TmpFS::Symlink(VNode *directory, const char *oldName, const char *newName)
+int TmpFS::symlink(VNode *directory, const char *oldName, const char *newName)
 {
     TmpInode *tmpInode;
-    int retVal = Creat(directory, newName, 0, &tmpInode);
+    int retVal = creat(directory, newName, 0, &tmpInode);
     if (retVal) return retVal;
 
     tmpInode->FileData = (uint8_t *) strdup(oldName);
@@ -362,7 +326,7 @@ int TmpFS::Symlink(VNode *directory, const char *oldName, const char *newName)
     return 0;
 }
 
-int TmpFS::Rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory, const char *newName)
+int TmpFS::rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory, const char *newName)
 {
     TmpInode *oldInode = Inode(oldDirectory);
     int inodeId = oldInode->Directory.value(oldName);
@@ -374,10 +338,10 @@ int TmpFS::Rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory,
     return 0;
 }
 
-int TmpFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
+int TmpFS::mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 {
     TmpInode *tmpInode;
-    int retVal = Creat(directory, newName, mode, &tmpInode);
+    int retVal = creat(directory, newName, mode, &tmpInode);
     if (retVal) return retVal;
 
     tmpInode->Major = dev >> 16; //TODO: Need to be changed to 64 bit
@@ -387,10 +351,10 @@ int TmpFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
     return 0;
 }
 
-int TmpFS::Mkdir(VNode *directory, const char *newName, mode_t mode)
+int TmpFS::mkdir(VNode *directory, const char *newName, mode_t mode)
 {
     TmpInode *tmpInode;
-    int retVal = Creat(directory, newName, mode, &tmpInode);
+    int retVal = creat(directory, newName, mode, &tmpInode);
     if (retVal) return retVal;
     
     tmpInode->FileData = 0;
@@ -402,7 +366,7 @@ int TmpFS::Mkdir(VNode *directory, const char *newName, mode_t mode)
     return 0;
 }
 
-int TmpFS::Truncate(VNode *node, uint64_t length)
+int TmpFS::truncate(VNode *node, uint64_t length)
 {
     TmpInode *inode = Inode(node);
 
@@ -418,17 +382,17 @@ int TmpFS::Truncate(VNode *node, uint64_t length)
     return 0;
 }
 
-int TmpFS::FSync(VNode *node)
+int TmpFS::fsync(VNode *node)
 {
     return 0;
 }
 
-int TmpFS::FDataSync(VNode *node)
+int TmpFS::fdatasync(VNode *node)
 {
     return 0;
 }
 
-int TmpFS::Unlink(VNode *directory, const char *name)
+int TmpFS::unlink(VNode *directory, const char *name)
 {
     TmpInode *inode = Inode(directory);
     
@@ -444,14 +408,14 @@ int TmpFS::Unlink(VNode *directory, const char *name)
     }
 }
 
-int TmpFS::Rmdir(VNode *directory, const char *name)
+int TmpFS::rmdir(VNode *directory, const char *name)
 {
     //TODO: check directory
     
-    return Unlink(directory, name);
+    return unlink(directory, name);
 }
 
-int TmpFS::Creat(VNode *directory, const char *name, mode_t mode, TmpInode **tmpInode)
+int TmpFS::creat(VNode *directory, const char *name, mode_t mode, TmpInode **tmpInode)
 {
     TmpFSPrivData *privdata = (TmpFSPrivData *) directory->mount->privdata;
 
@@ -467,10 +431,10 @@ int TmpFS::Creat(VNode *directory, const char *name, mode_t mode, TmpInode **tmp
     return 0;
 }
 
-int TmpFS::Creat(VNode *directory, const char *name, mode_t mode)
+int TmpFS::creat(VNode *directory, const char *name, mode_t mode)
 {
     TmpInode *tmpInode;
-    int retVal = Creat(directory, name, mode, &tmpInode);
+    int retVal = creat(directory, name, mode, &tmpInode);
     if (retVal) return retVal;
     
     tmpInode->FileData = (uint8_t *) malloc(4);
@@ -479,7 +443,7 @@ int TmpFS::Creat(VNode *directory, const char *name, mode_t mode)
 }
 
 //????
-int TmpFS::Name(VNode *directory, VNode *node, char **name, int *len)
+int TmpFS::name(VNode *directory, VNode *node, char **name, int *len)
 {
     TmpFSPrivData *privdata = (TmpFSPrivData *) directory->mount->privdata;
     TmpInode *inode = privdata->Inodes[directory->vnid.id];
@@ -499,7 +463,7 @@ int TmpFS::Name(VNode *directory, VNode *node, char **name, int *len)
     return 0;
 }
 
-int TmpFS::StatFS(VNode *directory, struct statfs *buf)
+int TmpFS::statfs(VNode *directory, struct statfs *buf)
 {
     buf->f_type = -1; //TODO
     buf->f_bsize = -1; //TODO
@@ -514,7 +478,7 @@ int TmpFS::StatFS(VNode *directory, struct statfs *buf)
     return 0;
 }
 
-int TmpFS::Size(VNode *node, int64_t *size)
+int TmpFS::size(VNode *node, int64_t *size)
 {
     TmpInode *inode = Inode(node);
     *size = inode->Size;
@@ -522,7 +486,7 @@ int TmpFS::Size(VNode *node, int64_t *size)
     return 0;
 }
 
-int TmpFS::Type(VNode *node, int *type)
+int TmpFS::type(VNode *node, int *type)
 {
     TmpInode *inode = Inode(node);
     *type = inode->Mode & S_IFMT;
@@ -530,7 +494,7 @@ int TmpFS::Type(VNode *node, int *type)
     return 0;
 }
 
-int TmpFS::Utime(VNode *node, const struct utimbuf *buf)
+int TmpFS::utime(VNode *node, const struct utimbuf *buf)
 {
     TmpInode *inode = Inode(node);
     
@@ -540,18 +504,18 @@ int TmpFS::Utime(VNode *node, const struct utimbuf *buf)
     return 0;
 }
 
-int TmpFS::Fcntl(VNode *node, int cmd, long arg)
+int TmpFS::fcntl(VNode *node, int cmd, long arg)
 {
     return -EINVAL;
 }
 
-int TmpFS::Ioctl(VNode *node, int request, long arg)
+int TmpFS::ioctl(VNode *node, int request, long arg)
 {
     return -EINVAL;
 }
 
 //HACK: it should map memory!
-void *TmpFS::Mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
+void *TmpFS::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
     TmpInode *inode = Inode(node);
     if (S_ISDIR(inode->Mode)) return (void *) -EISDIR;

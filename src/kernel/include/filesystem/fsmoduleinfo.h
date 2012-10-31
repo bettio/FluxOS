@@ -33,6 +33,45 @@ class VNode;
 struct dirent;
 class FileDescriptor;
 
+#define FSCALLS(sname) \
+        FSModuleInfo sname = \
+        { \
+            umount, \
+            openfd, \
+            closefd, \
+            dupfd, \
+            closevnode, \
+            socketcall, \
+            lookup, \
+            read, \
+            readlink, \
+            write, \
+            getdents, \
+            stat, \
+            size, \
+            type, \
+            name, \
+            access, \
+            chmod, \
+            chown, \
+            link, \
+            symlink, \
+            rename, \
+            mknod, \
+            mkdir, \
+            truncate, \
+            fsync, \
+            fdatasync, \
+            unlink, \
+            rmdir, \
+            creat, \
+            statfs, \
+            utime, \
+            fcntl, \
+            ioctl, \
+            mmap \
+        };
+
 struct FSModuleInfo
 {
     MUST_CHECK int (*umount)(VNode *root);

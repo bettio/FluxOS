@@ -59,7 +59,7 @@ int BlockDeviceManager::Register(BlockDevice *bd)
     BlockDevices.insert(blkId, bd);
     BlockDevicesByName.insert(bd->name, bd);
 
-    FileSystem::DevFS::Mknod(0, bd->name, S_IFBLK, (bd->Major << 16) | bd->Minor);
+    FileSystem::DevFS::mknod(0, bd->name, S_IFBLK, (bd->Major << 16) | bd->Minor);
 
     printk("Registered block device %s.\n", bd->name);
 

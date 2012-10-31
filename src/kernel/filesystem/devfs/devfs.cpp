@@ -57,6 +57,7 @@ struct TmpInode
 
 using namespace FileSystem;
 
+FSCALLS(DevFS::calls);
 QList<TmpInode *> *Inodes;
 
 int DevFS::Init()
@@ -85,27 +86,7 @@ int DevFS::RegisterAsFileSystem()
 
 int DevFS::Mount(FSMount *fsmount, BlockDevice *)
 {
-	FSModuleInfo *info = new FSModuleInfo;
-	if (info == NULL) return -ENOMEM;
-	info->lookup = Lookup;
-	info->read = Read;
-	info->readlink = Readlink;
-	info->write = Write;
-	info->getdents = GetDEnts;
-	info->stat = Stat;
-	info->name = Name;
-	info->access = Access;
-	info->chmod = Chmod;
-	info->chown = Chown;
-	info->link = Link;
-	info->mknod = Mknod;
-	info->truncate = Truncate;
-	info->fsync = FSync;
-	info->fdatasync = FDataSync;
-	info->rmdir = Rmdir;
-	info->creat = Creat;
-
-	fsmount->fs = info;
+	fsmount->fs = &calls;
 
 	VNode *root; 
 	VNodeManager::GetVnode(fsmount->mountId, 1, &root);
@@ -120,7 +101,37 @@ int DevFS::Mount(FSMount *fsmount, BlockDevice *)
 	return 0;
 }
 
-int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
+int DevFS::umount(VNode *root)
+{
+     return -EINVAL;
+}
+
+int DevFS::socketcall(VNode *node, int call, unsigned long *args)
+{
+     return -EINVAL;
+}
+
+int DevFS::openfd(VNode *node, FileDescriptor *fdesc)
+{
+     return -EINVAL;
+}
+
+int DevFS::closefd(VNode *node, FileDescriptor *fdesc)
+{
+     return -EINVAL;
+}
+
+int DevFS::dupfd(VNode *node, FileDescriptor *fdesc)
+{
+     return -EINVAL;
+}
+
+int DevFS::closevnode(VNode *node)
+{
+     return 0;
+}
+
+int DevFS::lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
 {
 	TmpInode *inode = Inodes->at(node->vnid.id);
 
@@ -180,12 +191,12 @@ int DevFS::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntyp
 	return -ENOENT;
 }
 
-int DevFS::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
+int DevFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
 	return 0;
 }
 
-int DevFS::Readlink(VNode *node, char *buffer, size_t bufsize)
+int DevFS::readlink(VNode *node, char *buffer, size_t bufsize)
 {
 	TmpInode *inode = Inodes->at(node->vnid.id);
 
@@ -198,12 +209,12 @@ int DevFS::Readlink(VNode *node, char *buffer, size_t bufsize)
 	return bufsize;
 }
 
-int DevFS::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int DevFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
 {
 	return 0;
 }
 
-int DevFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
+int DevFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 {
     TmpInode *inode = Inodes->at(node->vnid.id);
 
@@ -224,7 +235,7 @@ int DevFS::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
     return bufferUsedBytes;
 }
 
-int DevFS::Stat(VNode *node, struct stat *buf)
+int DevFS::stat(VNode *node, struct stat *buf)
 {
 	TmpInode *inode = Inodes->at(node->vnid.id);
 
@@ -245,27 +256,27 @@ int DevFS::Stat(VNode *node, struct stat *buf)
 	return 0;
 }
 
-int DevFS::Access(VNode *node, int aMode, int uid, int gid)
+int DevFS::access(VNode *node, int aMode, int uid, int gid)
 {
 	return 0;
 }
 
-int DevFS::Chmod(VNode *node, mode_t mode)
+int DevFS::chmod(VNode *node, mode_t mode)
 {
 	return 0;
 }
 
-int DevFS::Chown(VNode *node, uid_t uid, gid_t gid)
+int DevFS::chown(VNode *node, uid_t uid, gid_t gid)
 {
 	return 0;
 }
 
-int DevFS::Link(VNode *directory, VNode *oldNode, const char *newName)
+int DevFS::link(VNode *directory, VNode *oldNode, const char *newName)
 {
 	return 0;
 }
 
-int DevFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
+int DevFS::mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 {
 	TmpInode *tmpInode = new TmpInode;
 	tmpInode->Mode = mode;
@@ -283,37 +294,37 @@ int DevFS::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 }
 
 //TODO
-int DevFS::Truncate(VNode *node, uint64_t length)
+int DevFS::truncate(VNode *node, uint64_t length)
 {
 	return 0;
 }
 
-int DevFS::FSync(VNode *node)
+int DevFS::fsync(VNode *node)
 {
 	return 0;
 }
 
-int DevFS::FDataSync(VNode *node)
+int DevFS::fdatasync(VNode *node)
 {
 	return 0;
 }
 
-int DevFS::Unlink(VNode *directory, const char *name)
+int DevFS::unlink(VNode *directory, const char *name)
 {
 	return -EROFS;
 }
 
-int DevFS::Rmdir(VNode *directory, const char *name)
+int DevFS::rmdir(VNode *directory, const char *name)
 {
 	return -EROFS;
 }
 
-int DevFS::Creat(VNode *directory, const char *name, mode_t mode)
+int DevFS::creat(VNode *directory, const char *name, mode_t mode)
 {
 	return -EROFS;
 }
 
-int DevFS::Name(VNode *directory, VNode *node, char **name, int *len)
+int DevFS::name(VNode *directory, VNode *node, char **name, int *len)
 {
 	*name = strdup(".");
     *len = 1;
@@ -321,12 +332,54 @@ int DevFS::Name(VNode *directory, VNode *node, char **name, int *len)
 	return 0;
 }
 
-int DevFS::StatFS(VNode *directory, struct statfs *buf)
+int DevFS::statfs(VNode *directory, struct statfs *buf)
 {
 	return 0;
 }
 
-int DevFS::Utime(VNode *node, const struct utimbuf *buf)
+int DevFS::utime(VNode *node, const struct utimbuf *buf)
 {
 	return 0;
 }
+
+int DevFS::symlink(VNode *directory, const char *oldName, const char *newName)
+{
+     return -EINVAL;
+}
+
+int DevFS::rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory, const char *newName)
+{
+     return -EINVAL;
+}
+
+int DevFS::mkdir(VNode *directory, const char *newName, mode_t mode)
+{
+     return -EINVAL;
+}
+
+int DevFS::size(VNode *node, int64_t *size)
+{
+     return -EINVAL;
+}
+
+int DevFS::type(VNode *node, int *type)
+{
+     return -EINVAL;
+}
+
+int DevFS::fcntl(VNode *node, int cmd, long arg)
+{
+    return -EINVAL;
+}
+
+int DevFS::ioctl(VNode *node, int request, long arg)
+{
+    return -EINVAL;
+}
+
+void *DevFS::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
+{
+     return 0;
+}
+
+
