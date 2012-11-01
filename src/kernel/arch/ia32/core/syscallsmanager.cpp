@@ -253,10 +253,7 @@ uint32_t umount(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 
 uint32_t kill(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
-    printk("Not implemented syscall: kill\n");
-    while(1);
-
-    return 0;
+    return Task::kill(ebx, ecx);
 }
 
 uint32_t rename(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)

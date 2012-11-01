@@ -22,9 +22,13 @@
 #ifndef _TASK_TASK_H
 #define _TASK_TASK_H
 
+#define SIGKILL 9
+
 #include <task/processcontrolblock.h>
 #include <ListWithHoles>
 #include <arch.h>
+
+class ThreadControlBlock;
 
 class Task{
 	public:
@@ -37,6 +41,8 @@ class Task{
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);
         static int waitpid(int pid, int *status, int options);
+        static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
+        static int kill(int pid, int signal);
         static void notify(ProcessControlBlock *p);
 };
 

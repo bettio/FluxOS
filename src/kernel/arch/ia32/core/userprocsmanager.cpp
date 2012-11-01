@@ -84,6 +84,7 @@ void UserProcsManager::createInitProcess()
         thread->addressSpaceTable = (void *) PagingManager::createPageDir(); 
     #endif
 
+    process->mainThread = thread;
     Scheduler::threads->append(thread);
 }
 
@@ -113,6 +114,7 @@ int UserProcsManager::fork(void *stack)
     PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2, 1);
     thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
 
+    process->mainThread = thread;
     Scheduler::threads->append(thread);
 
     return process->pid;

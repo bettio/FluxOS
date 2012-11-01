@@ -148,13 +148,7 @@ void Task::closeAllFiles(ProcessControlBlock *process)
 
 void Task::exit(int exitStatus)
 {
-    ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
-    closeAllFiles(process);
-    FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
-    Scheduler::currentThread()->parentProcess->exitStatus = exitStatus;
-    Scheduler::currentThread()->parentProcess->status = TERMINATED;
-    notify(Scheduler::currentThread()->parentProcess->parent);
-    Scheduler::currentThread()->status = UWaiting;
+    terminateProcess(Scheduler::currentThread(), exitStatus);
     while (1);
 }
 
@@ -191,6 +185,41 @@ int Task::waitpid(int pid, int *status, int options)
     delete p;
 
     return 0;
+}
+
+int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
+{
+    ProcessControlBlock *process = thread->parentProcess;
+    closeAllFiles(process);
+    FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
+    process->exitStatus = exitStatus;
+    process->status = TERMINATED;
+    notify(process->parent);
+    thread->status = UWaiting;
+    
+    return 0;
+}
+
+int Task::kill(int pid, int signal)
+{
+    if ((pid >= Task::processes->size())) return -ESRCH;
+    ProcessControlBlock *target = Task::processes->at(pid);
+    if (target == NULL) return -ESRCH;
+
+    ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;
+    if (currentProcess->uid != ROOT_UID){
+        if (currentProcess->uid != target->uid) return -EPERM;
+    }
+
+    switch (signal){
+        case SIGKILL:
+            //TODO: kill all threads
+            terminateProcess(target->mainThread, -1);
+            return 0;
+
+        default:
+            return -EINVAL;
+    }
 }
 
 //TODO: implement notify as soon as waitForEvents is implemented.

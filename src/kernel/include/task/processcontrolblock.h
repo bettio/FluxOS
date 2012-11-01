@@ -29,6 +29,11 @@
 
 #include <ListWithHoles>
 
+#define ROOT_UID 0
+#define ROOT_GID 0
+
+class ThreadControlBlock;
+
 enum TaskStatus{
     NOT_STARTED,
 	READY,
@@ -48,6 +53,7 @@ class ProcessControlBlock
         int exitStatus;
         char *name;
         ProcessControlBlock *parent;
+        ThreadControlBlock *mainThread;
 
         void *dataSegmentEnd;
 
