@@ -81,7 +81,6 @@ FSModuleInfo *Pipe::NewFSModuleInfo()
     info->openfd = OpenFD;
     info->closefd = CloseFD;
     info->dupfd = DupFD;
-    info->socketcall = 0;
     info->lookup = Lookup;
     info->closevnode = CloseVNode;
     info->read = Read;

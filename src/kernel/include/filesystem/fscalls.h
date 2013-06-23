@@ -86,5 +86,6 @@ int pipe2(int pipefd[2], int flags);
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
 
 int poll(pollfd *fds, int nfds, int timeout);
+int socket(int domain, int type, int protocol);
 
 #endif

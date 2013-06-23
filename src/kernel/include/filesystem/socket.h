@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,52 +16,27 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.cpp                                                         *
+ *   Name: socket.h                                                        *
+ *   Date: 17/10/2012                                                      *
  ***************************************************************************/
 
-#include <net/net.h>
-#include <net/ip.h>
-#include <net/udp.h>
-#include <net/tcp.h>
+#ifndef _FILESYSTEM_SOCKET_H_
+#define _FILESYSTEM_SOCKET_H_
 
-#include <core/printk.h>
+#include <filesystem/vfs.h>
+#include <QList>
 
-#define ENABLE_DEBUG_MSG 1
-#include <debugmacros.h>
-
-QList<NetIface *> *Net::interfaces;
-QHash<QString, NetIface *> *Net::interfacesByName;
-
-void Net::init()
+namespace FileSystem
 {
-    interfaces = new QList<NetIface *>;
-    interfacesByName = new QHash<QString, NetIface *>;
+    class Socket
+    {
+        public:
+            static int init();
+            static VNode *newSocket(int domain, int type, int protocol);
 
-    IP::init();
-    IPv6::init();
-    UDP::init();
-    TCP::init();
+        private:
+            static unsigned long long socketsCounter;
+    };
 }
 
-void Net::registerInterface(NetIface *iface)
-{
-    int id = interfaces->append(iface);
-
-    interfacesByName->insert("eth0", iface);
-
-    memset(iface->myIP6.addrbytes, 0, sizeof(IPv6Addr));
-    iface->myIP6.addrbytes[0] = 0x20;
-    iface->myIP6.addrbytes[1] = 0x01;
-    iface->myIP6.addrbytes[2] = 0x04;
-    iface->myIP6.addrbytes[3] = 0x70;
-    iface->myIP6.addrbytes[4] = 0x00;
-    iface->myIP6.addrbytes[5] = 0x6C;
-    iface->myIP6.addrbytes[6] = 0x00;
-    iface->myIP6.addrbytes[7] = 0x7E;
-    iface->myIP6.addrbytes[15] = 0x3 + id;
-}
-
-NetIface *Net::interface(const char *name)
-{
-    return interfacesByName->value(name);
-}
+#endif

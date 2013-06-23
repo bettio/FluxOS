@@ -29,9 +29,14 @@
 #include <fcntl.h>
 #include <string.h>
 #include <time.h>
+#include <net/if.h>
+#include <net/route.h>
+#include <sys/ioctl.h>
 #include <sys/fluxos.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 
+void init_net(void);
 void init_sethostname(void);
 void init_setdomainname(void);
 
@@ -45,7 +50,8 @@ int main(int argc, char *argv[])
     init_sethostname();
     init_setdomainname();
 #endif
-    
+    init_net();
+
     while (1){
         printf("\n\nStarting the shell...\n\n");
 
@@ -60,6 +66,62 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+void init_net(void)
+{
+    struct ifreq ifr;
+    struct sockaddr_in sai;
+
+    memset(&ifr, 0, sizeof(ifr));
+    memset(&sai, 0, sizeof(sai));
+
+    int sockfd = socket(PF_INET, SOCK_DGRAM, 0);
+
+    strncpy(ifr.ifr_name, "eth0", IFNAMSIZ);
+
+    sai.sin_family = PF_INET;
+    sai.sin_port = 0;
+    sai.sin_addr.s_addr = 0x5901A8C0;
+    memcpy(&ifr.ifr_addr, &sai, sizeof(struct sockaddr));
+
+    ioctl(sockfd, SIOCSIFADDR, &ifr);
+    ioctl(sockfd, SIOCGIFFLAGS, &ifr);
+
+    ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+    ioctl(sockfd, SIOCSIFFLAGS, &ifr);
+
+    struct rtentry route;
+    sai.sin_addr.s_addr = 0x0001A8C0;
+    memcpy(&route.rt_dst, &sai, sizeof(struct sockaddr));
+    sai.sin_addr.s_addr = 0x00000000;
+    memcpy(&route.rt_gateway, &sai, sizeof(struct sockaddr));
+    sai.sin_addr.s_addr = 0x00FFFFFF;
+    memcpy(&route.rt_genmask, &sai, sizeof(struct sockaddr));
+    route.rt_dev = "eth0";
+    ioctl(sockfd, SIOCADDRT, &route);
+
+
+    struct sockaddr_in6 sai6;
+    memset(&sai6, 0, sizeof(sai6));
+    sai6.sin6_family = PF_INET6;
+    sai6.sin6_port = 0;
+    sai6.sin6_addr.s6_addr[0] = 0x20;
+    sai6.sin6_addr.s6_addr[1] = 0x01;
+    sai6.sin6_addr.s6_addr[2] = 0x04;
+    sai6.sin6_addr.s6_addr[3] = 0x70;
+    sai6.sin6_addr.s6_addr[4] = 0x00;
+    sai6.sin6_addr.s6_addr[5] = 0x6C;
+    sai6.sin6_addr.s6_addr[6] = 0x00;
+    sai6.sin6_addr.s6_addr[7] = 0x7E;
+    sai6.sin6_addr.s6_addr[15] = 0x03;
+    //memcpy(&ifr.ifr_addr, &sai, sizeof(struct sockaddr));
+
+    //ioctl(sockfd, SIOCSIFADDR, &ifr);
+    //ioctl(sockfd, SIOCGIFFLAGS, &ifr);
+
+    //ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+    //ioctl(sockfd, SIOCSIFFLAGS, &ifr);
 }
 
 #ifndef MINIMAL

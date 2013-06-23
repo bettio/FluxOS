@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2013 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,52 +16,58 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.cpp                                                         *
+ *   Name: socket.h                                                        *
  ***************************************************************************/
 
-#include <net/net.h>
-#include <net/ip.h>
-#include <net/udp.h>
-#include <net/tcp.h>
+#ifndef _LIBC_SYS_SOCKET_H_
+#define _LIBC_SYS_SOCKET_H_
 
-#include <core/printk.h>
+//socket domains
+#define PF_INET 2
+#define PF_INET6 10
 
-#define ENABLE_DEBUG_MSG 1
-#include <debugmacros.h>
+//socket types
+#define SOCK_STREAM 1
+#define SOCK_DGRAM 2
 
-QList<NetIface *> *Net::interfaces;
-QHash<QString, NetIface *> *Net::interfacesByName;
-
-void Net::init()
+#if __cplusplus
+extern "C"
 {
-    interfaces = new QList<NetIface *>;
-    interfacesByName = new QHash<QString, NetIface *>;
+#endif
 
-    IP::init();
-    IPv6::init();
-    UDP::init();
-    TCP::init();
-}
+struct in_addr { 
+    uint32_t s_addr;
+}; 
 
-void Net::registerInterface(NetIface *iface)
+struct sockaddr
 {
-    int id = interfaces->append(iface);
+    short int sa_family;
+    char sa_data[14];
+};
 
-    interfacesByName->insert("eth0", iface);
+struct sockaddr_in { 
+     short int sin_family;
+     short int sin_port;
+     struct in_addr sin_addr;
+};
 
-    memset(iface->myIP6.addrbytes, 0, sizeof(IPv6Addr));
-    iface->myIP6.addrbytes[0] = 0x20;
-    iface->myIP6.addrbytes[1] = 0x01;
-    iface->myIP6.addrbytes[2] = 0x04;
-    iface->myIP6.addrbytes[3] = 0x70;
-    iface->myIP6.addrbytes[4] = 0x00;
-    iface->myIP6.addrbytes[5] = 0x6C;
-    iface->myIP6.addrbytes[6] = 0x00;
-    iface->myIP6.addrbytes[7] = 0x7E;
-    iface->myIP6.addrbytes[15] = 0x3 + id;
+struct in6_addr {
+    uint8_t  s6_addr[16];
+};
+
+struct sockaddr_in6 {
+    uint8_t sin6_len;
+    uint8_t  sin6_family;
+    uint16_t sin6_port;
+    uint32_t sin6_flowinfo;
+    struct in6_addr sin6_addr;
+};
+
+int socket(int domain, int type, int protocol);
+
+#if __cplusplus
 }
+#endif
 
-NetIface *Net::interface(const char *name)
-{
-    return interfacesByName->value(name);
-}
+#endif
+

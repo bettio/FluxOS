@@ -428,6 +428,23 @@ uint32_t mmap(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
     return (uint32_t) mmap((void *) args->addr, (size_t) args->len, (int) args->prot, (int) args->flags, (int) args->fd, (size_t) args->offset);
 }
 
+uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    int retval;
+    long *args = (long *) ecx;
+
+    switch (ebx){
+        case SYS_SOCKET:
+            retval = socket(args[0], args[1], args[2]);
+            break;
+
+        default:
+            retval = -EINVAL;
+    }
+
+    return retval;
+}
+
 void SyscallsManager::registerDefaultSyscalls()
 {
     registerSyscall(1, exit);
@@ -508,7 +525,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //97 setpriority
     //99 statfs
     //100 fstatfs
-    //102 socketcall
+    registerSyscall(102, socketcall);
     //104 setitimer
     //105 getitimer
     registerSyscall(107, lstat);

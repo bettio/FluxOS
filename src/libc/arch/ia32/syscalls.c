@@ -606,3 +606,22 @@ void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset
 
 	return result;
 }
+
+void socket(int domain, int type, int protocol)
+{
+    int args[3];
+    args[0] = domain;
+    args[1] = type;
+    args[2] = protocol;
+
+	/* Parameters */
+	register unsigned int syscall asm("%eax") = 102;
+	register unsigned int callno asm("%ebx") = 1;
+	register unsigned int argsptr asm("%ecx") = (int) args;
+
+	/* Result */
+	register unsigned int result asm("%eax");
+
+	asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+}
+

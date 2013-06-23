@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2009 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,52 +16,43 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: net.cpp                                                         *
+ *   Name: socket.cpp                                                      *
  ***************************************************************************/
 
-#include <net/net.h>
-#include <net/ip.h>
-#include <net/udp.h>
-#include <net/tcp.h>
+#include <filesystem/socket.h>
 
 #include <core/printk.h>
 
-#define ENABLE_DEBUG_MSG 1
-#include <debugmacros.h>
+#include <filesystem/vfs.h>
+#include <filesystem/vnodemanager.h>
 
-QList<NetIface *> *Net::interfaces;
-QHash<QString, NetIface *> *Net::interfacesByName;
+#include <net/ipsocketcalls.h>
+#include <net/ip6socketcalls.h>
+#include <net/nettypes.h>
 
-void Net::init()
+using namespace FileSystem;
+
+unsigned long long Socket::socketsCounter;
+
+int Socket::init()
 {
-    interfaces = new QList<NetIface *>;
-    interfacesByName = new QHash<QString, NetIface *>;
-
-    IP::init();
-    IPv6::init();
-    UDP::init();
-    TCP::init();
+    return 0;
 }
 
-void Net::registerInterface(NetIface *iface)
+VNode *Socket::newSocket(int domain, int type, int protocol)
 {
-    int id = interfaces->append(iface);
+    VNode *vnd;
+    VNodeManager::GetVnode(SOCKET_MOUNTID, socketsCounter, &vnd);
+    if (vnd == NULL) return NULL;
 
-    interfacesByName->insert("eth0", iface);
+    if ((domain == PF_INET) && (type == SOCK_DGRAM) && (protocol == 0)){
+        IPSocketCalls::bindToSocket(vnd, domain, type, protocol);
+    }else if  ((domain == PF_INET6) && (type == SOCK_DGRAM) && (protocol == 0)){
+        IP6SocketCalls::bindToSocket(vnd, domain, type, protocol);
+    }
 
-    memset(iface->myIP6.addrbytes, 0, sizeof(IPv6Addr));
-    iface->myIP6.addrbytes[0] = 0x20;
-    iface->myIP6.addrbytes[1] = 0x01;
-    iface->myIP6.addrbytes[2] = 0x04;
-    iface->myIP6.addrbytes[3] = 0x70;
-    iface->myIP6.addrbytes[4] = 0x00;
-    iface->myIP6.addrbytes[5] = 0x6C;
-    iface->myIP6.addrbytes[6] = 0x00;
-    iface->myIP6.addrbytes[7] = 0x7E;
-    iface->myIP6.addrbytes[15] = 0x3 + id;
+    socketsCounter++;
+    
+    return vnd;
 }
 
-NetIface *Net::interface(const char *name)
-{
-    return interfacesByName->value(name);
-}

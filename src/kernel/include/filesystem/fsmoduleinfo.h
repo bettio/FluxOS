@@ -24,6 +24,7 @@
 #define _FILESYSTEM_FSMODULEINFO_H_
 
 #include <filesystem/fstypes.h>
+#include <filesystem/defaultfsops.h>
 
 #include <QHash>
 
@@ -41,7 +42,21 @@ class FileDescriptor;
             closefd, \
             dupfd, \
             closevnode, \
-            socketcall, \
+            DefaultFSOps::accept, \
+            DefaultFSOps::bind, \
+            DefaultFSOps::connect, \
+            DefaultFSOps::getpeername, \
+            DefaultFSOps::getsockname, \
+            DefaultFSOps::getsockopt, \
+            DefaultFSOps::listen, \
+            DefaultFSOps::recv, \
+            DefaultFSOps::recvfrom, \
+            DefaultFSOps::recvmsg, \
+            DefaultFSOps::send, \
+            DefaultFSOps::sendmsg, \
+            DefaultFSOps::sendto, \
+            DefaultFSOps::setsockopt, \
+            DefaultFSOps::shutdown, \
             lookup, \
             read, \
             readlink, \
@@ -72,6 +87,60 @@ class FileDescriptor;
             mmap \
         };
 
+#define SOCKET_FSCALLS(sname) \
+        FSModuleInfo sname = \
+        { \
+            DefaultFSOps::umount, \
+            openfd, \
+            closefd, \
+            dupfd, \
+            closevnode, \
+            accept, \
+            bind, \
+            connect, \
+            getpeername, \
+            getsockname, \
+            getsockopt, \
+            listen, \
+            recv, \
+            recvfrom, \
+            recvmsg, \
+            send, \
+            sendmsg, \
+            sendto, \
+            setsockopt, \
+            shutdown, \
+            DefaultFSOps::lookup, \
+            read, \
+            DefaultFSOps::readlink, \
+            write, \
+            DefaultFSOps::getdents, \
+            DefaultFSOps::stat, \
+            DefaultFSOps::size, \
+            type, \
+            DefaultFSOps::name, \
+            DefaultFSOps::access, \
+            DefaultFSOps::chmod, \
+            DefaultFSOps::chown, \
+            DefaultFSOps::link, \
+            DefaultFSOps::symlink, \
+            DefaultFSOps::rename, \
+            DefaultFSOps::mknod, \
+            DefaultFSOps::mkdir, \
+            DefaultFSOps::truncate, \
+            DefaultFSOps::fsync, \
+            DefaultFSOps::fdatasync, \
+            DefaultFSOps::unlink, \
+            DefaultFSOps::rmdir, \
+            DefaultFSOps::creat, \
+            DefaultFSOps::statfs, \
+            DefaultFSOps::utime, \
+            fcntl, \
+            ioctl, \
+            DefaultFSOps::mmap \
+        };
+
+
 struct FSModuleInfo
 {
     MUST_CHECK int (*umount)(VNode *root);
@@ -81,7 +150,21 @@ struct FSModuleInfo
     MUST_CHECK int (*dupfd)(VNode *node, FileDescriptor *fdesc);
     MUST_CHECK int (*closevnode)(VNode *node);
 
-    MUST_CHECK int (*socketcall)(VNode *node, int call, unsigned long *args);
+    MUST_CHECK int (*accept)(VNode *socknode, struct sockaddr *addr, int *addrlen);
+    MUST_CHECK int (*bind)(VNode *socknode, const struct sockaddr *addr, int addrlen);
+    MUST_CHECK int (*connect)(VNode *socknode, const struct sockaddr *addr, int addrlen);
+    MUST_CHECK int (*getpeername)(VNode *socknode, struct sockaddr *addr, int *addrlen);
+    MUST_CHECK int (*getsockname)(VNode *socknode, struct sockaddr *addr, int *addrlen);
+    MUST_CHECK int (*getsockopt)(VNode *socknode, int level, int optname, void *optval, int *optlen);
+    MUST_CHECK int (*listen)(VNode *socknode, int backlog);
+    MUST_CHECK int (*recv)(VNode *socknode, void *buf, size_t len, int flags);
+    MUST_CHECK int (*recvfrom)(VNode *socknode, void *buf, size_t len, int flags, struct sockaddr *src_addr, int *addrlen);
+    MUST_CHECK int (*recvmsg)(VNode *socknode, struct msghdr *msg, int flags);
+    MUST_CHECK int (*send)(VNode *socknode, const void *buf, size_t len, int flags);
+    MUST_CHECK int (*sendmsg)(VNode *socknode, const struct msghdr *msg, int flags);
+    MUST_CHECK int (*sendto)(VNode *socknode, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, int addrlen);
+    MUST_CHECK int (*setsockopt)(VNode *socknode, int level, int optname, const void *optval, int optlen);
+    MUST_CHECK int (*shutdown)(VNode *socknode, int how);
 
     MUST_CHECK int (*lookup)(VNode *node, const char *name, VNode **vnd, unsigned int *ntype);
     MUST_CHECK int (*read)(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);

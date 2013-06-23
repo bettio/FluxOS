@@ -26,6 +26,7 @@
 #include <net/netiface.h>
 
 #include <QList>
+#include <QString>
 
 #include <stdint.h>
 
@@ -36,9 +37,11 @@ class Net
     public:
         static void init();
         static void registerInterface(NetIface *iface);
+        static NetIface *interface(const char *);
 
     private:
         static QList<NetIface *> *interfaces;
+        static QHash<QString, NetIface *> *interfacesByName;
 };
 
 #endif

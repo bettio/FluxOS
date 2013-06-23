@@ -32,6 +32,7 @@
 #include <task/eventsmanager.h>
 #include <task/scheduler.h>
 #include <filesystem/pipe.h>
+#include <filesystem/socket.h>
 #include <filesystem/vnodemanager.h>
 #include <filesystem/pollfd.h>
 
@@ -510,18 +511,11 @@ int fcntl(int fd, int cmd, long arg)
 
 int ioctl(int d, int request, long arg)
 {
-        CHECK_FOR_EBADF(d);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
-	if (fdesc == NULL) return -EBADF;
+    CHECK_FOR_EBADF(d);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
+    if (fdesc == NULL) return -EBADF;
 
-	printk("---ioctl\n");
-
-	if (FS_CALL(fdesc->node, ioctl) != 0){
-		return FS_CALL(fdesc->node, ioctl)(fdesc->node, request, arg);
-	}else{
-		printk("ioctl non implementata\n");
-		return 0;
-	}
+    return FS_CALL(fdesc->node, ioctl)(fdesc->node, request, arg);
 }
 
 int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name)
@@ -896,5 +890,15 @@ int poll(pollfd *fds, int nfds, int timeout)
     }
 
     return 0;
+}
+
+int socket(int domain, int type, int protocol)
+{
+    VNode *node = Socket::newSocket(domain, type, protocol);
+    if (node == NULL) return -ENOMEM;
+
+    FileDescriptor *fdesc = new FileDescriptor(node);
+    fdesc->flags = O_RDWR;
+    return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 

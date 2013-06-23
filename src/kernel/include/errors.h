@@ -41,5 +41,6 @@
 #define ESPIPE 29
 #define EROFS 30
 #define ELOOP 40
+#define ENOTSOCK 88
 
 #endif

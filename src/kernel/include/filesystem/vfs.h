@@ -49,6 +49,7 @@
 
 #define RESERVED_MOUNT_IDS 0xFFFFFFF0
 #define PIPE_MOUNTID 0xFFFFFFF1
+#define SOCKET_MOUNTID 0xFFFFFFF7
 
 class QString;
             
