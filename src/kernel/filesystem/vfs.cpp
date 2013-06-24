@@ -136,7 +136,7 @@ int VFS::Mount(const char *source, const char *mountpoint, const char *fstype, u
 		fsmount->coversVNode = mntnode;
 	}
 
-	printk("Mounted %s\n", mountpoint);
+	printk("Mounted %s on %s\n", source, mountpoint);
 
 	#ifdef VFS_DEBUG
 		printk("Mount id: %i.\n", FirstFreeMntID);
