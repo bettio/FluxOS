@@ -23,11 +23,15 @@
 #ifndef _FILESYSTEM_FILEDESCRIPTOR_H
 #define _FILESYSTEM_FILEDESCRIPTOR_H
 
+#include <stdint.h>
+
 #define O_ACCMODE      0003
 #define O_RDONLY	     00
 #define O_WRONLY	     01
 #define O_RDWR		     02
 #define O_CREAT		   0100
+
+class VNode;
 
 class FileDescriptor
 {
