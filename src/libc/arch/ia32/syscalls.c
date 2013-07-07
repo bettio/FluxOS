@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sys/dirent.h>
 #include <sys/utsname.h>
+#include <sys/socket.h>
 
 #include "../../utils.h"
 
@@ -607,21 +608,124 @@ void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset
 	return result;
 }
 
-void socket(int domain, int type, int protocol)
+#define    SYS_SOCKET       1
+#define    SYS_BIND         2
+#define    SYS_CONNECT      3
+#define    SYS_LISTEN       4
+#define    SYS_ACCEPT       5
+#define    SYS_GETSOCKNAME  6
+#define    SYS_GETPEERNAME  7
+#define    SYS_SOCKETPAIR   8
+#define    SYS_SEND         9
+#define    SYS_RECV         10
+#define    SYS_SENDTO       11
+#define    SYS_RECVFROM     12
+#define    SYS_SHUTDOWN     13
+#define    SYS_SETSOCKOPT   14
+#define    SYS_GETSOCKOPT   15
+#define    SYS_SENDMSG      16
+#define    SYS_RECVMSG      17
+
+int socket(int domain, int type, int protocol)
 {
     int args[3];
     args[0] = domain;
     args[1] = type;
     args[2] = protocol;
 
-	/* Parameters */
-	register unsigned int syscall asm("%eax") = 102;
-	register unsigned int callno asm("%ebx") = 1;
-	register unsigned int argsptr asm("%ecx") = (int) args;
+    /* Parameters */
+    register unsigned int syscall asm("%eax") = 102;
+    register unsigned int callno asm("%ebx") = SYS_SOCKET;
+    register unsigned int argsptr asm("%ecx") = (int) args;
 
-	/* Result */
-	register unsigned int result asm("%eax");
+    /* Result */
+    register unsigned int result asm("%eax");
 
-	asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+    asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+
+    return result;
 }
 
+int bind(int sockfd, struct sockaddr *addr, socklen_t addrlen)
+{
+    unsigned int args[3];
+    args[0] = sockfd;
+    args[1] = (unsigned int) addr;
+    args[2] = addrlen;
+
+    /* Parameters */
+    register unsigned int syscall asm("%eax") = 102;
+    register unsigned int callno asm("%ebx") = SYS_BIND;
+    register unsigned int argsptr asm("%ecx") = (int) args;
+
+    /* Result */
+    register unsigned int result asm("%eax");
+
+    asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+
+    return result;
+}
+
+int connect(int sockfd, struct sockaddr *addr, socklen_t addrlen)
+{
+    unsigned int args[3];
+    args[0] = sockfd;
+    args[1] = (unsigned int) addr;
+    args[2] = addrlen;
+
+    /* Parameters */
+    register unsigned int syscall asm("%eax") = 102;
+    register unsigned int callno asm("%ebx") = SYS_CONNECT;
+    register unsigned int argsptr asm("%ecx") = (int) args;
+
+    /* Result */
+    register unsigned int result asm("%eax");
+
+    asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+
+    return result;
+}
+
+ssize_t send(int sockfd, const void *buf, size_t len, int flags)
+{
+    unsigned int args[4];
+    args[0] = sockfd;
+    args[1] = (unsigned int) buf;
+    args[2] = len;
+    args[3] = flags;
+
+    /* Parameters */
+    register unsigned int syscall asm("%eax") = 102;
+    register unsigned int callno asm("%ebx") = SYS_SEND;
+    register unsigned int argsptr asm("%ecx") = (int) args;
+
+    /* Result */
+    register unsigned int result asm("%eax");
+
+    asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+
+    return result;
+}
+
+ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen)
+{
+    unsigned int args[6];
+    args[0] = sockfd;
+    args[1] = (unsigned int) buf;
+    args[2] = len;
+    args[3] = flags;
+    args[4] = (unsigned int) dest_addr;
+    args[5] = addrlen;
+
+    /* Parameters */
+    register unsigned int syscall asm("%eax") = 102;
+    register unsigned int callno asm("%ebx") = SYS_SENDTO;
+    register unsigned int argsptr asm("%ecx") = (int) args;
+
+    /* Result */
+    register unsigned int result asm("%eax");
+
+    asm volatile("int $0x80"  : "=r" (result) : "r" (syscall), "r" (callno), "r" (argsptr));
+
+    return result;
+}

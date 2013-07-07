@@ -22,6 +22,8 @@
 #ifndef _LIBC_SYS_SOCKET_H_
 #define _LIBC_SYS_SOCKET_H_
 
+#include <stdint.h>
+
 //socket domains
 #define PF_INET 2
 #define PF_INET6 10
@@ -34,6 +36,8 @@
 extern "C"
 {
 #endif
+
+typedef int socklen_t;
 
 struct in_addr { 
     uint32_t s_addr;
@@ -64,6 +68,10 @@ struct sockaddr_in6 {
 };
 
 int socket(int domain, int type, int protocol);
+int bind(int sockfd, struct sockaddr *addr, socklen_t addrlen);
+int connect(int sockfd, struct sockaddr *addr, socklen_t addrlen);
+ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
 
 #if __cplusplus
 }

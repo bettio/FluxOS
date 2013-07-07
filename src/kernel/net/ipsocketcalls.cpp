@@ -43,7 +43,10 @@ FSMount IPSocketCalls::ipSocketFakeMount =
 
 int IPSocketCalls::bindToSocket(VNode *node, int domain, int type, int protocol)
 {
-    node->mount = &ipSocketFakeMount;
+    if (node->privdata == NULL){
+        node->mount = &ipSocketFakeMount;
+    }
+
     return 0;
 }
 

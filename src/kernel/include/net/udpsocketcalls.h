@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2012 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2013 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,12 +16,12 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: ipsocketcalls.h                                                 *
- *   Date: 05/11/2012                                                      *
+ *   Name: udpsocketcalls.h                                                *
+ *   Date: 30/06/2013                                                      *
  ***************************************************************************/
 
-#ifndef _NET_IPSOCKETCALLS_H_
-#define _NET_IPSOCKETCALLS_H_
+#ifndef _NET_UDPSOCKETCALLS_H_
+#define _NET_UDPSOCKETCALLS_H_
 
 #include <net/nettypes.h>
 
@@ -30,7 +30,7 @@ class FSMount;
 class FSModuleInfo;
 class VNode;
 
-class IPSocketCalls {
+class UDPSocketCalls {
     public:
         static int bindToSocket(VNode *node, int domain, int type, int protocol);
 
@@ -62,7 +62,7 @@ class IPSocketCalls {
 
     private:
        static FSModuleInfo calls;
-       static FSMount ipSocketFakeMount;
+       static FSMount udpSocketFakeMount;
 };
 
 #endif

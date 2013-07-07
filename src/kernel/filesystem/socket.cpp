@@ -28,6 +28,7 @@
 
 #include <net/ipsocketcalls.h>
 #include <net/ip6socketcalls.h>
+#include <net/udpsocketcalls.h>
 #include <net/nettypes.h>
 
 using namespace FileSystem;
@@ -46,9 +47,10 @@ VNode *Socket::newSocket(int domain, int type, int protocol)
     if (vnd == NULL) return NULL;
 
     if ((domain == PF_INET) && (type == SOCK_DGRAM) && (protocol == 0)){
-        IPSocketCalls::bindToSocket(vnd, domain, type, protocol);
+        UDPSocketCalls::bindToSocket(vnd, domain, type, protocol);
+
     }else if  ((domain == PF_INET6) && (type == SOCK_DGRAM) && (protocol == 0)){
-        IP6SocketCalls::bindToSocket(vnd, domain, type, protocol);
+        UDPSocketCalls::bindToSocket(vnd, domain, type, protocol);
     }
 
     socketsCounter++;
