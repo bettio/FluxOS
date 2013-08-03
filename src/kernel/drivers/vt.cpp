@@ -44,8 +44,8 @@ unsigned int SavedY;
 
 ConsoleDevice *Vt::console;
 
-char keysBuffer[256];
-int kbPos;
+volatile char keysBuffer[256];
+volatile int kbPos;
 int readPos;
 int inputAreaX; //HACK to avoid too much chars with backspace
 
