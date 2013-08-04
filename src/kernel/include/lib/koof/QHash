@@ -26,6 +26,48 @@
 
 #define QHASH_DEFAULT_CAPACITY 2
 
+inline int qHash(char c)
+{
+    return c;
+}
+
+inline int qHash(short int i)
+{
+   return i;
+}
+
+inline int qHash(int i)
+{
+   return i;
+}
+
+inline int qHash(unsigned int i)
+{
+   return i;
+}
+
+inline int qHash(long int l)
+{
+    if (sizeof(long int) == sizeof(int) * 2){
+        return ((int *) &l)[0] + ((int *) &l)[1];
+
+    }else{
+        return l;
+    }
+}
+
+inline int qHash(void *v)
+{
+    if (sizeof(void *) == sizeof(int) * 2){
+        return ((int *) &v)[0] + ((int *) &v)[1];
+
+    }else{
+        return *((int *) &v);
+    }
+}
+
+
+
 /**
  * NOTE: don't use a pointer as Key because keys are compared using == operator.
  */
@@ -460,40 +502,5 @@ template <typename Key, typename T> class QHash
             return iterator;
         }
 };
-
-inline int qHash(char c)
-{
-    return c;
-}
-
-inline int qHash(short int i)
-{
-   return i;
-}
-
-inline int qHash(int i)
-{
-   return i;
-}
-
-inline int qHash(long int l)
-{
-    if (sizeof(long int) == sizeof(int) * 2){
-        return ((int *) &l)[0] + ((int *) &l)[1];
-
-    }else{
-        return l;
-    }
-}
-
-inline int qHash(void *v)
-{
-    if (sizeof(void *) == sizeof(int) * 2){
-        return ((int *) &v)[0] + ((int *) &v)[1];
-
-    }else{
-        return *((int *) &v);
-    }
-}
 
 #endif

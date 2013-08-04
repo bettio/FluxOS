@@ -57,11 +57,7 @@ class IPv6AddrPtr
             return equals;
         }
 };
-
-inline int qHash(uint32_t v)
-{
-    return (int) v;
-} 
+ 
 
 inline int qHash(const IPv6AddrPtr &ptr)
 {
