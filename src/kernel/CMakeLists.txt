@@ -86,7 +86,7 @@ add_executable(vmflux ${KERNEL_SRCS})
 
 if (NATIVE_IA32)
     target_link_libraries(vmflux libgcc.a)
-    SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-Ttext=0x100000" )
+    SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-Ttext=0x100000 -Wl,--build-id=none" )
 
 elseif (VERSATILE_ARM)
     target_link_libraries(vmflux libgcc.a)
