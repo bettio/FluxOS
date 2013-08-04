@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2013 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,41 +16,46 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.cpp                                                   *
- *   Date: 15/11/2011                                                      *
+ *   Name: eventsmanager.h                                                 *
+ *   Date: 04/08/2013                                                      *
  ***************************************************************************/
 
-#include <task/scheduler.h>
+#ifndef _EVENTSMANAGER_H_
+#define _EVENTSMANAGER_H_
 
-#include <stdint.h>
-#include <cstdlib.h>
-#include <task/eventsmanager.h>
+#include <QList>
+#include <task/threadcontrolblock.h>
 
-QList<ThreadControlBlock *> *Scheduler::threads;
-int Scheduler::s_currentThread = 0;
-
-void Scheduler::init()
+class EventsManager
 {
-    threads = new QList<ThreadControlBlock *>();
-    EventsManager::init();
-}
+    public:
+        enum ResourceType
+        {
+            VNode
+        };
 
-ThreadControlBlock *Scheduler::nextThread()
-{
-    ThreadControlBlock *tB;
-    do {
-        s_currentThread = (s_currentThread + 1) % threads->size();
-        tB = threads->at(s_currentThread);
-    } while (tB->status != Running);
-    return tB;
-}
+        enum EventType
+        {
+             NoEvent = 0,
+             NewDataAvail = 1,
+             ProcessTerminated = 2
+        };
 
-ThreadControlBlock *Scheduler::currentThread()
-{    
-    return threads->at(s_currentThread);
-}
+        struct EventListener
+        {
+            void *resource;
+            ThreadControlBlock *thread;
+            EventType filter;
+        };
 
-void Scheduler::waitForEvents()
-{
+        static void init();
+        static int connectEventListener(void *resource, ThreadControlBlock *thread, EventType filter);
+        static ThreadControlBlock *takeEventListener(void *resource, EventType filter);
+        static bool disconnectEventListener(void *resource, ThreadControlBlock *thread);
 
-}
+    private:
+        static QList<EventListener> *eventListeners;
+};
+
+#endif
+
