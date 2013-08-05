@@ -27,6 +27,7 @@
 
 class FileDescriptor;
 class ProcessControlBlock;
+struct pollfd;
 
 int close(ProcessControlBlock *process, int fd);
 
@@ -83,5 +84,7 @@ int dup3(int oldfd, int newfd, int flags);
 int pipe2(int pipefd[2], int flags);
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);
+
+int poll(pollfd *fds, int nfds, int timeout);
 
 #endif

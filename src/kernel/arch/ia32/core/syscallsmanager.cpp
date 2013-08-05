@@ -37,6 +37,7 @@
 #include <core/system.h>
 #include <task/task.h>
 #include <filesystem/fscalls.h>
+#include <filesystem/pollfd.h>
 
 #include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
@@ -406,6 +407,11 @@ uint32_t fcntl(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t 
     return fcntl((int) ebx, (int) ecx, (long) edx);
 }
 
+uint32_t poll(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
+{
+    return poll((pollfd *) ebx, (int) ecx, (int) edx);
+}
+
 uint32_t pread(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
     return pread((int) ebx, (void *) ecx, (size_t) edx, (uint64_t) esi);
@@ -535,7 +541,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //163 mremap
     //164 setresuid
     //165 getresuid
-    //168 poll
+    registerSyscall(168, poll);
     //170 setresid
     //171 getresid
     registerSyscall(180, pread);

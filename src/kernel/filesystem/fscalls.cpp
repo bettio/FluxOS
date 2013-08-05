@@ -28,9 +28,12 @@
 #include <cstdlib.h>
 #include <core/printk.h>
 #include <filesystem/filedescriptor.h>
+#include <filesystem/pollfd.h>
+#include <task/eventsmanager.h>
 #include <task/scheduler.h>
 #include <filesystem/pipe.h>
 #include <filesystem/vnodemanager.h>
+#include <filesystem/pollfd.h>
 
 using namespace FileSystem;
 
@@ -843,3 +846,55 @@ void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
 
     return ret;
 }
+
+/*
+ How I should do this
+ - Disable scheduling
+ - Set thread as IWaiting
+ - Set all event listeners
+ - Check if some IO is already waiting
+ - Schedule
+*/
+int poll(pollfd *fds, int nfds, int timeout)
+{
+    if (timeout == 0) return 0;
+
+    Scheduler::inhibitPreemption();
+    Scheduler::currentThread()->status = IWaiting;
+
+    for (int i = 0; i < nfds; i++){
+        int fd = fds[i].fd;
+        if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) continue;
+        FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+        if (fdesc == NULL) continue;
+
+        EventsManager::EventType eType = EventsManager::NoEvent;
+        if (fds[0].events & POLLIN) eType = (EventsManager::EventType) (eType | EventsManager::NewDataAvail);
+
+        //TODO: check what we are polling for
+        EventsManager::connectEventListener(fdesc->node, Scheduler::currentThread(), eType);
+    }
+
+    schedule();
+
+    for (int i = 0; i < nfds; i++){
+        int fd = fds[i].fd;
+        if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))){
+            fds[i].revents = POLLNVAL;
+            continue;
+        }
+        FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+        if (fdesc == NULL){
+            fds[i].revents = POLLNVAL;
+            continue;
+        }
+
+        fds[i].revents = 0;
+        if (! EventsManager::disconnectEventListener(fdesc->node, Scheduler::currentThread())){
+           fds[i].revents |= POLLIN; //TODO: we are assuming POLLIN
+        }
+    }
+
+    return 0;
+}
+
