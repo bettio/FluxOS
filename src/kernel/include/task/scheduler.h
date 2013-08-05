@@ -26,6 +26,8 @@
 #include <QList>
 #include <task/threadcontrolblock.h>
 
+extern "C" void schedule();
+
 class Scheduler
 {
     public:
@@ -34,9 +36,13 @@ class Scheduler
         static ThreadControlBlock *currentThread();
         static QList<ThreadControlBlock *> *threads;
         static void waitForEvents();
+        static void inhibitPreemption();
+        static bool isPreemptionInhibited();
+        static void restorePreemption();
 
     private:
         static int s_currentThread;
+        static volatile bool preemptionEnabled;
 };
 
 #endif

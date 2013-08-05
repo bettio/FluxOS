@@ -39,7 +39,7 @@ struct ThreadControlBlock
     void *currentStackPtr;
     void *kernelStack;
     ProcessControlBlock *parentProcess;
-    ThreadStatus status;
+    volatile ThreadStatus status;
     unsigned int tid;
 
     void *addressSpaceTable;

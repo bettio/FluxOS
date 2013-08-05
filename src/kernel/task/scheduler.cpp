@@ -28,6 +28,7 @@
 
 QList<ThreadControlBlock *> *Scheduler::threads;
 int Scheduler::s_currentThread = 0;
+volatile bool Scheduler::preemptionEnabled = true;
 
 void Scheduler::init()
 {
@@ -53,4 +54,19 @@ ThreadControlBlock *Scheduler::currentThread()
 void Scheduler::waitForEvents()
 {
 
+}
+
+void Scheduler::inhibitPreemption()
+{
+    preemptionEnabled = false;
+}
+
+bool Scheduler::isPreemptionInhibited()
+{
+    return !preemptionEnabled;
+}
+
+void Scheduler::restorePreemption()
+{
+    preemptionEnabled = true;
 }
