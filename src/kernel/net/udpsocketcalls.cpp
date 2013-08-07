@@ -128,7 +128,7 @@ int UDPSocketCalls::connect(VNode *socknode, const struct sockaddr *addr, int ad
      UDPSocket *udpSock = (UDPSocket *) socknode->privdata;
      if (udpSock->remoteAddr != NULL) free(udpSock->remoteAddr);
      udpSock->remoteAddr = (sockaddr *) malloc(addrlen);
-     if (udpSock->localAddr == NULL){
+     if (udpSock->remoteAddr == NULL){
          return -ENOMEM;
      }
      memcpy(udpSock->remoteAddr, addr, addrlen);
