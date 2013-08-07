@@ -157,12 +157,12 @@ int UDPSocketCalls::getsockname(VNode *socknode, struct sockaddr *addr, int *add
 
 int UDPSocketCalls::getsockopt(VNode *socknode, int level, int optname, void *optval, int *optlen)
 {
-     return 0;
+     return -EINVAL;
 }
 
 int UDPSocketCalls::listen(VNode *socknode, int backlog)
 {
-     return 0;
+     return -EOPNOTSUPP;
 }
 
 int UDPSocketCalls::recv(VNode *socknode, void *buf, size_t len, int flags)
@@ -245,7 +245,7 @@ int UDPSocketCalls::sendto(VNode *socknode, const void *buf, size_t len, int fla
 
 int UDPSocketCalls::setsockopt(VNode *socknode, int level, int optname, const void *optval, int optlen)
 {
-     return 0;
+     return -EINVAL;
 }
 
 int UDPSocketCalls::shutdown(VNode *socknode, int how)
