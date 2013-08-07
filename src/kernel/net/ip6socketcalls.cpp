@@ -69,9 +69,9 @@ int IP6SocketCalls::closevnode(VNode *node)
     return 0;
 }
 
-int IP6SocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen)
+int IP6SocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint)
 {
-     return 0;
+     return -EOPNOTSUPP;
 }
 
 int IP6SocketCalls::bind(VNode *socknode, const struct sockaddr *addr, int addrlen)

@@ -150,7 +150,7 @@ struct FSModuleInfo
     MUST_CHECK int (*dupfd)(VNode *node, FileDescriptor *fdesc);
     MUST_CHECK int (*closevnode)(VNode *node);
 
-    MUST_CHECK int (*accept)(VNode *socknode, struct sockaddr *addr, int *addrlen);
+    MUST_CHECK int (*accept)(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint);
     MUST_CHECK int (*bind)(VNode *socknode, const struct sockaddr *addr, int addrlen);
     MUST_CHECK int (*connect)(VNode *socknode, const struct sockaddr *addr, int addrlen);
     MUST_CHECK int (*getpeername)(VNode *socknode, struct sockaddr *addr, int *addrlen);

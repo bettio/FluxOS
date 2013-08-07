@@ -63,7 +63,7 @@ namespace FileSystem
             static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);
 
 
-            static int accept(VNode *socknode, struct sockaddr *addr, int *addrlen);
+            static int accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint);
             static int bind(VNode *socknode, const struct sockaddr *addr, int addrlen);
             static int connect(VNode *socknode, const struct sockaddr *addr, int addrlen);
             static int getpeername(VNode *socknode, struct sockaddr *addr, int *addrlen);

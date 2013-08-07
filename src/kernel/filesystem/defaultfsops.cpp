@@ -24,7 +24,7 @@
 
 using namespace FileSystem;
 
-int DefaultFSOps::accept(VNode *socknode, struct sockaddr *addr, int *addrlen)
+int DefaultFSOps::accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint)
 {
     return -ENOTSOCK;
 }

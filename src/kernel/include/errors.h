@@ -42,6 +42,7 @@
 #define EROFS 30
 #define ELOOP 40
 #define ENOTSOCK 88
+#define EOPNOTSUPP 95
 #define ENOTCONN 107
 
 #endif

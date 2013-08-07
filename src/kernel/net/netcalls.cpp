@@ -41,7 +41,15 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
     if (fdesc == NULL) return -EBADF;
 
-    return FS_CALL(fdesc->node, accept)(fdesc->node, addr, addrlen);
+    VNode *newNode;
+    int retVal = FS_CALL(fdesc->node, accept)(fdesc->node, addr, addrlen, &newNode);
+    if (retVal == 0){
+        FileDescriptor *fdesc = new FileDescriptor(newNode);
+        if (fdesc == NULL) return -ENOMEM;
+        //fdesc->flags = flags;
+        retVal = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
+    }
+    return retVal;
 }
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)

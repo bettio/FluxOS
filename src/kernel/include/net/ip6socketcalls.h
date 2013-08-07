@@ -27,7 +27,7 @@ class IP6SocketCalls {
     public:
         static int bindToSocket(VNode *node, int domain, int type, int protocol);
 
-        static int accept(VNode *socknode, struct sockaddr *addr, int *addrlen);
+        static int accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint);
         static int bind(VNode *socknode, const struct sockaddr *addr, int addrlen);
         static int connect(VNode *socknode, const struct sockaddr *addr, int addrlen);
         static int getpeername(VNode *socknode, struct sockaddr *addr, int *addrlen);

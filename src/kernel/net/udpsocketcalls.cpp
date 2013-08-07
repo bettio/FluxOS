@@ -98,9 +98,9 @@ int UDPSocketCalls::closevnode(VNode *node)
     return 0;
 }
 
-int UDPSocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen)
+int UDPSocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint)
 {
-     return 0;
+     return -EOPNOTSUPP;
 }
 
 int UDPSocketCalls::bind(VNode *socknode, const struct sockaddr *addr, int addrlen)

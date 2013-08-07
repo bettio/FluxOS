@@ -70,9 +70,9 @@ int IPSocketCalls::closevnode(VNode *node)
     return 0;
 }
 
-int IPSocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen)
+int IPSocketCalls::accept(VNode *socknode, struct sockaddr *addr, int *addrlen, VNode **newEndPoint)
 {
-     return 0;
+     return -EOPNOTSUPP;
 }
 
 int IPSocketCalls::bind(VNode *socknode, const struct sockaddr *addr, int addrlen)
