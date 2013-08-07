@@ -138,11 +138,20 @@ int UDPSocketCalls::connect(VNode *socknode, const struct sockaddr *addr, int ad
 
 int UDPSocketCalls::getpeername(VNode *socknode, struct sockaddr *addr, int *addrlen)
 {
+     UDPSocket *udpSock = (UDPSocket *) socknode->privdata;
+     if (udpSock->remoteAddr == NULL) return -ENOTCONN;
+
+     int len = MIN(*addrlen, (int) sizeof(sockaddr_in));
+     memcpy(addr, udpSock->remoteAddr, len); //FIXME: support for ipv6
      return 0;
 }
 
 int UDPSocketCalls::getsockname(VNode *socknode, struct sockaddr *addr, int *addrlen)
 {
+     UDPSocket *udpSock = (UDPSocket *) socknode->privdata;
+
+     int len = MIN(*addrlen, (int) sizeof(sockaddr_in));
+     memcpy(addr, udpSock->localAddr, len); //FIXME: support for ipv6
      return 0;
 }
 
