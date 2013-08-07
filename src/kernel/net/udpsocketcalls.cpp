@@ -32,6 +32,8 @@
 #include <net/route.h>
 #include <net/udp.h>
 #include <net/udpsocket.h>
+#include <task/scheduler.h>
+#include <task/eventsmanager.h>
 
 using namespace FileSystem;
 
@@ -112,8 +114,13 @@ int UDPSocketCalls::bind(VNode *socknode, const struct sockaddr *addr, int addrl
          return -ENOMEM;
      }
      memcpy(udpSock->localAddr, addr, addrlen);
+     udpSock->datagrams = new QList<void *>();
+     if (udpSock->datagrams == NULL){
+         free(udpSock->localAddr);
+         return -ENOMEM;
+     }
 
-     return 0;
+     return UDP::bindVNodeToPort(((const sockaddr_in *) addr)->sin_port, socknode);
 }
         
 int UDPSocketCalls::connect(VNode *socknode, const struct sockaddr *addr, int addrlen)
@@ -151,11 +158,39 @@ int UDPSocketCalls::listen(VNode *socknode, int backlog)
 
 int UDPSocketCalls::recv(VNode *socknode, void *buf, size_t len, int flags)
 {
-     return 0;
+
+     return recvfrom(socknode, buf, len, flags, NULL, NULL);
 }
 
 int UDPSocketCalls::recvfrom(VNode *socknode, void *buf, size_t len, int flags, struct sockaddr *src_addr, int *addrlen)
 {
+     UDPSocket *udpSock = (UDPSocket *) socknode->privdata;
+
+     if (udpSock->datagrams->count()){
+         void *datagram = udpSock->datagrams->takeFirst();
+         const UDPHeader *header = (const UDPHeader *) datagram;
+         const void *data = (((const uint8_t *) (datagram)) + sizeof(UDPHeader));
+         int readData = MIN(len, header->length - sizeof(UDPHeader));
+         memcpy(buf, data, readData);
+         free(datagram);
+         return readData;
+     }
+
+     Scheduler::inhibitPreemption();
+     Scheduler::currentThread()->status = IWaiting;
+     EventsManager::connectEventListener(socknode, Scheduler::currentThread(), EventsManager::NewDataAvail);
+     schedule();
+
+     if (udpSock->datagrams->count()){
+         void *datagram = udpSock->datagrams->takeFirst();
+         const UDPHeader *header = (const UDPHeader *) datagram;
+         const void *data = (((const uint8_t *) (datagram)) + sizeof(UDPHeader));
+         int readData = MIN(len, header->length - sizeof(UDPHeader));
+         memcpy(buf, data, readData);
+         free(datagram);
+         return readData;
+     }
+
      return 0;
 }
 
@@ -211,7 +246,7 @@ int UDPSocketCalls::shutdown(VNode *socknode, int how)
 
 int UDPSocketCalls::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
-     return 0;
+     return recv(node, buffer, bufsize, 0);
 }
 
 int UDPSocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)

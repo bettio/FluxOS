@@ -21,17 +21,22 @@
 
 #include <net/net.h>
 
+#include <filesystem/vnode.h>
 #include <net/netutils.h>
 #include <net/udp.h>
 #include <net/icmp.h>
 #include <net/ip.h>
+#include <net/udpsocket.h>
+#include <task/eventsmanager.h>
 
 #define ENABLE_DEBUG_MSG 1
 #include <debugmacros.h>
 
+QHash<uint16_t, VNode *> *UDP::openPorts;
+
 void UDP::init()
 {
-
+    openPorts = new QHash<uint16_t, VNode *>;
 }
 
 void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType)
@@ -54,12 +59,27 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *pre
         return;
     }
 
-    if (previousHeaderType == 4){
-        //TODO: check compiliancy
-        ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->daddr, ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
+    DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
+
+    //Ready to deliver packet content
+    VNode *node = openPorts->value(header->destport);
+    if (node == NULL){
+        //Connection closed, send ICMP reply
+        if (previousHeaderType == 4){
+            //TODO: check compiliancy
+            ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->daddr, ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
+        }
     }
 
-    DEBUG_MSG("UDP Packet: SourcePort: %i, DestPort: %i, Len: %i\n", ntohs(header->sourceport), ntohs(header->destport), ntohs(header->length));
+    void *dataBuff = malloc(header->length);
+    memcpy(dataBuff, packet, header->length);
+    UDPSocket *sock = (UDPSocket *) node->privdata;
+    sock->datagrams->append(dataBuff);
+
+    ThreadControlBlock *thread = EventsManager::takeEventListener(node, EventsManager::NewDataAvail);
+    if (thread != NULL){
+        thread->status = Running;
+    }
 }
 
 void UDP::sendTo(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort, uint16_t destPort, uint8_t *packet, int size)
@@ -78,5 +98,11 @@ void UDP::sendTo(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort,
     newUDPHeader->checksum = IP::upperLayerChecksum(iface->myIP, destIp, PROTOCOL_UDP, newUDPHeader, size + sizeof(UDPHeader));
 
     IP::sendTo(newPacket, sizeof(UDPHeader) + size, srcIP, destIp, PROTOCOL_UDP);
+}
+
+int UDP::bindVNodeToPort(uint16_t port, VNode *node)
+{
+    openPorts->insert(port, node);
+    return 0;
 }
 
