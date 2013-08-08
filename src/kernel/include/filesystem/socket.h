@@ -33,6 +33,7 @@ namespace FileSystem
         public:
             static int init();
             static VNode *newSocket(int domain, int type, int protocol);
+            static VNode *newSocketEndPoint(void *privdata);
 
         private:
             static unsigned long long socketsCounter;

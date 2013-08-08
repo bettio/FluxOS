@@ -23,6 +23,9 @@
 #ifndef _TCP_H_
 #define _TCP_H_
 
+class VNode;
+template <typename Key, typename T> class QHash;
+
 #include <stdint.h>
 #include <net/ip.h>
 
@@ -55,6 +58,10 @@ class TCP
         static void init();
         static void processTCPPacket(NetIface *iface, uint8_t *packet, int size, void *previousHeader, int previousHeaderType);
         static void sendTCPPacket(NetIface *iface, ipaddr srcIP, ipaddr destIp, uint16_t srcPort, uint16_t destPort, int flags, int acknumber, int seqnumber, uint8_t *packet, int size);
+        static int bindVNodeToPort(uint16_t port, VNode *node);
+
+    private:
+        static QHash<uint16_t, VNode *> *openPorts;
 };
 
 

@@ -28,6 +28,7 @@
 
 #include <net/ipsocketcalls.h>
 #include <net/ip6socketcalls.h>
+#include <net/tcpsocketcalls.h>
 #include <net/udpsocketcalls.h>
 #include <net/nettypes.h>
 
@@ -46,12 +47,24 @@ VNode *Socket::newSocket(int domain, int type, int protocol)
     VNodeManager::GetVnode(SOCKET_MOUNTID, socketsCounter, &vnd);
     if (vnd == NULL) return NULL;
 
-    if ((domain == PF_INET) && (type == SOCK_DGRAM) && (protocol == 0)){
+    if (((domain == PF_INET) || (domain == PF_INET6)) && (type == SOCK_DGRAM) && (protocol == 0)){
         UDPSocketCalls::bindToSocket(vnd, domain, type, protocol);
 
-    }else if  ((domain == PF_INET6) && (type == SOCK_DGRAM) && (protocol == 0)){
-        UDPSocketCalls::bindToSocket(vnd, domain, type, protocol);
+    } else if (((domain == PF_INET) || (domain == PF_INET6)) && (type == SOCK_STREAM) && (protocol == 0)){
+        TCPSocketCalls::bindToSocket(vnd, domain, type, protocol);
     }
+
+    socketsCounter++;
+    
+    return vnd;
+}
+
+VNode *Socket::newSocketEndPoint(void *privdata)
+{
+    VNode *vnd;
+    VNodeManager::GetVnode(SOCKET_MOUNTID, socketsCounter, &vnd);
+    if (vnd == NULL) return NULL;
+    vnd->privdata = privdata;
 
     socketsCounter++;
     
