@@ -287,11 +287,11 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
     return result;
 }
 
-int open(const char *pathname, int flags)
+int open(VNode *dirNode, const char *pathname, int flags)
 {
     int result;
     VNode *node;
-    result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, &node, true);
+    result = FileSystem::VFS::RelativePathToVnode(dirNode, pathname, &node, true);
 
     if (result < 0){
         if (flags & O_CREAT){
@@ -307,6 +307,24 @@ int open(const char *pathname, int flags)
     fdesc->flags = flags;
 
     return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
+}
+
+int open(const char *pathname, int flags)
+{
+    return open(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, flags);
+}
+
+int openat(int dirfd, const char *pathname, int flags)
+{
+    CHECK_FOR_EBADF(dirfd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(dirfd);
+    if (fdesc == NULL) return -EBADF;
+    int type = 0;
+    int retVal = FS_CALL(fdesc->node, type)(fdesc->node, &type);
+    if (retVal < 0) return retVal;
+    if ((type & S_IFDIR) == 0) return -ENOTDIR;
+
+    return open(fdesc->node, pathname, flags);
 }
 
 int close(ProcessControlBlock *process, int fd)
