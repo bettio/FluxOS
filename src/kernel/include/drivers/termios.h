@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2013 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,66 +16,35 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: zerodev.cpp                                                     *
- *   Date: 13/12/2011                                                      *
+ *   Name: termios.h                                                       *
  ***************************************************************************/
 
-#include <drivers/zerodev.h>
+#ifndef _DRIVERS_TERMIOS_H_
+#define _DRIVERS_TERMIOS_H_
 
-#include <errors.h>
-#include <drivers/chardevice.h>
+typedef unsigned char	cc_t;
+typedef unsigned int	speed_t;
+typedef unsigned int	tcflag_t;
 
-CharDevice ZeroDev::zeroDev =
+#define NCCS 32
+
+struct termios
 {
-    0,
-    6,
-    1,
-    Read,
-    Write,
-    read,
-    write,
-    ioctl,
-    mmap,
-    "zero",
+    tcflag_t c_iflag;    
+    tcflag_t c_oflag;
+    tcflag_t c_cflag;
+    tcflag_t c_lflag;
+    cc_t c_line;
+    cc_t c_cc[NCCS];
+    speed_t c_ispeed;
+    speed_t c_ospeed;
 };
 
-void ZeroDev::init()
-{
-    CharDeviceManager::Register(&zeroDev);
-}
+#define OPOST   0000001
 
-int ZeroDev::Write(CharDevice *cd, const char *buffer, int count)
-{
-    return count;
-}
+#define ISIG    0000001
+#define ICANON  0000002
+#define ECHO    0000010
 
-int ZeroDev::Read(CharDevice *cd, char *buffer, int count)
-{
-    for (int i = 0; i < count; i++){
-        buffer[i] = 0;
-    }
-
-    return count;
-}
-
-int ZeroDev::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
-{
-    return Write(NULL, buffer, bufsize);
-}
-
-int ZeroDev::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
-{
-    return Read(NULL, buffer, bufsize);
-}
-
-int ZeroDev::ioctl(VNode *node, int request, long arg)
-{
-    return -EIOCTLNOTSUPPORTED;
-}
-
-void *ZeroDev::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
-{
-    return 0;
-}
-
+#endif
 

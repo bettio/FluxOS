@@ -69,7 +69,7 @@ int FullDev::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int FullDev::ioctl(VNode *node, int request, long arg)
 {
-    return 0;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *FullDev::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

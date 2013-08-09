@@ -327,7 +327,7 @@ int Pipe::Fcntl(VNode *node, int cmd, long arg)
 
 int Pipe::Ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *Pipe::Mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

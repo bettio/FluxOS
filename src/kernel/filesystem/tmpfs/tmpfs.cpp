@@ -511,7 +511,7 @@ int TmpFS::fcntl(VNode *node, int cmd, long arg)
 
 int TmpFS::ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 //HACK: it should map memory!

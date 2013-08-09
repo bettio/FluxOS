@@ -320,7 +320,7 @@ int ProcFS::fcntl(VNode *node, int cmd, long arg)
 
 int ProcFS::ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *ProcFS::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

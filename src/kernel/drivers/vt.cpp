@@ -21,8 +21,12 @@
  ***************************************************************************/
 
 #include <drivers/vt.h>
+
+#include <errors.h>
 #include <drivers/consoledevice.h>
 #include <drivers/chardevice.h>
+#include <drivers/termios.h>
+#include <filesystem/ioctl.h>
 
 #define MAX_PARAMS 32
 
@@ -149,7 +153,23 @@ int Vt::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int Vt::ioctl(VNode *node, int request, long arg)
 {
-    return 0;
+    switch (request){
+        case TCGETS: {
+            termios *t = (termios *) arg;
+            t->c_iflag = 0;
+            t->c_oflag = OPOST;
+            t->c_cflag = 0; 
+            t->c_lflag = ECHO | ICANON | ISIG;
+            t->c_line = 0;
+            for (int i = 0; i < NCCS; i++) t->c_cc[i] = 0;
+            t->c_ispeed = 0;
+            t->c_ospeed = 0;
+            return 0;	
+        }
+        default : {
+            return -EIOCTLNOTSUPPORTED;
+        }
+     }
 }
 
 void *Vt::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

@@ -92,7 +92,7 @@ int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int b
 
 int RamDisk::ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *RamDisk::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

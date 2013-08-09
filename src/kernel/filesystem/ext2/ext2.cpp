@@ -794,7 +794,7 @@ int Ext2::Fcntl(VNode *node, int cmd, long arg)
 
 int Ext2::Ioctl(VNode *node, int request, long arg)
 {
-    return -EINVAL;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *Ext2::Mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)

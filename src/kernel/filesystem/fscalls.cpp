@@ -31,6 +31,7 @@
 #include <filesystem/pollfd.h>
 #include <task/eventsmanager.h>
 #include <task/scheduler.h>
+#include <filesystem/ioctl.h>
 #include <filesystem/pipe.h>
 #include <filesystem/socket.h>
 #include <filesystem/vnodemanager.h>
@@ -563,7 +564,19 @@ int ioctl(int d, int request, long arg)
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
     if (fdesc == NULL) return -EBADF;
 
-    return FS_CALL(fdesc->node, ioctl)(fdesc->node, request, arg);
+    int retVal = FS_CALL(fdesc->node, ioctl)(fdesc->node, request, arg);
+    if (retVal == -EIOCTLNOTSUPPORTED){
+        switch (request){
+            case TCGETS: {
+                return -ENOTTY;
+            }
+            default: {
+                return -EINVAL;
+            }
+        }
+    }
+
+    return retVal;
 }
 
 int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name)

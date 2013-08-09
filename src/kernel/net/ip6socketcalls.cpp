@@ -232,7 +232,7 @@ int IP6SocketCalls::ioctl(VNode *node, int request, long arg)
            break;
 
         default:
-            return -EINVAL;
+            return -EIOCTLNOTSUPPORTED;
     }
 
     return 0;

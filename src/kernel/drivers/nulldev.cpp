@@ -21,6 +21,8 @@
  ***************************************************************************/
 
 #include <drivers/nulldev.h>
+
+#include <errors.h>
 #include <drivers/chardevice.h>
 
 CharDevice NullDev::nullDev =
@@ -64,7 +66,7 @@ int NullDev::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int NullDev::ioctl(VNode *node, int request, long arg)
 {
-    return 0;
+    return -EIOCTLNOTSUPPORTED;
 }
 
 void *NullDev::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
