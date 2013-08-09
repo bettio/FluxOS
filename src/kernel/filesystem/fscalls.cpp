@@ -622,12 +622,13 @@ int utime(const char *filename, const struct utimbuf *buf)
 int statfs(const char *path, struct statfs *buf)
 {
     VNode *tmpnode;
-
     int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &tmpnode, false);
-
     if (result < 0) return result;
 
-    return FS_CALL(tmpnode, statfs)(tmpnode, buf);
+    result = FS_CALL(tmpnode, statfs)(tmpnode, buf);
+    VNodeManager::PutVnode(tmpnode);
+
+    return result;
 }
 
 int fstatfs(int fd, struct statfs *buf)
