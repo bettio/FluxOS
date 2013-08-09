@@ -97,19 +97,41 @@ int getcwd(char *buf, size_t size)
     }
 }
 
-
-//TODO: We must check if the path is a file path
 int chdir(const char *path)
 {
-	VNode *node;
+    VNode *node;
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+    if (result < 0) return result;
+    int type = 0;
+    int retVal = FS_CALL(node, type)(node, &type);
+    if (retVal < 0){
+        VNodeManager::PutVnode(node);
+        return retVal;
+    }
+    if ((type & S_IFDIR) == 0){
+        VNodeManager::PutVnode(node);
+        return -ENOTDIR;
+    }
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+    Scheduler::currentThread()->parentProcess->currentWorkingDirNode = node;
 
-	if (result < 0) return result;
+    return 0;
+}
 
-	Scheduler::currentThread()->parentProcess->currentWorkingDirNode = node;
 
-	return 0;
+int fchdir(int fd)
+{
+    CHECK_FOR_EBADF(fd);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
+    if (fdesc == NULL) return -EBADF;
+    int type = 0;
+    int retVal = FS_CALL(fdesc->node, type)(fdesc->node, &type);
+    if (retVal < 0) return retVal;
+    if ((type & S_IFDIR) == 0) return -ENOTDIR;
+
+    Scheduler::currentThread()->parentProcess->currentWorkingDirNode = VNodeManager::ReferenceVnode(fdesc->node);
+
+    return 0;
 }
 
 int stat(const char *path, struct stat *buf)

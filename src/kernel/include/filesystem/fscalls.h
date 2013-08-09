@@ -42,6 +42,7 @@ int lseek(int fd, off_t offset, int whence);
 int getdents(int fd, dirent *dirp, unsigned int count);
 int getcwd(char *buf, size_t size);
 int chdir(const char *path);
+int fchdir(int fd);
 int read(int fd, void *buf, size_t count);
 int write(int fd, const void *buf, size_t count);
 int stat(const char *path, struct stat *buf);

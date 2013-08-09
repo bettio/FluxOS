@@ -293,6 +293,11 @@ uint32_t chdir(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
     return chdir((const char *) ebx);
 }
 
+uint32_t fchdir(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return fchdir((int) ebx);
+}
+
 uint32_t getdents(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
     return getdents((unsigned int) ebx, (dirent *) ecx, (unsigned int) edx);
@@ -565,7 +570,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //125 mprotect
     //126 sigprocmask
     //132 getpgid
-    //133 fchdir
+    registerSyscall(133, fchdir);
     //138 setfsuid
     //139 setfsgid 
     registerSyscall(141, getdents);
