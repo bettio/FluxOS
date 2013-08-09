@@ -287,6 +287,14 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
     return result;
 }
 
+mode_t umask(mode_t mode)
+{
+    ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
+    mode_t oldMask = process->umask;
+    process->umask = mode & 0777;
+    return oldMask;
+}
+
 int open(VNode *dirNode, const char *pathname, int flags)
 {
     int result;

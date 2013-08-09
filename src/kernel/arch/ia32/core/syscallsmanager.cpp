@@ -408,6 +408,11 @@ uint32_t fcntl(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t 
     return fcntl((int) ebx, (int) ecx, (long) edx);
 }
 
+uint32_t umask(uint32_t mode, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+    return umask(mode);
+}
+
 uint32_t poll(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
 {
     return poll((pollfd *) ebx, (int) ecx, (int) edx);
@@ -511,7 +516,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(54, ioctl);
     registerSyscall(55, fcntl);
     //57 setpgid
-    //60 umask
+    registerSyscall(60, umask);
     //61 chroot
     //62 ustat
     registerSyscall(32, dup2);

@@ -100,6 +100,7 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
     }
 	    
     process->currentWorkingDirNode = cwdNode;
+    process->umask = 0;
 
     process->status = READY;
 
@@ -130,7 +131,7 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     }
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
-
+    process->umask = parent->umask;
 
     process->status = READY;
 

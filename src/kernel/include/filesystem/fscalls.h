@@ -35,6 +35,7 @@ int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **na
 int creat(const char *pathname, mode_t mode);
 int utime(const char *path, const struct utimbuf *times);
 int readlink(const char *path, char *buf, size_t bufsiz);
+mode_t umask(mode_t mode);
 int open(const char *pathname, int flags);
 int close(int fd);
 int lseek(int fd, off_t offset, int whence);

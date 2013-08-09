@@ -59,6 +59,12 @@ class ProcessControlBlock
 
         ListWithHoles <FileDescriptor *> *openFiles;
         VNode *currentWorkingDirNode;
+        mode_t umask;
+
+        inline mode_t calculateMode(mode_t mode)
+        {
+            return mode & (~umask);
+        }
 };
 
 #endif
