@@ -439,6 +439,16 @@ uint32_t mmap(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
     return (uint32_t) mmap((void *) args->addr, (size_t) args->len, (int) args->prot, (int) args->flags, (int) args->fd, (size_t) args->offset);
 }
 
+uint32_t statfs(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return statfs((const char *) ebx, (struct statfs *) ecx);
+}
+
+uint32_t fstatfs(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
+{
+    return fstatfs((int) ebx, (struct statfs *) ecx);
+}
+
 uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
     int retval;
@@ -553,8 +563,8 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(95, fchown);
     //96 getpriority
     //97 setpriority
-    //99 statfs
-    //100 fstatfs
+    registerSyscall(99, statfs);
+    registerSyscall(100, fstatfs);
     registerSyscall(102, socketcall);
     //104 setitimer
     //105 getitimer

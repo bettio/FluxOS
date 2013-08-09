@@ -28,6 +28,7 @@
 class FileDescriptor;
 class ProcessControlBlock;
 struct pollfd;
+struct statfs;
 
 int close(ProcessControlBlock *process, int fd);
 
@@ -73,6 +74,8 @@ int ioctl(int d, int request, long arg);
 
 int mkdir(const char *pathname, mode_t mode);
 int rmdir(const char *pathname);
+int statfs(const char *path, struct statfs *buf);
+int fstatfs(int fd, struct statfs *buf);
 int unlink(const char *pathname);
 int symlink(const char *oldpath, const char *newpath);
 int link(const char *oldpath, const char *newpath);
