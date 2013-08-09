@@ -490,6 +490,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //26 ptrace
     //27 alarm
     registerSyscall(28, fstat);
+    //29 pause
     registerSyscall(30, utime);
     registerSyscall(33, access);
     //34 nice
@@ -527,6 +528,8 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(74, sethostname);
     //gettimeofday 78
     //settimeofday 79
+    //getgroups 80
+    //setgroups 81
     registerSyscall(83, symlink);
     registerSyscall(84, lstat);
     registerSyscall(85, readlink);
@@ -546,7 +549,9 @@ void SyscallsManager::registerDefaultSyscalls()
     //104 setitimer
     //105 getitimer
     registerSyscall(107, lstat);
+    //111 vhangup
     //114 wait4
+    //116 sysinfo
     registerSyscall(118, fsync);
     //119 sigreturn
     //120 clone
@@ -578,11 +583,16 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(168, poll);
     //170 setresid
     //171 getresid
+    //172 prctl
     registerSyscall(180, pread);
     registerSyscall(181, pwrite);
     registerSyscall(182, chown);
     registerSyscall(183, getcwd);
+    //184 capget
+    //185 capset
     //186 sigaltstack
     //187 sendfile
+    //190 vfork
+    //295 openat
 }
 
