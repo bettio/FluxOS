@@ -69,6 +69,7 @@ void UDP::processUDPPacket(NetIface *iface, uint8_t *packet, int size, void *pre
             //TODO: check compiliancy
             ICMP::sendICMPReply(iface, (uint8_t *) ipHeader, size + sizeof(IPHeader), ipHeader->daddr, ipHeader->saddr, ICMP_UNREACHABLE, ICMP_UNREACHABLE_PORT);
         }
+        return;
     }
 
     void *dataBuff = malloc(header->length);
