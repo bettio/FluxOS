@@ -20,7 +20,13 @@
  *   Date: 25/04/2005                                                      *
  ***************************************************************************/
 
+#include <arch.h>
+
+#ifndef ARCH_MIPS
 #include <boot/bootloaderinfo.h>
+#else
+#include <arch/mips/boot/bootinfo.h>
+#endif
 #include <drivers/blockdevicemanager.h>
 #include <cstdlib.h>
 #include <errors.h>
@@ -32,8 +38,12 @@ uint8_t *diskMem;
 
 void RamDisk::init()
 {
+#ifndef BOOTINFO
        if (BootLoaderInfo::modulesCount() > 0){
            diskMem = (uint8_t *) BootLoaderInfo::module(0);
+#else
+           diskMem = (uint8_t *) BootInfo::ramdisk();
+#endif
            BlockDevice *ramd0 = new BlockDevice;
            //TODO: Warning: unchecked malloc
            ramd0->int_cookie = 0;
@@ -48,7 +58,9 @@ void RamDisk::init()
            ramd0->mmap = mmap;
 
            BlockDeviceManager::Register(ramd0);
+#ifndef BOOTINFO
        }
+#endif
 }
 
 void RamDisk::readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer)
@@ -64,6 +76,7 @@ bool RamDisk::writeBlock(BlockDevice *bd, int block, int blocksN, uint8_t *block
 
 int RamDisk::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
+#ifndef BOOTINFO
     if (pos >= BootLoaderInfo::moduleSize(0)){
         return 0;
     }
@@ -71,6 +84,7 @@ int RamDisk::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
     if (pos + bufsize >= BootLoaderInfo::moduleSize(0)){
         bufsize = BootLoaderInfo::moduleSize(0) - pos;
     }
+#endif
 
     memcpy(buffer, diskMem + pos, bufsize);
     return bufsize;
@@ -78,6 +92,7 @@ int RamDisk::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
 {
+#ifndef BOOTINFO
     if (pos >= BootLoaderInfo::moduleSize(0)){
         return 0;
     }
@@ -85,6 +100,7 @@ int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int b
     if (pos + bufsize >= BootLoaderInfo::moduleSize(0)){
         bufsize = BootLoaderInfo::moduleSize(0) - pos;
     }
+#endif
 
     memcpy(diskMem + pos, buffer, bufsize);
     return bufsize;

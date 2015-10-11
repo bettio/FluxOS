@@ -26,6 +26,24 @@ elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
     SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin" )
     SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=i386 -fno-builtin -fno-exceptions -fno-rtti" )
 
+elseif (BUILD_TARGET MATCHES "MIPS_24K")
+    SET(NATIVE_MIPS ON)
+    SET(MIPS_24K ON)
+
+    SET(CMAKE_ASM_COMPILER "${COMPILER_PREFIX}g++" )
+    include(CMakeASMInformation)
+    enable_language(ASM)
+    set(can_use_assembler TRUE)
+    SET(CMAKE_ASM_COMPILER "${COMPILER_PREFIX}g++" )
+
+    SET(CMAKE_C_FLAGS "-mips32 -EL -msoft-float -static -nostdlib -nostdinc -fno-stack-protector -Wall -fno-builtin -g -nodefaultlibs -nostartfiles" )
+    SET(CMAKE_CXX_FLAGS "-mips32 -EL -msoft-float -static -nostdlib -nostdinc -fno-stack-protector -Wall -fno-builtin -g -nodefaultlibs -nostartfiles -fno-exceptions -fno-threadsafe-statics -fno-rtti" )
+    SET(CMAKE_ASM_FLAGS "-mips32 -EL -msoft-float -static -nostdlib -nostdinc -fno-stack-protector -Wall -fno-builtin -g -nodefaultlibs -nostartfiles -fno-exceptions -fno-threadsafe-statics -fno-rtti" )
+
+    SET(CMAKE_C_COMPILER "${COMPILER_PREFIX}gcc" )
+    SET(CMAKE_CXX_COMPILER "${COMPILER_PREFIX}g++" )
+
+
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     SET(NATIVE_ARM ON)
     SET(VERSATILE_ARM ON)
@@ -54,6 +72,9 @@ if (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
 elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
     include_directories(include/arch/ia32/ia32)
 
+elseif (BUILD_TARGET MATCHES "MIPS_24K")
+    include_directories(include/arch/mips/mips)
+
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     include_directories(include/arch/arm/versatilearm)
 
@@ -64,6 +85,9 @@ if (UMM)
 
 elseif (NATIVE_IA32)
     include(arch/ia32/ia32.cmake)
+
+elseif (MIPS_24K)
+    include(arch/mips/mips.cmake)
 
 elseif (VERSATILE_ARM)
     include(arch/arm/arm.cmake)
@@ -87,6 +111,10 @@ add_executable(vmflux ${KERNEL_SRCS})
 if (NATIVE_IA32)
     target_link_libraries(vmflux libgcc.a)
     SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-Ttext=0x100000 -Wl,--build-id=none" )
+
+elseif (MIPS_24K)
+    target_link_libraries(vmflux libgcc.a)
+    SET_TARGET_PROPERTIES(vmflux PROPERTIES LINK_FLAGS "-Ttext=0x80100000 -Wl,--build-id=none" )
 
 elseif (VERSATILE_ARM)
     target_link_libraries(vmflux libgcc.a)

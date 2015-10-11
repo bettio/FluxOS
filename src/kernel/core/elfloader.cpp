@@ -101,6 +101,12 @@ int ElfLoader::loadExecutableFile(const char *path)
     for (int i = 0; i < elfHeader->phnum; i++){
         if (pHeader[i].type == 1){
             char *segment = (char *) pHeader[i].virtualAddr;
+            #ifdef MIN_ELF_LOAD_ADDR
+            if ((unsigned long) segment < MIN_ELF_LOAD_ADDR) {
+                printk("ElfLoader: warning: skipping bad address: %x\n", segment);
+                continue;
+            }
+            #endif
             res = FS_CALL(node, read)(node, pHeader[i].offset, segment, pHeader[i].segmentMemSize);
             if (res < 0){
                 FileSystem::VNodeManager::PutVnode(node);
