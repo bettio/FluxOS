@@ -11,8 +11,9 @@ elseif (BUILD_TARGET MATCHES "UMM_LINUX_X86_64")
     SET(ARCH_SOURCES arch/x86_64/syscalls.c)
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     SET(ARCH_SOURCES arch/arm/syscalls.c)
-
     target_link_libraries(${name} libgcc.a)
+elseif (BUILD_TARGET MATCHES "MIPS_24K")
+    SET(ARCH_SOURCES arch/mips/syscalls.c)
 endif ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_IA32"))
 
 add_library(libc STATIC
