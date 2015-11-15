@@ -7,6 +7,7 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
 if (NOT UMM)
     set(KERNEL_SRCS ${KERNEL_SRCS}
         task/scheduler.cpp
+        task/userprocessimage.cpp
     )
 endif (NOT UMM)
 

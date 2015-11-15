@@ -30,11 +30,10 @@
 #include <task/task.h>
 #include <arch/mips/core/cpuregistersframe.h>
 #include <task/archthreadsmanager.h>
+#include <task/userprocessimage.h>
 
 #define SYSCALL_FUNCTION_PTR unsigned long (*)(unsigned long, unsigned long, unsigned long)
 #define SYSCALLTABLE_SIZE 256
-
-int execve(const char *filename, char *const argv[], char *const envp[]);
 
 unsigned long (*syscallsTable[SYSCALLTABLE_SIZE])(unsigned long, unsigned long, unsigned long);
 
@@ -67,7 +66,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(__NR_OPEN, (SYSCALL_FUNCTION_PTR) open);
 //    registerSyscall(__NR_CLOSE, (SYSCALL_FUNCTION_PTR) close);
 //    registerSyscall(__NR_WAITPID, (SYSCALL_FUNCTION_PTR) waitpid);
-    registerSyscall(__NR_EXECVE, (SYSCALL_FUNCTION_PTR) execve);
+    registerSyscall(__NR_EXECVE, (SYSCALL_FUNCTION_PTR) UserProcessImage::execve);
     registerSyscall(__NR_CHDIR, (SYSCALL_FUNCTION_PTR) chdir);
 //    registerSyscall(__NR_TIME, (SYSCALL_FUNCTION_PTR) time);
     registerSyscall(__NR_CHMOD, (SYSCALL_FUNCTION_PTR) chmod);

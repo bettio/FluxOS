@@ -16,54 +16,28 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.cpp                                                 *
+ *   Name: userprocsmanager.h                                              *
  *   Date: 13/11/2015                                                      *
  ***************************************************************************/
 
-#include <core/archmanager.h>
-#include <core/printk.h>
+#ifndef _USER_PROCS_MANAGER_H
+#define _USER_PROCS_MANAGER_H
 
-#include <arch/mips/drivers/serial.h>
-#include <arch/mips/mm/pagingmanager.h>
-#include <arch/mips/core/exceptionsvector.h>
-#include <arch/mips/core/syscallsmanager.h>
-#include <task/userprocessimage.h>
+struct RegistersFrame;
 
-#include <drivers/vt.h>
-#include <task/task.h>
-
-void ArchManager::Init()
+class UserProcsManager
 {
-    Serial::init();
-    Out = Serial::Device();
-}
+    public:
+        static void setupStackAndRegisters(RegistersFrame *frame, void *entryPoint, void *userSpaceStack, unsigned long userStackSize,
+                                           int argc, int argsSize, int envc, int envSize, int auxc, int auxSize,
+                                           char **argsList[], char **argsBlock,
+                                           char **envList[], char **envBlock,
+                                           char **auxList[], char **auxBlock);
+        static int fork(void *stack);
+        static void *createUserProcessStack(unsigned int size);
+        static void startRegsFrame(RegistersFrame *frame);
+        static RegistersFrame *createNewRegistersFrame();
+};
 
-void ArchManager::InitArch()
-{
-    ExceptionsVector::init();
-    Task::init();
-}
+#endif
 
-void ArchManager::InitMemoryManagment()
-{
-    PagingManager::init();
-}
-
-void ArchManager::InitMultitasking()
-{
-    SyscallsManager::init();
-}
-
-void ArchManager::InitHardware()
-{
-//    Vt::ReInit();
-    Serial::reinit();
-}
-
-void ArchManager::StartInit()
-{
-    UserProcessImage::setupInitProcessImage();
-}
-
-//TODO: please, move away this stuff
-unsigned long kernel_heap_free_pos = KERNEL_HEAP_START;
