@@ -72,6 +72,15 @@ void printk(const char *s, ...)
 
 				break;
 			}
+                        case 'p': {
+				unsigned long n = va_arg(l, unsigned long);
+				uitoaz(n, num, 16);
+
+				len = strlen(num);
+				Out->Write(Out, num, len);
+
+				break;
+                        }
 			case 'u':{
 				unsigned int n = va_arg(l,unsigned int);
 				uitoaz(n,num,10);
