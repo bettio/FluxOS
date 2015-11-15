@@ -37,9 +37,6 @@
 #define MAX_ARGS_NUMBER 5
 #define INIT_USER_STACK_SIZE 8192
 
-//TODO: move away
-#define userptr
-
 int padToWord(int addr)
 {
     return (addr & 0xFFFFFFFC) + 4;

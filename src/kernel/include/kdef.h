@@ -23,3 +23,5 @@
 #include <stdint.h>
 #include <gccattributes.h>
 #include <gccbuiltins.h>
+
+#define userptr
