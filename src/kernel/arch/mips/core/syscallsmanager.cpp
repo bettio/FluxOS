@@ -29,8 +29,10 @@
 #include <filesystem/fscalls.h>
 #include <task/task.h>
 #include <arch/mips/core/cpuregistersframe.h>
+#include <net/netcalls.h>
 #include <task/archthreadsmanager.h>
 #include <task/userprocessimage.h>
+#include <task/userprocsmanager.h>
 
 #define SYSCALL_FUNCTION_PTR unsigned long (*)(unsigned long, unsigned long, unsigned long)
 #define SYSCALLTABLE_SIZE 256
@@ -60,7 +62,7 @@ void SyscallsManager::unregisterSyscall(int num)
 void SyscallsManager::registerDefaultSyscalls()
 {
 //    registerSyscall(__NR_EXIT, (SYSCALL_FUNCTION_PTR) exit);
-//    registerSyscall(__NR_FORK, (SYSCALL_FUNCTION_PTR) fork);
+    registerSyscall(__NR_FORK, (SYSCALL_FUNCTION_PTR) UserProcsManager::fork);
     registerSyscall(__NR_READ, (SYSCALL_FUNCTION_PTR) read);
     registerSyscall(__NR_WRITE, (SYSCALL_FUNCTION_PTR) write);
     registerSyscall(__NR_OPEN, (SYSCALL_FUNCTION_PTR) open);
@@ -101,6 +103,7 @@ void SyscallsManager::registerDefaultSyscalls()
 //    registerSyscall(__NR_FDATASYNC, (SYSCALL_FUNCTION_PTR) fdatasync);
 //    registerSyscall(__NR_PREAD, (SYSCALL_FUNCTION_PTR) pread);
 //    registerSyscall(__NR_PWRITE, (SYSCALL_FUNCTION_PTR) pwrite);
+    registerSyscall(__NR_SOCKET, (SYSCALL_FUNCTION_PTR) socket);
     registerSyscall(__NR_CHOWN, (SYSCALL_FUNCTION_PTR) chown);
     registerSyscall(__NR_GETCWD, (SYSCALL_FUNCTION_PTR) getcwd);
 }
