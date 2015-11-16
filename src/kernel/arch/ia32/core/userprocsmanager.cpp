@@ -72,7 +72,7 @@ void UserProcsManager::processLoader()
 
 void UserProcsManager::createInitProcess()
 {
-    executable = strdup("/bin/init");
+    executable = strdup("/sbin/init");
     args = strdup("");
     ProcessControlBlock *process = Task::CreateNewTask("init");
     ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
