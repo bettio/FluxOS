@@ -235,6 +235,7 @@ void PagingManager::newPage(uint32_t addr)
 
   pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE | User);
   invalidateTLB();
+  memset((void *) (addr & 0xFFFFF000), 0, 4096);
 }
 
 void PagingManager::enable()
