@@ -130,7 +130,7 @@ int UserProcsManager::execve(const char *_filename, char *const _argv[], char *c
     ElfLoader loader;
     int res = loader.loadExecutableFile(filename);
     if (res < 0 || !loader.isValid()){
-        printk("Cannot load executable file: %s error: %i\n", executable, res);
+        printk("Cannot load executable file: %s error: %i\n", filename, res);
         //exit
         Scheduler::currentThread()->status = UWaiting;
         Scheduler::currentThread()->parentProcess->status = TERMINATED;
