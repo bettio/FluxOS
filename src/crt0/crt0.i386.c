@@ -29,6 +29,7 @@ asm(
 "pushl %eax\n"
 "pushl %esi\n"
 "pushl %ecx\n"
+"call initmem\n"
 "call main\n"
 "push %eax\n"
 "call _exit\n"
