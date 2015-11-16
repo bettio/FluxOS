@@ -18,6 +18,8 @@ mkdir -p "${DESTDIR}/sbin"
 
 cp src/init/init "${DESTDIR}/sbin/"
 
+cp src/fluxsh/fluxsh "${DESTDIR}/bin/"
+
 while read coreutil
 do
     cp "src/coreutils/${coreutil}" "${DESTDIR}/bin/"
