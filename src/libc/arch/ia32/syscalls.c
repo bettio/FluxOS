@@ -345,11 +345,15 @@ int brk(void *end_data_segment)
 	register unsigned int _end_data_segment asm("%ebx") = (unsigned int) end_data_segment;
 
 	/* Result */
-	register unsigned int result asm("%eax");
+	register int result asm("%eax");
 
 	asm volatile("int $0x80" : "=r" (result) : "r" (syscall), "r" (_end_data_segment));
-
-	RETURN(result);
+        
+        if (end_data_segment != 0) {
+	    RETURN(result);
+        } else {
+            return result;
+        }
 }
 
 
