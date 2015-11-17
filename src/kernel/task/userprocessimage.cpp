@@ -168,6 +168,7 @@ int UserProcessImage::setupInitProcessImage()
     ThreadControlBlock *thread = new ThreadControlBlock;
     Scheduler::threads->append(thread);
     ProcessControlBlock *process = Task::CreateNewTask("init");
+    process->dataSegmentEnd = (void *) 0x84200000; 
     thread->parentProcess = process;
     thread->status = Running;
 

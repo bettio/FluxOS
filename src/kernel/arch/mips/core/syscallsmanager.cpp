@@ -29,6 +29,7 @@
 #include <filesystem/fscalls.h>
 #include <task/task.h>
 #include <arch/mips/core/cpuregistersframe.h>
+#include <mm/memcalls.h>
 #include <net/netcalls.h>
 #include <task/archthreadsmanager.h>
 #include <task/userprocessimage.h>
@@ -82,7 +83,7 @@ void SyscallsManager::registerDefaultSyscalls()
 //    registerSyscall(__NR_GETUID, (SYSCALL_FUNCTION_PTR) getuid);
 //    registerSyscall(__NR_FSTAT, (SYSCALL_FUNCTION_PTR) fstat);
 //    registerSyscall(__NR_KILL, (SYSCALL_FUNCTION_PTR) kill);
-//    registerSyscall(__NR_BRK, (SYSCALL_FUNCTION_PTR) brk);
+    registerSyscall(__NR_BRK, (SYSCALL_FUNCTION_PTR) brk);
 //    registerSyscall(__NR_SETGID, (SYSCALL_FUNCTION_PTR) setgid);
 //    registerSyscall(__NR_GETGID, (SYSCALL_FUNCTION_PTR) getgid);
     registerSyscall(__NR_IOCTL, (SYSCALL_FUNCTION_PTR) ioctl);
