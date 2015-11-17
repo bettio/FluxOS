@@ -39,7 +39,7 @@ void command_switch(const char *c);
 
 char *cd;
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char *envp[])
 {
 	char *c = malloc(256);
 

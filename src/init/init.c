@@ -42,7 +42,7 @@ void init_setdomainname(void);
 
 #define MINIMAL
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char *envp[])
 {
     printf("\n\nINIT 0.1 - Starting FluxOS...\n\n");
 
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
         int pid = fork();
         if (!pid){
             char *a[] = {"/bin/fluxsh", "", 0};
-            execve("/bin/fluxsh", a, 0);
+            execve("/bin/fluxsh", a, envp);
         }
 
         waitpid(pid, &status, 0);
