@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2015 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,8 +16,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: scheduler.h                                                     *
- *   Date: 15/11/2011                                                      *
+ *   Name: userprocessimage.h                                              *
+ *   Date: 09/11/2015                                                      *
  ***************************************************************************/
 
 #ifndef _USERPROCESSIMAGE_H_
@@ -31,9 +31,17 @@ extern "C" void schedule();
 class UserProcessImage
 {
     public:
-        static int loadExecutable(const char *executablePath, void **entryPoint);
         static int setupInitProcessImage();
         static int execve(userptr const char *filename, userptr char *const argv[], userptr char *const envp[]);
+
+    private:
+        static void buildNewEnvironment(userptr const char *const env[], int envCount, userptr char *envTable[], userptr char *envBlock);
+        static void buildNewArgsList(userptr const char *const args[], int argsCount, userptr char *argsTable[], userptr char *argsBlock);
+        static int copyUserspaceStringsVectorToBlock(char *destStringsBlock, userptr const char *const srcStringsVect[], int destStringsBlockSize);
+        static void buildStringsPtrVector(userptr char *destArgsTable[], userptr char *destArgsBlock, const char *srcArgsBlock, int argsCount);
+        static int stringsVectorSize(userptr char *const v[], int *num, int maxNum, int maxStrLen);
+        static void buildAuxVector(userptr char *auxTable[], userptr char *auxBlock);
+        static int loadExecutable(const char *executablePath, void **entryPoint);
 };
 
 #endif

@@ -114,7 +114,5 @@ void UserProcsManager::startRegsFrame(RegistersFrame *frame)
 //TODO: implement fork here
 int UserProcsManager::fork(void *stack)
 {
-    printk("missing fork implementation\n");
-    while(1);
     return 0;
 }

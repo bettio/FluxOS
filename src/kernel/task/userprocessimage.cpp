@@ -34,45 +34,13 @@
 
 #define INIT_USER_STACK_SIZE 8192
 #define MAX_ENV_VARS_NUMBER 10
+#define MAX_ENV_VAR_LEN 256
 #define MAX_ARGS_NUMBER 5
+#define MAX_ARG_LEN 256
 
 static inline int padToWord(int addr)
 {
     return (addr & 0xFFFFFFFC) + 4;
-}
-
-int calculateEnvironmentSize(userptr char *const env[], int *envVarsNum)
-{
-    int size = 0;
-    for (int i = 0; i < MAX_ENV_VARS_NUMBER; i++) {
-        //TODO: check env[i] address validity
-        if (!env[i]) {
-            *envVarsNum = i - 1;
-            break;
-        } else {
-            //user
-            size += strlen(env[i]) + 1;
-        }
-    }
-
-    return size;
-}
-
-int calculateArgsListSize(userptr char *const args[], int *argsNum)
-{
-    int size = 0;
-    for (int i = 0; i < MAX_ARGS_NUMBER; i++) {
-        //TODO: check env[i] address validity
-        if (!args[i]) {
-            *argsNum = i - 1;
-            break;
-        } else {
-            //user
-            size += strlen(args[i]) + 1;
-        }
-    }
-
-    return size;
 }
 
 int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoint)
@@ -86,19 +54,17 @@ int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoi
     *entryPoint = loader.entryPoint();
 }
 
-void buildNewEnvironment(userptr const char *const env[], int envCount, userptr char *envTable[], userptr char *envBlock)
+void UserProcessImage::buildNewEnvironment(userptr const char *const env[], int envCount, userptr char *envTable[], userptr char *envBlock)
 {
     for (int i = 0; i < envCount; i++) {
         strcpy(envBlock, env[i]);
         envTable[i] = envBlock;
-        printk("envTable: %x\n", envTable[i]);
         envBlock += strlen(env[i]) + 1;
-        printk("inserito: %s\n", envTable[i]);
     }
     envTable[envCount] = NULL;
 }
 
-void buildNewArgsList(userptr const char *const args[], int argsCount, userptr char *argsTable[], userptr char *argsBlock)
+void UserProcessImage::buildNewArgsList(userptr const char *const args[], int argsCount, userptr char *argsTable[], userptr char *argsBlock)
 {
      for (int i = 0; i < argsCount; i++) {
         strcpy(argsBlock, args[i]);
@@ -108,7 +74,52 @@ void buildNewArgsList(userptr const char *const args[], int argsCount, userptr c
     argsTable[argsCount] = NULL;
 }
 
-void buildAuxVector(userptr char *auxTable[], userptr char *auxBlock)
+int UserProcessImage::copyUserspaceStringsVectorToBlock(char *destStringsBlock, userptr const char *const srcStringsVect[], int destStringsBlockSize)
+{
+    int i = 0;
+    int remainingSize = destStringsBlockSize;
+
+    while (srcStringsVect[i]) {
+        int size = strnlen(srcStringsVect[i], remainingSize - 1) + 1;
+        strncpy(destStringsBlock, srcStringsVect[i], size);
+        destStringsBlock += size;
+        i++;
+    }
+
+    return 0;
+}
+
+void UserProcessImage::buildStringsPtrVector(userptr char *destArgsTable[], userptr char *destArgsBlock, const char *srcArgsBlock, int argsCount)
+{
+    for (int i = 0; i < argsCount; i++) {
+        destArgsTable[i] = destArgsBlock;
+        int size = strlen(srcArgsBlock) + 1;
+        strcpy(destArgsBlock, srcArgsBlock);
+        destArgsBlock += size;
+        srcArgsBlock += size;
+    }
+    destArgsTable[argsCount] = NULL;
+}
+
+int UserProcessImage::stringsVectorSize(userptr char *const v[], int *num, int maxNum, int maxStrLen)
+{
+    int size = 0;
+    for (int i = 0; i < maxNum; i++) {
+        //TODO: check env[i] address validity
+        if (!v[i]) {
+            *num = i;
+            break;
+        } else {
+            //TODO: user
+            size += strnlen(v[i], maxStrLen) + 1;
+        }
+    }
+
+    return size;
+}
+
+
+void UserProcessImage::buildAuxVector(userptr char *auxTable[], userptr char *auxBlock)
 {
 //TODO: implement this
 }
@@ -167,17 +178,31 @@ int UserProcessImage::setupInitProcessImage()
 //TODO: not completely implemented
 int UserProcessImage::execve(userptr const char *filename, userptr char *const argv[], userptr char *const envp[])
 {
+    int ret = 0;
+
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
+
+    int argc;
+    int argsBlockSize = stringsVectorSize(argv, &argc, MAX_ARGS_NUMBER, MAX_ARG_LEN);
+    int envc;
+    int envBlockSize = stringsVectorSize(envp, &envc, MAX_ENV_VARS_NUMBER, MAX_ENV_VAR_LEN);
+    int auxc = 1; /* TODO: Implement here */
+    int auxSize = 16;
+
+    char *tmpArgsBlock = (char *) malloc(argsBlockSize);
+    ret = copyUserspaceStringsVectorToBlock(tmpArgsBlock, argv, argsBlockSize);
+    if (ret < 0) {
+        return ret;
+    }
+
+    char *tmpEnvBlock = (char *) malloc(envBlockSize);
+    ret = copyUserspaceStringsVectorToBlock(tmpEnvBlock, envp, envBlockSize);
+    if (ret < 0 ) {
+        return ret;
+    }
 
     void *entryPoint;
     loadExecutable(filename, &entryPoint);
-
-    int argc;
-    int argsBlockSize = calculateArgsListSize(argv, &argc);
-    int envc;
-    int envBlockSize = calculateEnvironmentSize(envp, &envc);
-    int auxc = 1; /* TODO: Implement here */
-    int auxSize = 16;
 
     int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize);
 
@@ -195,12 +220,10 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
                            &argsList, &argsBlock, &envList, &envBlock,
                            &auxList, &auxBlock);
 
-    buildNewArgsList(argv, argc, argsList, argsBlock);
-    buildNewEnvironment(envp, envc, envList, envBlock);
-    buildAuxVector(auxList, auxBlock);
+    buildStringsPtrVector(argsList, argsBlock, tmpArgsBlock, argc);
+    buildStringsPtrVector(envList, envBlock, tmpEnvBlock, envc);
 
-    printk("panic here\n");
-    while (1);
+    buildAuxVector(auxList, auxBlock);
 
     //TODO: remove this
     UserProcsManager::startRegsFrame(regsFrame);
