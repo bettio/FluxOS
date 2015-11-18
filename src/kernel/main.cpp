@@ -45,6 +45,8 @@
 
 #include <net/net.h>
 
+#include <uapi/processuapi.h>
+
 #include <core/system.h>
 
 #define BOOT 1
@@ -101,6 +103,8 @@ int main()
     FileSystem::VFS::Mount("null", "/proc", "procfs", 0, 0);
 
 	ArchManager::InitMultitasking();
+
+        ProcessUAPI::init();
 
 	printk("Starting Init...\n");
 

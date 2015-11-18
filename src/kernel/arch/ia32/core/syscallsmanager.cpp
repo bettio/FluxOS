@@ -40,6 +40,8 @@
 #include <filesystem/pollfd.h>
 #include <net/netcalls.h>
 
+#include <uapi/processuapi.h>
+
 #include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
 #include <task/processcontrolblock.h>
@@ -49,6 +51,7 @@
 #include <mm/memcalls.h>
 
 #define SYSCALL_MAXNUM 256
+#define UGLY_CAST uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 
 struct MmapArgs
 {
@@ -168,39 +171,9 @@ uint32_t dup2(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
     return dup2(ebx, ecx);
 }
 
-uint32_t getppid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Scheduler::currentThread()->parentProcess->parent->pid;
-}
-
-uint32_t getpid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Scheduler::currentThread()->parentProcess->pid;
-}
-
-uint32_t getgid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Scheduler::currentThread()->parentProcess->gid;
-}
-
-uint32_t getuid(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Scheduler::currentThread()->parentProcess->uid;
-}
-
 uint32_t stime(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
     return (uint32_t) SystemTimer::stime((long *) ebx);
-}
-
-uint32_t setgid(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Task::SetGid(ebx);
-}
-
-uint32_t setuid(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Task::SetUid(ebx);
 }
 
 uint32_t open(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
@@ -501,11 +474,11 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(16, lchown);
     registerSyscall(18, stat);
     registerSyscall(19, lseek);
-    registerSyscall(20, getpid);
+    registerSyscall(20, (UGLY_CAST) ProcessUAPI::getpid);
     registerSyscall(21, mount);
     registerSyscall(22, umount);
-    registerSyscall(23, setuid);
-    registerSyscall(24, getuid);
+    registerSyscall(23, (UGLY_CAST) ProcessUAPI::setuid);
+    registerSyscall(24, (UGLY_CAST) ProcessUAPI::getuid);
     registerSyscall(25, stime);
     //26 ptrace
     //27 alarm
@@ -522,8 +495,8 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(41, dup);
     registerSyscall(42, pipe);
     registerSyscall(45, brk);
-    registerSyscall(46, setgid);
-    registerSyscall(47, getgid);
+    registerSyscall(46, (UGLY_CAST) ProcessUAPI::setgid);
+    registerSyscall(47, (UGLY_CAST) ProcessUAPI::getgid);
     //48 sys_signal
     //49 geteuid
     //50 getegid
@@ -535,7 +508,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //61 chroot
     //62 ustat
     registerSyscall(32, dup2);
-    registerSyscall(64, getppid);
+    registerSyscall(64, (UGLY_CAST) ProcessUAPI::getppid);
     //65 getpgrp
     //66 setsid
     //67 sigaction

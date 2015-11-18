@@ -20,9 +20,9 @@
  *   Date: 19/10/2015                                                      *
  ***************************************************************************/
 
-#include <arch/mips/core/syscallsmanager.h>
+#include <core/syscallsmanager.h>
 
-#include <arch/mips/uapi/syscallsnr.h>
+#include <uapi/syscallsnr.h>
 #include <core/printk.h>
 #include <core/system.h>
 #include <filesystem/vfs.h>

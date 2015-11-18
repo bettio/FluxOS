@@ -33,8 +33,6 @@ class ThreadControlBlock;
 class Task{
 	public:
         static void init();
-        static int SetUid(unsigned int uid);
-        static int SetGid(unsigned int gid);
         static ProcessControlBlock *CreateNewTask(const char *name);
         static ProcessControlBlock *NewProcess(const char *name);
         static ListWithHoles<ProcessControlBlock *> *processes;

@@ -100,6 +100,7 @@ include(filesystem/filesystem.cmake)
 include(lib/libc/libc.cmake)
 include(mm/mm.cmake)
 include(task/task.cmake)
+include(uapi/uapi.cmake)
 include(net/net.cmake)
 
 set(KERNEL_SRCS ${KERNEL_SRCS}

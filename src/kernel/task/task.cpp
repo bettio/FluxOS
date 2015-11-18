@@ -33,32 +33,6 @@ void Task::init()
     processes = new ListWithHoles<ProcessControlBlock *>();
 }
 
-int Task::SetUid(unsigned int uid)
-{
-	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
-
-	if (task->uid == 0){
-		task->uid = uid;
-
-		return 0;
-	}else{
-		return -EPERM;
-	}
-}
-
-int Task::SetGid(unsigned int gid)
-{
-	ProcessControlBlock *task = Scheduler::currentThread()->parentProcess;
-
-	if (task->uid == 0){
-		task->gid = gid;
-
-		return 0;
-	}else{
-		return -EPERM;
-	}
-}
-
 ProcessControlBlock *Task::CreateNewTask(const char *name)
 {
 	ProcessControlBlock *process = new ProcessControlBlock;

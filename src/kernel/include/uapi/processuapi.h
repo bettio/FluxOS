@@ -16,24 +16,44 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: syscallsmanager.h                                               *
- *   Date: 19/10/2015                                                      *
+ *   Name: processuapi.h                                                   *
+ *   Date: 17/11/2015                                                      *
  ***************************************************************************/
 
-#ifndef _SYSCALLSMANAGER_H_
-#define _SYSCALLSMANAGER_H_
+#ifndef _UAPI_PROCESSUAPI_H_
+#define _UAPI_PROCESSUPAI_H_
 
-#include <stdint.h>
+#include <kdef.h>
 
-class SyscallsManager
+#define pid_t unsigned long
+#define uid_t unsigned long
+#define gid_t unsigned long
+
+class ProcessUAPI
 {
     public:
         static void init();
-        static void registerSyscall(int num, unsigned long (*func)(unsigned long a0, unsigned long a1, unsigned long a2));
-        static void unregisterSyscall(int sysC);
 
-    private:
-        static void registerDefaultSyscalls();
+        static pid_t getpid();
+        static pid_t getppid();
+        static pid_t getsid(pid_t pid);
+        static uid_t getuid();
+        static uid_t geteuid();
+        static gid_t getgid();
+        static gid_t getegid();
+
+        static pid_t setsid();
+
+        static int setuid(uid_t uid);
+        static int seteuid(uid_t euid);
+        static int setresuid(uid_t ruid, uid_t euid, uid_t suid);
+        static int setgid(gid_t gid);
+        static int setegid(gid_t egid);
+        static int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 };
+
+#undef pid_t
+#undef uid_t
+#undef gid_t
 
 #endif

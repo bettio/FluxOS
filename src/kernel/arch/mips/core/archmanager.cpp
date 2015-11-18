@@ -26,7 +26,7 @@
 #include <arch/mips/drivers/serial.h>
 #include <arch/mips/mm/pagingmanager.h>
 #include <arch/mips/core/exceptionsvector.h>
-#include <arch/mips/core/syscallsmanager.h>
+#include <core/syscallsmanager.h>
 #include <task/userprocessimage.h>
 
 #include <drivers/vt.h>
