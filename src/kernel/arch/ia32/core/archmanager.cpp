@@ -23,9 +23,9 @@
 #include <task/task.h>
 #include <core/printk.h>
 #include <core/archmanager.h>
+#include <core/syscallsmanager.h>
 #include <drivers/vt.h>
 #include <arch/ia32/core/idt.h>
-#include <arch/ia32/core/syscallsmanager.h>
 #include <arch/ia32/drivers/ata.h>
 #include <arch/ia32/drivers/keyboard.h>
 #include <arch/ia32/drivers/ps2mouse.h>

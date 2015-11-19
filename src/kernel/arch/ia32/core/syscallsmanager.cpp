@@ -20,7 +20,7 @@
  *   Date: 09/07/2005                                                      *
  ***************************************************************************/
 
-#include <arch/ia32/core/syscallsmanager.h>
+#include <core/syscallsmanager.h>
 #include <task/scheduler.h>
 
 #include <arch/ia32/core/idt.h>
@@ -41,6 +41,7 @@
 #include <net/netcalls.h>
 
 #include <uapi/processuapi.h>
+#include <uapi/socketsyscalls.h>
 
 #include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
@@ -50,8 +51,8 @@
 
 #include <mm/memcalls.h>
 
-#define SYSCALL_MAXNUM 256
-#define UGLY_CAST uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
+#define SYSCALLTABLE_SIZE 256
+#define IA32_SYSCALL_TYPE uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 
 struct MmapArgs
 {
@@ -64,51 +65,37 @@ struct MmapArgs
 };
 
 extern "C" void syscallHandler();
-
-uint32_t (*SyscallsTable[SYSCALL_MAXNUM])(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi);
+uint32_t (*syscallsTable[SYSCALLTABLE_SIZE])(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi);
 
 void SyscallsManager::init()
 {
     IDT::setHandler(syscallHandler, 128, 3);
-
-    for(int i = 0; i < SYSCALL_MAXNUM; i++){
-        registerSyscall(i, nullSysCallHandler);
-    }
     registerDefaultSyscalls();
 }
 
-void SyscallsManager::registerSyscall(int num, uint32_t (*func)(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi))
+void SyscallsManager::registerSyscall(int num, void *funcPtr)
 {
-    SyscallsTable[num] = func;
+    syscallsTable[num] = (IA32_SYSCALL_TYPE) funcPtr;
 }
 
 void SyscallsManager::unregisterSyscall(int num)
 {
-    SyscallsTable[num] = nullSysCallHandler;
-}
-
-uint32_t SyscallsManager::nullSysCallHandler(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    printk("Null System Call Handler:\n"
-           " - ebx: 0x%x, ecx: 0x%x\n"
-           " - edx: 0x%x, esi: 0x%x\n"
-           " - edi: 0x%x\n",
-           ebx, ecx, edx, esi, edi);
-
-    return -EFAULT;
+    syscallsTable[num] = NULL;
 }
     
-extern "C" uint32_t doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
+extern "C" unsigned long doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
 {
     //TODO: remove this workaround: add esp parameter to all the syscalls
     if (eax == 2){
         return UserProcsManager::fork((void *) esp);
 
-    }else if (eax < 256){
-        return SyscallsTable[eax](ebx, ecx, edx, esi, edi);
-    
-    }else{
-         return SyscallsManager::nullSysCallHandler(ebx, ecx, edx, esi, edi);
+    } else if ((eax < SYSCALLTABLE_SIZE) && syscallsTable[eax]) {
+            return syscallsTable[eax](ebx, ecx, edx, esi, edi);
+
+    } else {
+        printk("Invalid syscall number %i. Registers: ebx: 0x%x, ecx: 0x%x, edx: 0x%x, esi: 0x%x, edi: 0x%x, esp: 0x%x.\n",
+               eax, ebx, ecx, edx, esi, edi, esp);
+        return -EFAULT;
     }
 }
 
@@ -133,294 +120,6 @@ asm(
     "sti\n"
     "iret\n"
 );
-
-uint32_t exit(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    Task::exit(ebx);
-    return 0;
-}
-
-uint32_t read(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return read((int) ebx, (void *) ecx, (size_t) edx);
-}
-
-uint32_t write(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return write((int) ebx, (void *) ecx, (size_t) edx);
-}
-
-uint32_t symlink(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return symlink((const char *) ebx, (const char *) ecx);
-}
-
-uint32_t readlink(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return readlink((const char *) ebx, (char *) ecx, (size_t) edx);
-}
-
-uint32_t reboot(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t)
-{
-    ArchManager::reboot();
-    return -EPERM;
-}
-
-uint32_t dup2(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return dup2(ebx, ecx);
-}
-
-uint32_t stime(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return (uint32_t) SystemTimer::stime((long *) ebx);
-}
-
-uint32_t open(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return open((const char *) ebx, (int) ecx);
-}
-
-uint32_t close(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return close((int) ebx);
-}
-
-uint32_t execve(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return UserProcsManager::execve((char *) ebx, (char **) ecx, (char **) edx);
-}
-
-uint32_t waitpid(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return Task::waitpid(ebx, (int *) ecx, edx);
-}
-
-uint32_t creat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return creat((const char *) ebx, (mode_t) ecx);
-}
-
-uint32_t link(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return link((const char *) ebx, (const char *) ecx);
-}
-
-uint32_t unlink(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return unlink((const char *) ebx);
-}
-
-uint32_t getcwd(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return getcwd((char *) ebx, (int) ecx);
-}
-
-uint32_t mount(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return FileSystem::VFS::Mount((const char *) ebx, (const char *) ecx, (const char *) edx, (unsigned int) esi, (const void *) edi);
-}
-
-uint32_t umount(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return FileSystem::VFS::Umount((const char *) ebx);
-}
-
-uint32_t kill(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return Task::kill(ebx, ecx);
-}
-
-uint32_t rename(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return rename((const char *) ebx, (const char *) ecx);
-}
-
-uint32_t mkdir(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return mkdir((const char *) ebx, (mode_t) ecx);
-}
-
-uint32_t rmdir(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return rmdir((const char *) ebx);
-}
-
-uint32_t dup(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return dup((int) ebx);
-}
-
-uint32_t pipe(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return pipe2((int *) ebx, 0);
-}
-
-uint32_t brk(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return (uint32_t) brk((void *) ebx);
-}
-
-uint32_t chdir(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return chdir((const char *) ebx);
-}
-
-uint32_t fchdir(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return fchdir((int) ebx);
-}
-
-uint32_t getdents(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return getdents((unsigned int) ebx, (dirent *) ecx, (unsigned int) edx);
-}
-
-uint32_t time(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return SystemTimer::time((long *) ebx);
-}
-
-uint32_t mknod(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return mknod((const char *) ebx, (mode_t) ecx, (dev_t) edx);
-}
-
-uint32_t sethostname(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return SetHostName((const char *) ebx, (size_t) ecx);   
-}
-
-uint32_t setdomainname(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return SetDomainName((const char *) ebx, (size_t) ecx);
-}
-
-uint32_t lseek(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return lseek((int) ebx, (off_t) ecx, (int) edx);
-}
-
-uint32_t uname(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return Uname((utsname *) ebx);
-}
-
-uint32_t stat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return stat((const char *) ebx, (struct stat *) ecx);
-}
-
-uint32_t lstat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return lstat((const char *) ebx, (struct stat *) ecx);
-}
-
-uint32_t fstat(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return fstat((int) ebx, (struct stat *) ecx);
-}
-
-uint32_t utime(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return utime((const char *) ebx, (const struct utimbuf *) ecx);
-}
-
-uint32_t access(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return access((const char *) ebx, (int) ecx);
-}
-
-uint32_t fsync(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return fsync((int) ebx);
-}
-
-uint32_t fdatasync(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return fdatasync((int) ebx);
-}
-
-uint32_t truncate(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return truncate((const char *) ebx, (uint64_t) ecx);
-}
-
-uint32_t ftruncate(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return ftruncate((int) ebx, (uint64_t) ecx);
-}
-
-uint32_t chmod(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return chmod((const char *) ebx, (mode_t) ecx);
-}
-
-uint32_t fchmod(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return fchmod((int) ebx, (mode_t) ecx);
-}
-
-uint32_t chown(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return chown((const char *) ebx, (uid_t) ecx, (gid_t) edx);
-}
-
-uint32_t fchown(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return fchown((int) ebx, (uid_t) ecx, (gid_t) edx);
-}
-
-uint32_t lchown(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return lchown((const char *) ebx, (uid_t) ecx, (gid_t) edx);
-}
-
-uint32_t ioctl(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return ioctl((int) ebx, (int) ecx, (long) edx);
-}
-
-uint32_t fcntl(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return fcntl((int) ebx, (int) ecx, (long) edx);
-}
-
-uint32_t umask(uint32_t mode, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    return umask(mode);
-}
-
-uint32_t poll(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t, uint32_t)
-{
-    return poll((pollfd *) ebx, (int) ecx, (int) edx);
-}
-
-uint32_t pread(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return pread((int) ebx, (void *) ecx, (size_t) edx, (uint64_t) esi);
-}
-
-uint32_t pwrite(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
-{
-    return pwrite((int) ebx, (void *) ecx, (size_t) edx, (uint64_t) esi);
-}
-
-uint32_t mmap(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
-{
-    MmapArgs *args = (MmapArgs *) ebx;
-    return (uint32_t) mmap((void *) args->addr, (size_t) args->len, (int) args->prot, (int) args->flags, (int) args->fd, (size_t) args->offset);
-}
-
-uint32_t statfs(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return statfs((const char *) ebx, (struct statfs *) ecx);
-}
-
-uint32_t fstatfs(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
-{
-    return fstatfs((int) ebx, (struct statfs *) ecx);
-}
 
 uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 {
@@ -457,58 +156,58 @@ uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 
 void SyscallsManager::registerDefaultSyscalls()
 {
-    registerSyscall(1, exit);
-    registerSyscall(3, read);
-    registerSyscall(4, write);
-    registerSyscall(5, open);
-    registerSyscall(6, close);
-    registerSyscall(7, waitpid);
-    registerSyscall(8, creat);
-    registerSyscall(9, link);
-    registerSyscall(10, unlink);
-    registerSyscall(11, execve);
-    registerSyscall(12, chdir);
-    registerSyscall(13, time);
-    registerSyscall(14, mknod);
-    registerSyscall(15, chmod);
-    registerSyscall(16, lchown);
-    registerSyscall(18, stat);
-    registerSyscall(19, lseek);
-    registerSyscall(20, (UGLY_CAST) ProcessUAPI::getpid);
-    registerSyscall(21, mount);
-    registerSyscall(22, umount);
-    registerSyscall(23, (UGLY_CAST) ProcessUAPI::setuid);
-    registerSyscall(24, (UGLY_CAST) ProcessUAPI::getuid);
-    registerSyscall(25, stime);
+    registerSyscall(1, (void *) Task::exit);
+    registerSyscall(3, (void *) read);
+    registerSyscall(4, (void *) write);
+    registerSyscall(5, (void *) open);
+    registerSyscall(6, (void *) close);
+    registerSyscall(7, (void *) Task::waitpid);
+    registerSyscall(8, (void *) creat);
+    registerSyscall(9, (void *) link);
+    registerSyscall(10, (void *) unlink);
+    registerSyscall(11, (void *) UserProcsManager::execve);
+    registerSyscall(12, (void *) chdir);
+    registerSyscall(13, (void *) SystemTimer::time);
+    registerSyscall(14, (void *) mknod);
+    registerSyscall(15, (void *) chmod);
+    registerSyscall(16, (void *) lchown);
+    registerSyscall(18, (void *) stat);
+    registerSyscall(19, (void *) lseek);
+    registerSyscall(20, (void *) ProcessUAPI::getpid);
+    registerSyscall(21, (void *) FileSystem::VFS::Mount);
+    registerSyscall(22, (void *) FileSystem::VFS::Umount);
+    registerSyscall(23, (void *) ProcessUAPI::setuid);
+    registerSyscall(24, (void *) ProcessUAPI::getuid);
+    registerSyscall(25, (void *) SystemTimer::stime);
     //26 ptrace
     //27 alarm
-    registerSyscall(28, fstat);
+    registerSyscall(28, (void *) fstat);
     //29 pause
-    registerSyscall(30, utime);
-    registerSyscall(33, access);
+    registerSyscall(30, (void *) utime);
+    registerSyscall(33, (void *) access);
     //34 nice
     //36 sync
-    registerSyscall(37, kill);
-    registerSyscall(38, rename);
-    registerSyscall(39, mkdir);
-    registerSyscall(40, rmdir);
-    registerSyscall(41, dup);
-    registerSyscall(42, pipe);
-    registerSyscall(45, brk);
-    registerSyscall(46, (UGLY_CAST) ProcessUAPI::setgid);
-    registerSyscall(47, (UGLY_CAST) ProcessUAPI::getgid);
+    registerSyscall(37, (void *) Task::kill);
+    registerSyscall(38, (void *) rename);
+    registerSyscall(39, (void *) mkdir);
+    registerSyscall(40, (void *) rmdir);
+    registerSyscall(41, (void *) dup);
+    registerSyscall(42, (void *) pipe);
+    registerSyscall(45, (void *) brk);
+    registerSyscall(46, (void *) ProcessUAPI::setgid);
+    registerSyscall(47, (void *) ProcessUAPI::getgid);
     //48 sys_signal
     //49 geteuid
     //50 getegid
     //52 umount2
-    registerSyscall(54, ioctl);
-    registerSyscall(55, fcntl);
+    registerSyscall(54, (void *) ioctl);
+    registerSyscall(55, (void *) fcntl);
     //57 setpgid
-    registerSyscall(60, umask);
+    registerSyscall(60, (void *) umask);
     //61 chroot
     //62 ustat
-    registerSyscall(32, dup2);
-    registerSyscall(64, (UGLY_CAST) ProcessUAPI::getppid);
+    registerSyscall(32, (void *) dup2);
+    registerSyscall(64, (void *) ProcessUAPI::getppid);
     //65 getpgrp
     //66 setsid
     //67 sigaction
@@ -518,52 +217,52 @@ void SyscallsManager::registerDefaultSyscalls()
     //71 setregid
     //72 sigsuspend
     //73 sigpending
-    registerSyscall(74, sethostname);
+    registerSyscall(74, (void *) SetHostName);
     //gettimeofday 78
     //settimeofday 79
     //getgroups 80
     //setgroups 81
-    registerSyscall(83, symlink);
-    registerSyscall(84, lstat);
-    registerSyscall(85, readlink);
+    registerSyscall(83, (void *) symlink);
+    registerSyscall(84, (void *) lstat);
+    registerSyscall(85, (void *) readlink);
     //86 uselib
-    registerSyscall(88, reboot);
-    registerSyscall(90, mmap);
+    registerSyscall(88, (void *) ArchManager::reboot);
+    registerSyscall(90, (void *) mmap);
     //91 munmap
-    registerSyscall(92, truncate);
-    registerSyscall(93, ftruncate);
-    registerSyscall(94, fchmod);
-    registerSyscall(95, fchown);
+    registerSyscall(92, (void *) truncate);
+    registerSyscall(93, (void *) ftruncate);
+    registerSyscall(94, (void *) fchmod);
+    registerSyscall(95, (void *) fchown);
     //96 getpriority
     //97 setpriority
-    registerSyscall(99, statfs);
-    registerSyscall(100, fstatfs);
-    registerSyscall(102, socketcall);
+    registerSyscall(99, (void *) statfs);
+    registerSyscall(100, (void *) fstatfs);
+    registerSyscall(102, (void *) socketcall);
     //104 setitimer
     //105 getitimer
-    registerSyscall(107, lstat);
+    registerSyscall(107, (void *) lstat);
     //111 vhangup
     //114 wait4
     //116 sysinfo
-    registerSyscall(118, fsync);
+    registerSyscall(118, (void *) fsync);
     //119 sigreturn
     //120 clone
-    registerSyscall(121, setdomainname);
-    registerSyscall(122, uname);
+    registerSyscall(121, (void *) SetDomainName);
+    registerSyscall(122, (void *) Uname);
     //125 mprotect
     //126 sigprocmask
     //132 getpgid
-    registerSyscall(133, fchdir);
+    registerSyscall(133, (void *) fchdir);
     //138 setfsuid
     //139 setfsgid 
-    registerSyscall(141, getdents);
+    registerSyscall(141, (void *) getdents);
     //142 select
     //143 flock
     //144 msync
     //145 readv
     //146 writev
     //147 sys_getsid
-    registerSyscall(148, fdatasync);
+    registerSyscall(148, (void *) fdatasync);
     //149 sysctl
     //150 mlock
     //151 munlock
@@ -573,14 +272,14 @@ void SyscallsManager::registerDefaultSyscalls()
     //163 mremap
     //164 setresuid
     //165 getresuid
-    registerSyscall(168, poll);
+    registerSyscall(168, (void *) poll);
     //170 setresid
     //171 getresid
     //172 prctl
-    registerSyscall(180, pread);
-    registerSyscall(181, pwrite);
-    registerSyscall(182, chown);
-    registerSyscall(183, getcwd);
+    registerSyscall(180, (void *) pread);
+    registerSyscall(181, (void *) pwrite);
+    registerSyscall(182, (void *) chown);
+    registerSyscall(183, (void *) getcwd);
     //184 capget
     //185 capset
     //186 sigaltstack
