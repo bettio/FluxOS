@@ -30,7 +30,7 @@ class ProcessControlBlock;
 struct pollfd;
 struct statfs;
 
-int close(ProcessControlBlock *process, int fd);
+int closePB(ProcessControlBlock *process, int fd);
 
 int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name);
 int creat(const char *pathname, mode_t mode);
@@ -86,6 +86,7 @@ int chmod(const char *path, mode_t mode);
 int dup(int oldfd);
 int dup2(int oldfd, int newfd);
 int dup3(int oldfd, int newfd, int flags);
+int pipe(int pipefd[2]);
 int pipe2(int pipefd[2], int flags);
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset);

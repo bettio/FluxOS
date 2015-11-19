@@ -358,7 +358,7 @@ int openat(int dirfd, const char *pathname, int flags)
     return open(fdesc->node, pathname, flags);
 }
 
-int close(ProcessControlBlock *process, int fd)
+int closePB(ProcessControlBlock *process, int fd)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -374,7 +374,7 @@ int close(ProcessControlBlock *process, int fd)
 
 int close(int fd)
 {
-    return close(Scheduler::currentThread()->parentProcess, fd);
+    return closePB(Scheduler::currentThread()->parentProcess, fd);
 }
 
 int write(int fd, const void *buf, size_t count)
@@ -890,6 +890,11 @@ int pipe2(int pipefd[2], int flags)
     pipefd[1] = Scheduler::currentThread()->parentProcess->openFiles->add(fdesc1);
 
     return 0;
+}
+
+int pipe(int pipefd[2])
+{
+    return pipe2(pipefd, 0);
 }
 
 void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
