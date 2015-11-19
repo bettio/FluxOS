@@ -36,18 +36,18 @@
 void ProcessUAPI::init()
 {
 #ifndef ARCH_IA32
-    SyscallsManager::registerSyscall(__NR_GETPID, (SYSCALL_FUNCTION_PTR) getpid);
-    SyscallsManager::registerSyscall(__NR_GETPPID, (SYSCALL_FUNCTION_PTR) getppid);
-    SyscallsManager::registerSyscall(__NR_GETSID, (SYSCALL_FUNCTION_PTR) getsid);
-    SyscallsManager::registerSyscall(__NR_GETUID, (SYSCALL_FUNCTION_PTR) getuid);
-    SyscallsManager::registerSyscall(__NR_GETEUID, (SYSCALL_FUNCTION_PTR) geteuid);
-    SyscallsManager::registerSyscall(__NR_GETGID, (SYSCALL_FUNCTION_PTR) getgid);
-    SyscallsManager::registerSyscall(__NR_GETEGID, (SYSCALL_FUNCTION_PTR) getegid);
-    SyscallsManager::registerSyscall(__NR_SETSID, (SYSCALL_FUNCTION_PTR) setsid);
-    SyscallsManager::registerSyscall(__NR_SETUID, (SYSCALL_FUNCTION_PTR) setuid);
-    SyscallsManager::registerSyscall(__NR_SETRESUID, (SYSCALL_FUNCTION_PTR) setresuid);
-    SyscallsManager::registerSyscall(__NR_SETGID, (SYSCALL_FUNCTION_PTR) setgid);
-    SyscallsManager::registerSyscall(__NR_SETRESGID, (SYSCALL_FUNCTION_PTR) setresgid);
+    SyscallsManager::registerSyscall(__NR_GETPID,(void *) getpid);
+    SyscallsManager::registerSyscall(__NR_GETPPID,(void *) getppid);
+    SyscallsManager::registerSyscall(__NR_GETSID,(void *) getsid);
+    SyscallsManager::registerSyscall(__NR_GETUID,(void *) getuid);
+    SyscallsManager::registerSyscall(__NR_GETEUID,(void *) geteuid);
+    SyscallsManager::registerSyscall(__NR_GETGID,(void *) getgid);
+    SyscallsManager::registerSyscall(__NR_GETEGID,(void *) getegid);
+    SyscallsManager::registerSyscall(__NR_SETSID,(void *) setsid);
+    SyscallsManager::registerSyscall(__NR_SETUID,(void *) setuid);
+    SyscallsManager::registerSyscall(__NR_SETRESUID,(void *) setresuid);
+    SyscallsManager::registerSyscall(__NR_SETGID,(void *) setgid);
+    SyscallsManager::registerSyscall(__NR_SETRESGID,(void *) setresgid);
 #endif
 }
 

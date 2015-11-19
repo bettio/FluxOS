@@ -45,13 +45,13 @@ void SyscallsManager::init()
     registerDefaultSyscalls();
 }
 
-void SyscallsManager::registerSyscall(int num, unsigned long (*func)(unsigned long, unsigned long, unsigned long))
+void SyscallsManager::registerSyscall(int num, void *funcPtr)
 {
     if ((num >= __NR_SYSCALLS) && (num < __NR_SYSCALLS + SYSCALLTABLE_SIZE)) {
-        syscallsTable[num - __NR_SYSCALLS] = func;
+        syscallsTable[num - __NR_SYSCALLS] = (SYSCALL_FUNCTION_PTR) funcPtr;
 
     } else {
-        printk("Failed to register out of range syscall number: %i\n", num);
+        printk("Failed to register %p (out of range syscall number %i)\n", funcPtr, num);
     }
 }
 
@@ -62,51 +62,51 @@ void SyscallsManager::unregisterSyscall(int num)
 
 void SyscallsManager::registerDefaultSyscalls()
 {
-//    registerSyscall(__NR_EXIT, (SYSCALL_FUNCTION_PTR) exit);
-    registerSyscall(__NR_FORK, (SYSCALL_FUNCTION_PTR) UserProcsManager::fork);
-    registerSyscall(__NR_READ, (SYSCALL_FUNCTION_PTR) read);
-    registerSyscall(__NR_WRITE, (SYSCALL_FUNCTION_PTR) write);
-    registerSyscall(__NR_OPEN, (SYSCALL_FUNCTION_PTR) open);
-//    registerSyscall(__NR_CLOSE, (SYSCALL_FUNCTION_PTR) close);
-//    registerSyscall(__NR_WAITPID, (SYSCALL_FUNCTION_PTR) waitpid);
-    registerSyscall(__NR_EXECVE, (SYSCALL_FUNCTION_PTR) UserProcessImage::execve);
-    registerSyscall(__NR_CHDIR, (SYSCALL_FUNCTION_PTR) chdir);
-//    registerSyscall(__NR_TIME, (SYSCALL_FUNCTION_PTR) time);
-    registerSyscall(__NR_CHMOD, (SYSCALL_FUNCTION_PTR) chmod);
-    registerSyscall(__NR_LCHOWN, (SYSCALL_FUNCTION_PTR) lchown);
-//    registerSyscall(__NR_STAT, (SYSCALL_FUNCTION_PTR) stat);
-    registerSyscall(__NR_LSEEK, (SYSCALL_FUNCTION_PTR) lseek);
-//    registerSyscall(__NR_GETPID, (SYSCALL_FUNCTION_PTR) getpid);
-//    registerSyscall(__NR_MOUNT, (SYSCALL_FUNCTION_PTR) mount);
-//    registerSyscall(__NR_UMOUNT, (SYSCALL_FUNCTION_PTR) umount);
-//    registerSyscall(__NR_SETUID, (SYSCALL_FUNCTION_PTR) setuid);
-//    registerSyscall(__NR_GETUID, (SYSCALL_FUNCTION_PTR) getuid);
-//    registerSyscall(__NR_FSTAT, (SYSCALL_FUNCTION_PTR) fstat);
-//    registerSyscall(__NR_KILL, (SYSCALL_FUNCTION_PTR) kill);
-    registerSyscall(__NR_BRK, (SYSCALL_FUNCTION_PTR) brk);
-//    registerSyscall(__NR_SETGID, (SYSCALL_FUNCTION_PTR) setgid);
-//    registerSyscall(__NR_GETGID, (SYSCALL_FUNCTION_PTR) getgid);
-    registerSyscall(__NR_IOCTL, (SYSCALL_FUNCTION_PTR) ioctl);
-//    registerSyscall(__NR_FCNTL, (SYSCALL_FUNCTION_PTR) fcntl);
-//    registerSyscall(__NR_GETPPID, (SYSCALL_FUNCTION_PTR) getppid);
-//    registerSyscall(__NR_SETHOSTNAME, (SYSCALL_FUNCTION_PTR) sethostname);
-//    registerSyscall(__NR_MMAP, (SYSCALL_FUNCTION_PTR) mmap);
-//    registerSyscall(__NR_TRUNCATE, (SYSCALL_FUNCTION_PTR) truncate);
-//    registerSyscall(__NR_FTRUNCATE, (SYSCALL_FUNCTION_PTR) ftruncate);
-    registerSyscall(__NR_FCHMOD, (SYSCALL_FUNCTION_PTR) fchmod);
-    registerSyscall(__NR_FCHOWN, (SYSCALL_FUNCTION_PTR) fchown);
-    registerSyscall(__NR_LSTAT, (SYSCALL_FUNCTION_PTR) lstat);
-    registerSyscall(__NR_READLINK, (SYSCALL_FUNCTION_PTR) readlink);
-//    registerSyscall(__NR_FSYNC, (SYSCALL_FUNCTION_PTR) fsync);
-//    registerSyscall(__NR_SETDOMAINNAME, (SYSCALL_FUNCTION_PTR) setdomainname);
-    registerSyscall(__NR_UNAME, (SYSCALL_FUNCTION_PTR) Uname);
-    registerSyscall(__NR_GETDENTS, (SYSCALL_FUNCTION_PTR) getdents);
-//    registerSyscall(__NR_FDATASYNC, (SYSCALL_FUNCTION_PTR) fdatasync);
-//    registerSyscall(__NR_PREAD, (SYSCALL_FUNCTION_PTR) pread);
-//    registerSyscall(__NR_PWRITE, (SYSCALL_FUNCTION_PTR) pwrite);
-    registerSyscall(__NR_SOCKET, (SYSCALL_FUNCTION_PTR) socket);
-    registerSyscall(__NR_CHOWN, (SYSCALL_FUNCTION_PTR) chown);
-    registerSyscall(__NR_GETCWD, (SYSCALL_FUNCTION_PTR) getcwd);
+//    registerSyscall(__NR_EXIT, (void *)  exit);
+    registerSyscall(__NR_FORK, (void *)  UserProcsManager::fork);
+    registerSyscall(__NR_READ, (void *)  read);
+    registerSyscall(__NR_WRITE, (void *)  write);
+    registerSyscall(__NR_OPEN, (void *)  open);
+//    registerSyscall(__NR_CLOSE, (void *)  close);
+//    registerSyscall(__NR_WAITPID, (void *)  waitpid);
+    registerSyscall(__NR_EXECVE, (void *)  UserProcessImage::execve);
+    registerSyscall(__NR_CHDIR, (void *)  chdir);
+//    registerSyscall(__NR_TIME, (void *)  time);
+    registerSyscall(__NR_CHMOD, (void *)  chmod);
+    registerSyscall(__NR_LCHOWN, (void *)  lchown);
+//    registerSyscall(__NR_STAT, (void *)  stat);
+    registerSyscall(__NR_LSEEK, (void *)  lseek);
+//    registerSyscall(__NR_GETPID, (void *)  getpid);
+//    registerSyscall(__NR_MOUNT, (void *)  mount);
+//    registerSyscall(__NR_UMOUNT, (void *)  umount);
+//    registerSyscall(__NR_SETUID, (void *)  setuid);
+//    registerSyscall(__NR_GETUID, (void *)  getuid);
+//    registerSyscall(__NR_FSTAT, (void *)  fstat);
+//    registerSyscall(__NR_KILL, (void *)  kill);
+    registerSyscall(__NR_BRK, (void *)  brk);
+//    registerSyscall(__NR_SETGID, (void *)  setgid);
+//    registerSyscall(__NR_GETGID, (void *)  getgid);
+    registerSyscall(__NR_IOCTL, (void *)  ioctl);
+//    registerSyscall(__NR_FCNTL, (void *)  fcntl);
+//    registerSyscall(__NR_GETPPID, (void *)  getppid);
+//    registerSyscall(__NR_SETHOSTNAME, (void *)  sethostname);
+//    registerSyscall(__NR_MMAP, (void *)  mmap);
+//    registerSyscall(__NR_TRUNCATE, (void *)  truncate);
+//    registerSyscall(__NR_FTRUNCATE, (void *)  ftruncate);
+    registerSyscall(__NR_FCHMOD, (void *)  fchmod);
+    registerSyscall(__NR_FCHOWN, (void *)  fchown);
+    registerSyscall(__NR_LSTAT, (void *)  lstat);
+    registerSyscall(__NR_READLINK, (void *)  readlink);
+//    registerSyscall(__NR_FSYNC, (void *)  fsync);
+//    registerSyscall(__NR_SETDOMAINNAME, (void *)  setdomainname);
+    registerSyscall(__NR_UNAME, (void *)  Uname);
+    registerSyscall(__NR_GETDENTS, (void *)  getdents);
+//    registerSyscall(__NR_FDATASYNC, (void *)  fdatasync);
+//    registerSyscall(__NR_PREAD, (void *)  pread);
+//    registerSyscall(__NR_PWRITE, (void *)  pwrite);
+    registerSyscall(__NR_SOCKET, (void *)  socket);
+    registerSyscall(__NR_CHOWN, (void *)  chown);
+    registerSyscall(__NR_GETCWD, (void *)  getcwd);
 }
 
 extern "C" unsigned long syscallISR(unsigned long nr, unsigned long a0, unsigned long a1, unsigned long a2)

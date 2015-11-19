@@ -25,14 +25,12 @@
 
 #include <stdint.h>
 
-#define SYSCALL_FUNCTION_PTR unsigned long (*)(unsigned long, unsigned long, unsigned long)
-
 class SyscallsManager
 {
     public:
         static void init();
-        static void registerSyscall(int num, unsigned long (*func)(unsigned long a0, unsigned long a1, unsigned long a2));
-        static void unregisterSyscall(int sysC);
+        static void registerSyscall(int num, void *funcPtr);
+        static void unregisterSyscall(int num);
 
     private:
         static void registerDefaultSyscalls();
