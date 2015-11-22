@@ -32,6 +32,7 @@
 #define ROOT_UID 0
 #define ROOT_GID 0
 
+class MemoryContext;
 class ThreadControlBlock;
 
 enum TaskStatus{
@@ -54,6 +55,7 @@ class ProcessControlBlock
         char *name;
         ProcessControlBlock *parent;
         ThreadControlBlock *mainThread;
+        MemoryContext *memoryContext;
 
         void *dataSegmentEnd;
 

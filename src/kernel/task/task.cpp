@@ -20,6 +20,8 @@
  ***************************************************************************/
 
 #include <task/task.h>
+
+#include <mm/memorycontext.h>
 #include <task/scheduler.h>
 #include <filesystem/vnodemanager.h>
 #include <filesystem/fscalls.h>
@@ -42,6 +44,7 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->gid = 0;
 	process->name = strdup(name);
         process->parent = 0;
+        process->memoryContext = new MemoryContext();
 	process->dataSegmentEnd = (void *) 0xC0000000;
         process->openFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *ttyNode;
@@ -50,6 +53,21 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
             return 0;
         }
+
+    /* Work around, don't hardcode memory descriptors */
+    MemoryDescriptor *desc = new MemoryDescriptor;
+    desc->baseAddress = (void *) 0x8000000;
+    desc->length = 0x0100000;
+    desc->permissions = (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission);
+    desc->flags = MemoryDescriptor::AnonymousMemory;
+    process->memoryContext->insertMemoryDescriptor(desc);
+
+    desc = new MemoryDescriptor;
+    desc->baseAddress = (void *) 0xC0000000;
+    desc->length = 0x20000000;
+    desc->permissions = (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission);
+    desc->flags = MemoryDescriptor::AnonymousMemory;
+    process->memoryContext->insertMemoryDescriptor(desc);
 
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
@@ -92,6 +110,7 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->gid = parent->gid;
     process->name = strdup(name);
     process->parent = parent;
+    process->memoryContext = new MemoryContext();
     process->dataSegmentEnd = (void *) 0xC0000000;
     process->openFiles = new ListWithHoles<FileDescriptor *>();
     for (int i = 0; i < parent->openFiles->size(); i++){
@@ -106,6 +125,15 @@ ProcessControlBlock *Task::NewProcess(const char *name)
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
     process->umask = parent->umask;
+
+    /* Work around, don't hardcode memory descriptors */
+    process->memoryContext->allocateAnonymousMemory((void *) 0x8000000, 0x0100000,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
+                                                    MemoryContext::FixedHint);
+
+    process->memoryContext->allocateAnonymousMemory((void *) 0xC0000000, 0x20000000,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
+                                                    MemoryContext::FixedHint);
 
     process->status = READY;
 

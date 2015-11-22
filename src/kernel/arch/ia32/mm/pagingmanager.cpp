@@ -28,6 +28,9 @@
 #include <core/printk.h>
 #include <cstdlib.h>
 #include <defs.h>
+#include <mm/memorycontext.h>
+#include <task/scheduler.h>
+#include <gccbuiltins.h>
 
 extern "C" void pageFaultHandler();
 
@@ -308,19 +311,14 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
     //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
 
     if (isMissingPageError(errorCode)){
-        if (hasMemoryPermissions(faultAddress, errorCode)){
-	    if (faultAddress < NULL_POINTERS_REGION_SIZE){
-                const char *errorString = (errorCode & 2) ? "write" : "read";
-                uint32_t eip = GET_FAULT_EIP();
-                printk("Instruction at 0x%x tried to %s null pointer (addr: 0x%x)\n", eip, errorString, faultAddress);
-		while (1);
-	    }
-	    PagingManager::newPage(faultAddress);
-	}else{
-            const char *errorString = (errorCode & 2) ? "write" : "read";
-            printk("Segmentation Fault while trying to %s unallocated address 0x%x\n", errorString, faultAddress);
-            while (1);
-	}
+        if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {
+            //TODO: make sure that it's not a kernel space fault
+            MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
+
+            UserspaceMemoryManager::MemoryOperation op = (errorCode & 2) ? UserspaceMemoryManager::WriteOperation : UserspaceMemoryManager::ReadOperation;
+            memoryContext->handlePageFault((void *) faultAddress, (void *) GET_FAULT_EIP(), op, UserspaceMemoryManager::MissingPageFault);
+        }
+
     }else{
         const char *errorString = (errorCode & 2) ? "write" : "read";
         //printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
