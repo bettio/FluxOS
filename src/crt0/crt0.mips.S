@@ -2,8 +2,6 @@
 .globl __start
 
 __start:
-    jal initmem
-
     /* $a0 <- argc */
     lw $a0, 0($sp)
 

@@ -31,17 +31,6 @@
 
 unsigned int mem;
 
-void initmem()
-{
-	//heap on i386: mem = 0xD0000000;
-
-	mem = brk((void *) 0);
-
-	mem += (8 - (mem % 8));
-
-	brk((void *) mem);
-}
-
 void *calloc(size_t num, size_t size)
 {
 	unsigned int tmp;
