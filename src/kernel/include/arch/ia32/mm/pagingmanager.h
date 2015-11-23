@@ -22,22 +22,8 @@
 
 #include <stdint.h>
 
-enum PageFlags
-{
-    Present = 1,
-    Write = 2,
-    User = 4,
-    WriteThrough = 8,
-    PageLevelCacheDisable = 16,
-    Accessed = 32,
-    Dirty = 64,
-    PageSize = 128,
-    PAT = 128,
-    Global = 256
-};
-
 #define MISSING_PAGE 0
-#define KERNEL_STD_PAGE Present | Write
+#define KERNEL_STD_PAGE PagingManager::Present | PagingManager::Write
 
 #define PAGEDIR_ENTRIES 1024
 #define PAGETABLE_ENTRIES 1024
@@ -47,6 +33,20 @@ enum PageFlags
 class PagingManager
 {
     public:
+        enum PageFlags
+        {
+            Present = 1,
+            Write = 2,
+            User = 4,
+            WriteThrough = 8,
+            PageLevelCacheDisable = 16,
+            Accessed = 32,
+            Dirty = 64,
+            PageSize = 128,
+            PAT = 128,
+            Global = 256
+        };
+
         static void init();
         inline static void setCR3(uint32_t cr3reg) { asm volatile("movl %0, %%cr3\n" : : "r"(cr3reg)); }
         static void mapPhysicalMemoryRegion(volatile uint32_t *pageDir, uint32_t physAddr, uint32_t virtualAddr, uint32_t len);
@@ -54,7 +54,7 @@ class PagingManager
         static volatile uint32_t *clonePageDir();
         static volatile uint32_t *createEmptyPageTable();
         static volatile uint32_t *createPageDir();
-        static void newPage(uint32_t addr);
+        static void newPage(uint32_t addr, unsigned long flags = 0);
         static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
         static void cloneKernelSpace(volatile uint32_t *pageDir);
         static void *mapPhysicalMemory(uint32_t physAddr, int len);

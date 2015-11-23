@@ -119,13 +119,15 @@ void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, Userspace
 
     if ((flags & UserspaceMemoryManager::MissingPageFault) && (mDesc->flags == MemoryDescriptor::AnonymousMemory)) {
         #ifdef ARCH_IA32_NATIVE
-            PagingManager::newPage((uint32_t) faultAddress);
+            unsigned long npFlags = (mDesc->permissions & MemoryDescriptor::WritePermission) ? PagingManager::Write : 0;
+            PagingManager::newPage((uint32_t) faultAddress, npFlags);
         #endif
 
     } else if (flags & UserspaceMemoryManager::MissingPageFault && (mDesc->flags == MemoryDescriptor::MemoryMappedFile)) {
        MemoryMappedFileDescriptor *mfDesc = (MemoryMappedFileDescriptor *) mDesc;
        #ifdef ARCH_IA32_NATIVE
-           PagingManager::newPage((uint32_t) faultAddress);
+           unsigned long npFlags = (mfDesc->permissions & MemoryDescriptor::WritePermission) ? PagingManager::Write : 0;
+           PagingManager::newPage((uint32_t) faultAddress, npFlags);
        #endif
        unsigned long virtualPageAddress = (((unsigned long) faultAddress) & 0xFFFFF000);
        unsigned long offset = virtualPageAddress - ((unsigned long) mfDesc->baseAddress);

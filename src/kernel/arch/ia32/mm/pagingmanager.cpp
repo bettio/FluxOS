@@ -220,7 +220,7 @@ void flushTLBEntry(volatile void *m)
     invalidateTLB();
 }
 
-void PagingManager::newPage(uint32_t addr)
+void PagingManager::newPage(uint32_t addr, unsigned long flags)
 {
    int di = addrToPageDirIndex(addr);
    int ti = addrToPageTableIndex(addr);
@@ -236,7 +236,7 @@ void PagingManager::newPage(uint32_t addr)
        }
    }
 
-  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE | User);
+  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), Present | User | flags);
   invalidateTLB();
   memset((void *) (addr & 0xFFFFF000), 0, 4096);
 }
@@ -320,36 +320,34 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
         }
 
     }else{
-        const char *errorString = (errorCode & 2) ? "write" : "read";
-        //printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
    int di = PagingManager::addrToPageDirIndex(faultAddress & 0xFFFFF000);
    int ti = PagingManager::addrToPageTableIndex(faultAddress & 0xFFFFF000);
 
    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
    volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
 
-   if (!(pageDir[di] & Write)){
+   if (!(pageDir[di] & PagingManager::Write)){
        //while (1);
        void *newPage;
        posix_memalign(&newPage, 4096, 4096);
        //PagingManager::newPage((uint32_t) newPage);
        memcpy(newPage, (const void *) pageTable, 4096);
-       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);     
+       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
        pageTable = (volatile uint32_t *) newPage;
        //while (1);
    }
 
-   if (!(pageTable[ti] & Write)){
+   if (!(pageTable[ti] & PagingManager::Write)){
        //while (1);
        void *newPage;
        posix_memalign(&newPage, 4096, 4096);
        //PagingManager::newPage((uint32_t) newPage);
        memcpy(newPage, (const void *) (faultAddress & 0xFFFFF000), 4096);
-       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);
+       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
    }
 
-   pageDir[di] |= (User);
-   pageTable[ti] |= (User);
+   pageDir[di] |= (PagingManager::User);
+   pageTable[ti] |= (PagingManager::User);
    invalidateTLB();
     }
 }
