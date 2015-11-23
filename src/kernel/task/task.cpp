@@ -45,7 +45,8 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->name = strdup(name);
         process->parent = 0;
         process->memoryContext = new MemoryContext();
-	process->dataSegmentEnd = (void *) 0xC0000000;
+	process->dataSegmentStart = (void *) 0xC0000000;
+	process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
         process->openFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *ttyNode;
         int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
@@ -54,10 +55,9 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             return 0;
         }
 
-    process->memoryContext->allocateAnonymousMemory((void *) 0xC0000000, 0x20000000,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
+        process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
                                                     MemoryContext::FixedHint);
-
 
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
@@ -101,7 +101,8 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->name = strdup(name);
     process->parent = parent;
     process->memoryContext = new MemoryContext();
-    process->dataSegmentEnd = (void *) 0xC0000000;
+    process->dataSegmentStart = (void *) 0xC0000000;
+    process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
     process->openFiles = new ListWithHoles<FileDescriptor *>();
     for (int i = 0; i < parent->openFiles->size(); i++){
         FileDescriptor *oldFd = parent->openFiles->at(i);
@@ -117,8 +118,8 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->umask = parent->umask;
 
     /* Work around, don't hardcode memory descriptors */
-    process->memoryContext->allocateAnonymousMemory((void *) 0xC0000000, 0x20000000,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
+    process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
                                                     MemoryContext::FixedHint);
 
     process->status = READY;

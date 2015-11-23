@@ -68,10 +68,12 @@ class MemoryContext
         };
 
         MemoryContext();
+        MemoryDescriptor *findMemoryDescriptor(void *address) const;
         void handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags);
         int insertMemoryDescriptor(MemoryDescriptor *descriptor);
         void *findMemoryExtent(void *baseAddress, unsigned long length, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void *baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
+        int growExtent(void *address, unsigned long increment);
 
     private:
         QList<MemoryDescriptor *> *m_descriptors;

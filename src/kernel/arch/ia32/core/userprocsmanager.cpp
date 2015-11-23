@@ -24,6 +24,7 @@
 
 #include <arch/ia32/mm/pagingmanager.h>
 #include <core/elfloader.h>
+#include <mm/memorycontext.h>
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>
@@ -45,6 +46,12 @@ void UserProcsManager::processLoader()
         Scheduler::currentThread()->parentProcess->status = TERMINATED;
 	while(1);
     }
+
+    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) (USER_DEFAULT_STACK_ADDR - 1024), 2048,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+                                                    MemoryContext::FixedHint);
+
+
 
     memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
     PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0);
@@ -137,8 +144,17 @@ int UserProcsManager::execve(const char *_filename, char *const _argv[], char *c
         while(1);
     }
 
+    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) USER_DEFAULT_ARGS_ADDR, 4096,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+                                                    MemoryContext::FixedHint);
+
     strncpy((char *) USER_DEFAULT_ARGS_ADDR, argv, 4096);
     char *arg = (char *) USER_DEFAULT_ARGS_ADDR;
+
+    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) (USER_DEFAULT_STACK_ADDR - 1024), 2048,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+                                                    MemoryContext::FixedHint);
+
 
     memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
     PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0, 1);

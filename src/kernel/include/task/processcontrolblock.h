@@ -57,6 +57,7 @@ class ProcessControlBlock
         ThreadControlBlock *mainThread;
         MemoryContext *memoryContext;
 
+        void *dataSegmentStart;
         void *dataSegmentEnd;
 
         ListWithHoles <FileDescriptor *> *openFiles;

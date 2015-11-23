@@ -69,18 +69,24 @@ MemoryContext::MemoryContext()
     m_descriptors = new QList<MemoryDescriptor *>();
 }
 
+MemoryDescriptor *MemoryContext::findMemoryDescriptor(void *address) const
+{
+    for (int i = 0; i < m_descriptors->count(); i++) {
+        MemoryDescriptor *d = m_descriptors->at(i);
+//        printk("checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + ((d->length & 0xFFFFF000) + 0x1000));
+        if (((unsigned long) address >= (unsigned long) d->baseAddress) &&
+            ((unsigned long) address < ((unsigned long) d->baseAddress) + ((d->length & 0xFFFFF000) + 0x1000))) {
+            return d;
+        }
+    }
+
+    return NULL;
+}
+
 void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags)
 {
     //printk("Fault address: 0x%p\n", faultAddress);
-    MemoryDescriptor *mDesc = NULL;
-    for (int i = 0; i < m_descriptors->count(); i++) {
-        MemoryDescriptor *d = m_descriptors->at(i);
-        if (((unsigned long) faultAddress >= (unsigned long) d->baseAddress) &&
-            ((unsigned long) faultAddress < ((unsigned long) d->baseAddress) + ((d->length & 0xFFFFF000) + 0x1000))) {
-            mDesc = d;
-            break;
-        }
-    }
+    MemoryDescriptor *mDesc = findMemoryDescriptor(faultAddress);
 
     if (UNLIKELY(!mDesc)) {
         //Unmapped space, we are not allowed to do anything here, just segfault
@@ -162,6 +168,18 @@ int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long leng
     desc->permissions = permissions;
     desc->flags = MemoryDescriptor::AnonymousMemory;
     insertMemoryDescriptor(desc);
+
+    return 0;
+}
+
+int MemoryContext::growExtent(void *address, unsigned long increment)
+{
+    MemoryDescriptor *desc = findMemoryDescriptor(address);
+    if (desc) {
+        //TODO: we really have to check if we have enough space
+        desc->length += increment;
+        return increment;
+    }
 
     return 0;
 }
