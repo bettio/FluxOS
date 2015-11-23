@@ -29,55 +29,17 @@
 
 #define MAX_DIGIT 9
 
-unsigned int mem;
-
-void *calloc(size_t num, size_t size)
+void abort()
 {
-	unsigned int tmp;
-
-	if (mem == 0){
-		///printf("mem: init\n");
-
-		mem = brk(0);
-	}
-
-	tmp = mem + (8 - ((mem + size) % 8));
-
-	mem += num*size + (8 - ((mem + size) % 8));
-
-	brk((void *) mem);
-
-	return (void*) tmp;
+    printf("abort");
+    _exit(1);
 }
 
-void free(void *ptr)
+void *sbrk(intptr_t increment)
 {
-	return;
-}
-
-void *malloc(size_t size)
-{
-	unsigned int tmp;
-
-	if (mem == 0){
-		mem = brk(0);
-	}
-
-	tmp = mem + (8 - ((mem + size) % 8));
-
-	mem += size + (8 - ((mem + size) % 8));
-
-	brk((void *) mem);
-
-	return (void*) tmp;
-}
-
-void *realloc(void *ptr, size_t size)
-{
-	void *newarea = malloc(size);
-	memcpy(newarea, ptr, size);
-
-	return (void *) newarea;
+    unsigned long oldProgramBreak = brk(0);
+    brk((void *) oldProgramBreak + increment);
+    return (void *) oldProgramBreak;
 }
 
 int atoi(const char *s)
