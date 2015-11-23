@@ -54,20 +54,10 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             return 0;
         }
 
-    /* Work around, don't hardcode memory descriptors */
-    MemoryDescriptor *desc = new MemoryDescriptor;
-    desc->baseAddress = (void *) 0x8000000;
-    desc->length = 0x0100000;
-    desc->permissions = (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission);
-    desc->flags = MemoryDescriptor::AnonymousMemory;
-    process->memoryContext->insertMemoryDescriptor(desc);
+    process->memoryContext->allocateAnonymousMemory((void *) 0xC0000000, 0x20000000,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
+                                                    MemoryContext::FixedHint);
 
-    desc = new MemoryDescriptor;
-    desc->baseAddress = (void *) 0xC0000000;
-    desc->length = 0x20000000;
-    desc->permissions = (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission);
-    desc->flags = MemoryDescriptor::AnonymousMemory;
-    process->memoryContext->insertMemoryDescriptor(desc);
 
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
@@ -127,10 +117,6 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->umask = parent->umask;
 
     /* Work around, don't hardcode memory descriptors */
-    process->memoryContext->allocateAnonymousMemory((void *) 0x8000000, 0x0100000,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
-                                                    MemoryContext::FixedHint);
-
     process->memoryContext->allocateAnonymousMemory((void *) 0xC0000000, 0x20000000,
                                                     (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission | MemoryDescriptor::ExecutePermission),
                                                     MemoryContext::FixedHint);

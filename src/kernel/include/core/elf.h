@@ -108,4 +108,10 @@ struct ElfSymbol
     uint16_t sectionIndex;
 };
 
+#define ELF_PT_LOAD 1
+
+#define ELF_PF_X 1
+#define ELF_PF_W 2
+#define ELF_PF_R 4
+
 #endif

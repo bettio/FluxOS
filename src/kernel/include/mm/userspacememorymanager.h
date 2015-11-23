@@ -13,8 +13,8 @@ class UserspaceMemoryManager
 
         enum PageFaultFlags
         {
-            NoFlags,
-            MissingPageFault
+            NoFlags = 0,
+            MissingPageFault = 1
         };
 };
 

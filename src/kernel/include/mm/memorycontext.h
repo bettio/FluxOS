@@ -26,6 +26,8 @@
 #include <QList>
 #include <mm/userspacememorymanager.h>
 
+class VNode;
+
 class MemoryDescriptor
 {
     public:
@@ -39,7 +41,8 @@ class MemoryDescriptor
 
         enum Flags
         {
-            AnonymousMemory
+            AnonymousMemory = 1,
+            MemoryMappedFile = 2
         };
 
         void *baseAddress;
@@ -48,15 +51,12 @@ class MemoryDescriptor
         Permissions permissions;
 };
 
-#if 0
-class FileMemoryDescriptor : public MemoryDescriptor
+class MemoryMappedFileDescriptor : public MemoryDescriptor
 {
     public:
-        int fd;
+        VNode *node;
         unsigned long offset;
-        void *loadPage(void *virtualAddress, FileMemoryDescriptor *desc);
 };
-#endif
 
 class MemoryContext
 {

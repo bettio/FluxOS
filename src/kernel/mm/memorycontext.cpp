@@ -60,7 +60,7 @@ void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager
         pid = Scheduler::currentThread()->parentProcess->pid;
     }
 
-    printk("[Process %i] Segmentation Fault: instruction at 0x%p tried to %s at %s memory address 0x%p.\n", pid, faultPC, memoryOperationToString(op), memoryDescriptorTypeString, faultAddress);
+    printk("[Process %i] Segmentation Fault: instruction at 0x%p tried to %s %s memory address 0x%p.\n", pid, faultPC, memoryOperationToString(op), memoryDescriptorTypeString, faultAddress);
     while(1);
 }
 
@@ -71,11 +71,12 @@ MemoryContext::MemoryContext()
 
 void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags)
 {
+    //printk("Fault address: 0x%p\n", faultAddress);
     MemoryDescriptor *mDesc = NULL;
     for (int i = 0; i < m_descriptors->count(); i++) {
         MemoryDescriptor *d = m_descriptors->at(i);
         if (((unsigned long) faultAddress >= (unsigned long) d->baseAddress) &&
-            ((unsigned long) faultAddress < ((unsigned long) d->baseAddress) + d->length)) {
+            ((unsigned long) faultAddress < ((unsigned long) d->baseAddress) + ((d->length & 0xFFFFF000) + 0x1000))) {
             mDesc = d;
             break;
         }
@@ -111,11 +112,26 @@ void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, Userspace
     }
 
     if ((flags & UserspaceMemoryManager::MissingPageFault) && (mDesc->flags == MemoryDescriptor::AnonymousMemory)) {
-        printk("missing page fault\n");
         #ifdef ARCH_IA32_NATIVE
             PagingManager::newPage((uint32_t) faultAddress);
         #endif
-    }
+
+    } else if (flags & UserspaceMemoryManager::MissingPageFault && (mDesc->flags == MemoryDescriptor::MemoryMappedFile)) {
+       MemoryMappedFileDescriptor *mfDesc = (MemoryMappedFileDescriptor *) mDesc;
+       #ifdef ARCH_IA32_NATIVE
+           PagingManager::newPage((uint32_t) faultAddress);
+       #endif
+       unsigned long virtualPageAddress = (((unsigned long) faultAddress) & 0xFFFFF000);
+       unsigned long offset = virtualPageAddress - ((unsigned long) mfDesc->baseAddress);
+       int res = FS_CALL(mfDesc->node, read)(mfDesc->node, offset, (char *) virtualPageAddress, 4096);
+       if (res < 0) {
+           printk("I/O error while loading page (read bytes: %i)\n", res);
+           segmentationFault(faultAddress, faultPC, op, flags, "missing page");
+       }
+   } else {
+       printk("error: unexpected memory mapping type\n");
+       segmentationFault(faultAddress, faultPC, op, flags, "unmanaged");
+   }
 }
 
 int MemoryContext::insertMemoryDescriptor(MemoryDescriptor *descriptor)
