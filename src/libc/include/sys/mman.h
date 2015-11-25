@@ -47,20 +47,15 @@ extern "C"
 /* Sharing types (must choose one and only one of these).  */
 #define MAP_SHARED	0x01		/* Share changes.  */
 #define MAP_PRIVATE	0x02		/* Changes are private.  */
-#ifdef __USE_MISC
 # define MAP_TYPE	0x0f		/* Mask for type of mapping.  */
-#endif
 
 /* Other flags.  */
 #define MAP_FIXED	0x10		/* Interpret addr exactly.  */
-#ifdef __USE_MISC
 # define MAP_FILE	0
 # define MAP_ANONYMOUS	0x20		/* Don't use a file.  */
 # define MAP_ANON	MAP_ANONYMOUS
-#endif
 
 /* These are Linux-specific.  */
-#ifdef __USE_MISC
 # define MAP_GROWSDOWN	0x00100		/* Stack-like segment.  */
 # define MAP_DENYWRITE	0x00800		/* ETXTBSY */
 # define MAP_EXECUTABLE	0x01000		/* Mark it as an executable.  */
@@ -68,7 +63,6 @@ extern "C"
 # define MAP_NORESERVE	0x04000		/* Don't check for reservations.  */
 # define MAP_POPULATE	0x08000		/* Populate (prefault) pagetables.  */
 # define MAP_NONBLOCK	0x10000		/* Do not block on IO.  */
-#endif
 
 /* Flags to `msync'.  */
 #define MS_ASYNC	1		/* Sync memory asynchronously.  */
@@ -107,8 +101,9 @@ extern "C"
 # define POSIX_MADV_DONTNEED	4 /* Don't need these pages.  */
 #endif
 
-void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
-int munmap(void *start, size_t length);
+extern void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+extern int munmap(void *start, size_t length);
+extern int mprotect(void *addr, size_t len, int prot);
 
 #if __cplusplus
 }
