@@ -24,6 +24,7 @@
 #define _MM_MEMORY_CONTEXT_H_
 
 #include <QList>
+#include <BuddyAllocator.h>
 #include <mm/userspacememorymanager.h>
 
 class VNode;
@@ -69,14 +70,19 @@ class MemoryContext
 
         MemoryContext();
         MemoryDescriptor *findMemoryDescriptor(void *address) const;
+        QList<MemoryDescriptor *> *findMemoryDescriptorsByRange(void *low, void *hi);
         void handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags);
         int insertMemoryDescriptor(MemoryDescriptor *descriptor);
-        void *findMemoryExtent(void *baseAddress, unsigned long length, MemoryContext::MemoryAllocationHints hints);
+        void *findEmptyMemoryExtent(void *baseAddress, unsigned long length, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void *baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
-        int growExtent(void *address, unsigned long increment);
+        int allocateAnonymousMemory(void **baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
+        unsigned long resizeExtent(void *address, long increment);
+        void mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions);
+        int releaseDescriptor(MemoryDescriptor *d);
 
     private:
         QList<MemoryDescriptor *> *m_descriptors;
+        BuddyAllocator m_vmemAlloc;
 };
 
 #endif
