@@ -302,6 +302,44 @@ void PagingManager::cleanUserspace()
      invalidateTLB();
 }
 
+inline volatile uint32_t *currentPageDir()
+{
+    return (volatile uint32_t *) 0xFFFFF000;
+}
+
+inline uint32_t pageTableEntryPhysicalAddress(uint32_t pageTableEntry)
+{
+    return pageTableEntry & 0xFFFFF000;
+}
+
+void PagingManager::removePages(void *addr, unsigned long len)
+{
+    volatile uint32_t *pageDir = currentPageDir();
+
+    uint32_t startAddress = (uint32_t) addr;
+    uint32_t endAddress = ((uint32_t) addr) + len;
+
+    int previousDirIndex = addrToPageDirIndex(startAddress);
+
+    for (uint32_t address = startAddress; address < endAddress; address += 4096) {
+       int di = addrToPageDirIndex(address);
+       int ti = addrToPageTableIndex(address);
+       volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+       uint32_t physicalAddress = pageTableEntryPhysicalAddress(pageTable[ti]);
+       pageTable[ti] = 0;
+
+       //TODO: we need to support somehow page ranges to avoid to waste time
+       PhysicalMM::freePage(physicalAddress);
+
+       if (previousDirIndex != di) {
+           // TODO: here we check if the previous page table has been left completely empty
+           // if so we remove it from the page directory
+       }
+    }
+    invalidateTLB();
+}
+
 #define hasMemoryPermissions(a, b) (1)
 #define isMissingPageError(errorCode) ( !(errorCode & 1) )
 #define GET_FAULT_EIP() *((uint32_t *) ((char *) &faultAddress + 32))

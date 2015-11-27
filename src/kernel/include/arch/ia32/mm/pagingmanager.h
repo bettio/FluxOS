@@ -68,7 +68,7 @@ class PagingManager
         inline static uint32_t pageDirectoryEntry(uint32_t address, unsigned int flags) { return address | flags; }
         static void cleanUserspace();
 
-
+        static void removePages(void *addr, unsigned long len);
    private:
         static void enable();
 };
