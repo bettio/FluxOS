@@ -347,6 +347,8 @@ void PagingManager::removePages(void *addr, unsigned long len)
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
     //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
+ 
+    if (LIKELY(faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR)) {
 
     if (isMissingPageError(errorCode)){
         if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {
@@ -387,6 +389,10 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
    pageDir[di] |= (PagingManager::User);
    pageTable[ti] |= (PagingManager::User);
    invalidateTLB();
+    }
+    } else {
+        printk("Kernel page fault\n");
+        while(1);
     }
 }
 
