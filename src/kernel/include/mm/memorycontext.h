@@ -26,8 +26,13 @@
 #include <QList>
 #include <BuddyAllocator.h>
 #include <mm/userspacememorymanager.h>
+#include <stdint.h>
 
 class VNode;
+
+class MemoryResource
+{
+};
 
 class MemoryDescriptor
 {
@@ -48,6 +53,7 @@ class MemoryDescriptor
 
         void *baseAddress;
         unsigned long length;
+        MemoryResource *resource;
         Flags flags;
         Permissions permissions;
 };
@@ -57,6 +63,12 @@ class MemoryMappedFileDescriptor : public MemoryDescriptor
     public:
         VNode *node;
         unsigned long offset;
+};
+
+class CopyOnWriteAnonMemory : public MemoryResource
+{
+    public:
+        uint8_t *pageRefCounter;
 };
 
 class MemoryContext
@@ -70,15 +82,31 @@ class MemoryContext
 
         MemoryContext();
         MemoryDescriptor *findMemoryDescriptor(void *address) const;
-        QList<MemoryDescriptor *> *findMemoryDescriptorsByRange(void *low, void *hi);
+        QList<MemoryDescriptor *> *findMemoryDescriptorsByRange(void *low, void *hi) const;
+        int countDescriptorsByRange(void *low, void *hi) const;
         void handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags);
         int insertMemoryDescriptor(MemoryDescriptor *descriptor);
         void *findEmptyMemoryExtent(void *baseAddress, unsigned long length, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void *baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void **baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
-        unsigned long resizeExtent(void *address, long increment);
+
+        /**
+         * Resize the memory region pointed by descriptor
+         * @param descriptor a valid memory descriptor pointer
+         * @param increment memory descriptor length increment/decrement
+         */
+        long resizeExtent(MemoryDescriptor *descriptor, long increment);
+
+        /**
+         * Update memory protection for a memory region pointed by a descriptor
+         * @param descriptor a valid memory descriptor pointer
+         * @param permissions new permissions
+         */
+        int updatePermissions(MemoryDescriptor *descriptor, MemoryDescriptor::Permissions permissions);
+
         void mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions);
         int releaseDescriptor(MemoryDescriptor *d);
+        MemoryDescriptor *makeCOWAnonymousMemory(MemoryDescriptor *descriptor);
 
     private:
         QList<MemoryDescriptor *> *m_descriptors;

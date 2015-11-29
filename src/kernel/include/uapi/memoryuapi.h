@@ -32,7 +32,7 @@ class MemoryUAPI
     public:
         static void init();
         static void *brk(void *ptr);
-        static unsigned long mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, unsigned long fd, unsigned long offset);
+        static unsigned long mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, long fd, unsigned long offset);
         static unsigned long munmap(void *addr, unsigned long length);        
         static int mprotect(void *addr, unsigned long len, int prot);
         static int msync(void *addr, unsigned long length, int flags);

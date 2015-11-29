@@ -27,6 +27,7 @@
 
 #define PROT_READ       0x1
 #define PROT_WRITE      0x2
+#define PROT_EXEC       0x4
 
 #define MAP_SHARED      0x01
 #define MAP_PRIVATE     0x02
@@ -43,7 +44,7 @@ struct MmapArgs
 	unsigned long len;
 	unsigned long prot;
 	unsigned long flags;
-	unsigned long fd;
+	long fd;
 	unsigned long offset;
 };
 
@@ -55,6 +56,21 @@ uint32_t mmap_i386(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 
 #endif
 
+inline MemoryDescriptor::Permissions protFlagsToPermissions(int prot)
+{
+    MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
+    if (prot & PROT_READ) {    
+        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ReadPermission);
+    }
+    if (prot & PROT_WRITE) {    
+        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
+    }
+    if (prot & PROT_EXEC) {    
+        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
+    }
+    return permissions;
+}
+
 void MemoryUAPI::init()
 {
 
@@ -65,18 +81,34 @@ void *MemoryUAPI::brk(void *ptr)
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
 
     if (ptr != NULL){
-        if (ptr > process->dataSegmentEnd) {
-            process->dataSegmentEnd = (void *) ((unsigned long) process->dataSegmentStart +
-                                                (unsigned long) process->memoryContext->resizeExtent(process->dataSegmentStart, (long) ptr - (long) process->dataSegmentEnd));
-        } else {
-            printk("Error cannot shrink data segment\n");
+        MemoryDescriptor *dataSegmentDescriptor = process->memoryContext->findMemoryDescriptor(process->dataSegmentStart);
+        if (UNLIKELY(!dataSegmentDescriptor)) {
+            printk("Error: data segment does not point to any valid MemoryDescriptor\n");
+            return NULL;
         }
+
+        if (ptr > process->dataSegmentEnd) {
+            // check if we are going to overlap any existing mapping
+            if (UNLIKELY(process->memoryContext->countDescriptorsByRange(dataSegmentDescriptor, (void *) ((unsigned long) ptr - (unsigned long) process->dataSegmentEnd)))) {
+                return (void *) -ENOMEM;
+            }
+        } else {
+            // it doesn't make any sense to shrink the data segment to a negative size
+            // TODO: specification doesn't say anything about this, and I'm not sure if ENOMEM is the
+            // error that has to be returned
+            if (UNLIKELY(ptr < process->dataSegmentStart)) {
+                return (void *) -ENOMEM;
+            }
+        }
+
+        process->dataSegmentEnd = (void *) ((unsigned long) process->dataSegmentStart +
+                                            (unsigned long) process->memoryContext->resizeExtent(dataSegmentDescriptor, (long) ptr - (long) process->dataSegmentEnd));
     }
 
     return process->dataSegmentEnd;
 }
 
-unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, unsigned long fd, unsigned long offset)
+unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, long fd, unsigned long offset)
 {
     // flags must be either MAP_SHARED or MAP_PRIVATE.
     if (((flags & (MAP_PRIVATE | MAP_SHARED)) == (MAP_PRIVATE | MAP_SHARED)) || ((flags & (MAP_PRIVATE | MAP_SHARED)) == 0)) {
@@ -90,13 +122,7 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
         hints = (MemoryContext::MemoryAllocationHints) MemoryContext::FixedHint;
     }
 
-    MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
-    if (prot & PROT_READ) {    
-        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ReadPermission);
-    }
-    if (prot & PROT_WRITE) {    
-        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
-    }
+    MemoryDescriptor::Permissions permissions = protFlagsToPermissions(prot);
 
     if (flags & MAP_ANONYMOUS) {
         void *newAddr = addr;
@@ -133,24 +159,28 @@ unsigned long MemoryUAPI::munmap(void *addr, unsigned long length)
     return 0;
 }
 
+//TODO: stub
 int MemoryUAPI::mlock(const void *addr, unsigned long len)
 {
-
+    return -ENOMEM;
 }
 
+//TODO: stub
 int MemoryUAPI::munlock(const void *addr, unsigned long len)
 {
-
+    return -ENOMEM;
 }
 
+//TODO: stub
 int MemoryUAPI::mlockall(int flags)
 {
-
+    return -ENOMEM;
 }
 
+//TODO: stub
 int MemoryUAPI::munlockall()
 {
-
+    return -ENOMEM;
 }
 
 int MemoryUAPI::mprotect(void *addr, unsigned long len, int prot)
@@ -166,16 +196,26 @@ int MemoryUAPI::mprotect(void *addr, unsigned long len, int prot)
         return -EINVAL;
     }
 
+    MemoryDescriptor::Permissions permissions = protFlagsToPermissions(prot);
+
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
     QList<MemoryDescriptor *> *descriptors = process->memoryContext->findMemoryDescriptorsByRange(addr, ((char *) addr) + len);
+    for (int i = 0; i < descriptors->count(); i++) {
+        process->memoryContext->updatePermissions(descriptors->at(i), permissions);
+    }
+    delete descriptors;
+
+    return 0;
 }
 
+//TODO: stub
 int MemoryUAPI::msync(void *addr, unsigned long length, int flags)
 {
-
+    return -ENOMEM;
 }
 
+//TODO stub
 unsigned long MemoryUAPI::mremap(void *old_address, unsigned long old_size, unsigned long new_size, int flags, ... /* void *new_address */)
 {
-
+    return -ENOMEM;
 }

@@ -90,7 +90,7 @@ MemoryDescriptor *MemoryContext::findMemoryDescriptor(void *address) const
     return NULL;
 }
 
-QList<MemoryDescriptor *> *MemoryContext::findMemoryDescriptorsByRange(void *low, void *hi)
+QList<MemoryDescriptor *> *MemoryContext::findMemoryDescriptorsByRange(void *low, void *hi) const
 {
 //    printk("range: %p - %p\n", low, hi);
     QList<MemoryDescriptor *> *foundDescriptors = new QList<MemoryDescriptor *>();
@@ -110,6 +110,27 @@ QList<MemoryDescriptor *> *MemoryContext::findMemoryDescriptorsByRange(void *low
     return foundDescriptors;
 
 }
+
+int MemoryContext::countDescriptorsByRange(void *low, void *hi) const
+{
+//    printk("range: %p - %p\n", low, hi);
+    int count = 0;
+
+    for (int i = 0; i < m_descriptors->count(); i++) {
+        MemoryDescriptor *d = m_descriptors->at(i);
+//        printk("checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
+        if (
+            ( ((unsigned long) low) <= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) ) &&
+            ( ((unsigned long) hi) >= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) )
+           ) {
+//        printk("found: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
+            count++;
+        }
+    }
+
+    return count;
+}
+
 
 void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags)
 {
@@ -180,13 +201,16 @@ void *MemoryContext::findEmptyMemoryExtent(void *baseAddress, unsigned long leng
 {
     void *newAddress = baseAddress;
 
-#if 0
     if (baseAddress) {
-        // TODO: make sure we are not trying to allocate overlapping memory regions
-
+        // make sure we are not trying to allocate overlapping memory regions
+        QList<MemoryDescriptor *> *descriptors = findMemoryDescriptorsByRange(baseAddress, (char *) baseAddress + length);
+        if (!descriptors->isEmpty() && (hints & FixedHint)) {
+            printk("WARNING: Tried to allocate already used memory region\n");
+            return NULL;
+        } else if (descriptors->isEmpty()) {
+            m_vmemAlloc.allocateBlocks(((unsigned long) baseAddress >> 12), (length >> 12) + ((length & 0xFFF) != 0));
+        }
     }
-#endif
-
     if (baseAddress == NULL) {
         unsigned long pageIndex = m_vmemAlloc.allocateBlocks((length >> 12) + ((length & 0xFFF) != 0));
         newAddress = (void *) ((1 << 29) + (pageIndex << 12));
@@ -240,16 +264,21 @@ int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long leng
     return 0;
 }
 
-unsigned long MemoryContext::resizeExtent(void *address, long increment)
+long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
 {
-    MemoryDescriptor *desc = findMemoryDescriptor(address);
-    if (desc) {
-        //TODO: we really have to check if we have enough space
-        desc->length += increment;
-        return increment;
+    int endOfDescriptorPageIndex = ((unsigned long) desc->baseAddress >> 12) + (desc->length >> 12) + ((desc->length & 0xFFF) != 0);
+
+    if (increment > 0) {
+        int delta = (increment >> 12) + ((increment & 0xFFF) != 0);
+        m_vmemAlloc.allocateBlocks(endOfDescriptorPageIndex, delta);
+
+    } else if (increment < 0) {
+        int delta = ((-increment) >> 12);
+        m_vmemAlloc.freeBlocks(endOfDescriptorPageIndex - delta, delta);
     }
 
-    return 0;
+    desc->length += increment;
+    return increment;
 }
 
 void MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions)
@@ -260,6 +289,9 @@ void MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, un
     mappedFileDesc->permissions = permissions;
     mappedFileDesc->flags = MemoryDescriptor::MemoryMappedFile;
     mappedFileDesc->node = FileSystem::VNodeManager::ReferenceVnode(node);
+
+    m_vmemAlloc.allocateBlocks(((unsigned long) virtualAddress >> 12), (length >> 12) + ((length & 0xFFF) != 0));
+
     insertMemoryDescriptor(mappedFileDesc);
 }
 
@@ -276,4 +308,45 @@ int MemoryContext::releaseDescriptor(MemoryDescriptor *descriptor)
     delete descriptor;
 
     return 0;
+}
+
+int MemoryContext::updatePermissions(MemoryDescriptor *descriptor, MemoryDescriptor::Permissions permissions)
+{
+   descriptor->permissions = permissions;
+   // TODO: update protection at page level and pay attention to copy on write
+}
+
+MemoryDescriptor *MemoryContext::makeCOWAnonymousMemory(MemoryDescriptor *descriptor)
+{
+    int pagesNum = (descriptor->length >> 12) + ((descriptor->length & 0xFFF) != 0);
+
+    CopyOnWriteAnonMemory *cowMemory = new CopyOnWriteAnonMemory;
+    if (UNLIKELY(!cowMemory)) {
+        return NULL;
+    }
+    cowMemory->pageRefCounter = new uint8_t[pagesNum];
+    if (UNLIKELY(!cowMemory->pageRefCounter)) {
+        delete cowMemory;
+        return NULL;
+    }
+    for (int i = 0; i < pagesNum; i++) {
+        cowMemory->pageRefCounter[i] = 2;
+    }
+
+    MemoryDescriptor *newDescriptor = new MemoryDescriptor;
+    if (UNLIKELY(!newDescriptor)) {
+        delete cowMemory->pageRefCounter;
+        delete cowMemory;
+        return NULL;
+    }
+
+    descriptor->resource = cowMemory;
+
+    newDescriptor->baseAddress = NULL;
+    newDescriptor->length = descriptor->length;
+    newDescriptor->permissions = descriptor->permissions;
+    newDescriptor->flags = MemoryDescriptor::AnonymousMemory;
+    newDescriptor->resource = cowMemory;
+
+    return newDescriptor;
 }
