@@ -24,6 +24,10 @@
 
 #include <mm/memorycontext.h>
 #include <task/scheduler.h>
+#ifndef ARCH_IA32
+#include <uapi/syscallsnr.h>
+#endif
+#include <core/syscallsmanager.h>
 
 #define PROT_READ       0x1
 #define PROT_WRITE      0x2
@@ -73,7 +77,9 @@ inline MemoryDescriptor::Permissions protFlagsToPermissions(int prot)
 
 void MemoryUAPI::init()
 {
-
+#ifndef ARCH_IA32
+    SyscallsManager::registerSyscall(__NR_BRK, (void *)  brk);
+#endif
 }
 
 void *MemoryUAPI::brk(void *ptr)

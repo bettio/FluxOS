@@ -126,6 +126,14 @@ void UserProcessImage::buildAuxVector(userptr char *auxTable[], userptr char *au
 
 int UserProcessImage::setupInitProcessImage()
 {
+    Scheduler::init();
+    ThreadControlBlock *thread = new ThreadControlBlock;
+    Scheduler::threads->append(thread);
+    ProcessControlBlock *process = Task::CreateNewTask("init");
+    process->dataSegmentEnd = (void *) 0x84200000;
+    thread->parentProcess = process;
+    thread->status = Running;
+
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
 
     //TODO: no hardcoded here
@@ -163,14 +171,6 @@ int UserProcessImage::setupInitProcessImage()
     const char *const env[2] = { initCWD, NULL };
     buildNewEnvironment(env, envc, envList, envBlock);
     buildAuxVector(auxList, auxBlock);
-
-    Scheduler::init();
-    ThreadControlBlock *thread = new ThreadControlBlock;
-    Scheduler::threads->append(thread);
-    ProcessControlBlock *process = Task::CreateNewTask("init");
-    process->dataSegmentEnd = (void *) 0x84200000; 
-    thread->parentProcess = process;
-    thread->status = Running;
 
     //TODO: remove this
     UserProcsManager::startRegsFrame(regsFrame);

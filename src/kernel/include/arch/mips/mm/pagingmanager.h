@@ -28,7 +28,16 @@
 class PagingManager
 {
     public:
+        enum PageFlags
+        {
+            Present = 1,
+            Write = 2,
+            User = 4,
+        };
+
         static void init();
+        static void removePages(void *addr, unsigned long len);
+        static void newPage(uint32_t addr, unsigned long flags = 0);
 };
 
 #endif

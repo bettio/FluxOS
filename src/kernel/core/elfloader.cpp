@@ -105,12 +105,10 @@ int ElfLoader::loadExecutableFile(const char *path)
     for (int i = 0; i < elfHeader->phnum; i++){
         if (pHeader[i].type == ELF_PT_LOAD){
             char *segment = (char *) pHeader[i].virtualAddr;
-            #ifdef MIN_ELF_LOAD_ADDR
-            if ((unsigned long) segment < MIN_ELF_LOAD_ADDR) {
+            if (((unsigned long) segment < USERSPACE_LOW_ADDR) || ((unsigned long) segment > USERSPACE_HI_ADDR)) {
                 printk("ElfLoader: warning: skipping bad address: %p\n", segment);
                 continue;
             }
-            #endif
             MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
             if (pHeader[i].flags & ELF_PF_X) {
                 permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ExecutePermission);

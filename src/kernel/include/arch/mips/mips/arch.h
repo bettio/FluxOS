@@ -35,6 +35,7 @@ extern unsigned long kernel_heap_free_pos;
 
 #define LITTLE_ENDIAN 1234
 
-#define MIN_ELF_LOAD_ADDR 0x84100000
+#define USERSPACE_LOW_ADDR 0x00000000
+#define USERSPACE_HI_ADDR 0x07FFFFFFF
 
 #endif

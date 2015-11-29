@@ -83,7 +83,6 @@ void SyscallsManager::registerDefaultSyscalls()
 //    registerSyscall(__NR_GETUID, (void *)  getuid);
 //    registerSyscall(__NR_FSTAT, (void *)  fstat);
 //    registerSyscall(__NR_KILL, (void *)  kill);
-    registerSyscall(__NR_BRK, (void *)  brk);
 //    registerSyscall(__NR_SETGID, (void *)  setgid);
 //    registerSyscall(__NR_GETGID, (void *)  getgid);
     registerSyscall(__NR_IOCTL, (void *)  ioctl);
