@@ -22,6 +22,9 @@
 
 #include <arch/mips/mm/pagingmanager.h>
 
+#define ENABLE_DEBUG_MSG 0
+#include <debugmacros.h>
+
 #include <core/printk.h>
 #include <stdint.h>
 #include <cstdlib.h>
@@ -33,8 +36,10 @@
 #include <task/scheduler.h>
 
 #define PDE_VALID 1
+#define PTE_DIRTY 1
 
-extern "C" void writeTLBRegisters(unsigned long pageMaskRegister, unsigned long entryHiRegister, unsigned long entryLo0REgister, unsigned long entryLo1Register);
+extern "C" void updateTLB(unsigned long *pageTable, int pageDirectoryIndex, int pageTableIndex, uint8_t asid);
+extern "C" uint8_t switchASID(uint8_t asid);
 
 unsigned long *kernelPageDir;
 unsigned long *userPageDir;
@@ -59,6 +64,11 @@ inline unsigned long pageDirEntry(unsigned long address, bool valid)
     return address | (valid ? PDE_VALID : 0);
 }
 
+inline unsigned long pageTableEntry(unsigned long address, bool valid)
+{
+    return address | (valid ? PDE_VALID : 0);
+}
+
 /*
  * Page dir entry
  * [0]: Valid
@@ -72,16 +82,6 @@ inline unsigned long entryPhysicalAddress(unsigned long entry)
     return entry & 0xFFFFFC00;
 }
 
-inline void writePagesToRegisters(unsigned long pageMask, unsigned long virtualPageNumber, bool global, uint8_t asid,
-                                     unsigned long physicalFrameNumber0, uint8_t cacheability0, bool dirty0, bool valid0,
-                                     unsigned long physicalFrameNumber1, uint8_t cacheability1, bool dirty1, bool valid1)
-{
-    writeTLBRegisters(pageMask << 13, (virtualPageNumber << 13) | asid,
-                      (physicalFrameNumber0 << 6) | (dirty0 << 2) | (valid0 << 1) | global,
-                      (physicalFrameNumber1 << 6) | (dirty1 << 2) | (valid1 << 1) | global
-                     );
-}
-
 inline int addrToPageDirIndex(uint32_t addr)
 {
     return addr >> 22;
@@ -90,6 +90,11 @@ inline int addrToPageDirIndex(uint32_t addr)
 inline int addrToPageTableIndex(uint32_t addr)
 {
     return (addr >> 12) & 0x3FF;
+}
+
+inline int currentASID()
+{
+    return 0;
 }
 
 void PagingManager::init()
@@ -105,10 +110,14 @@ void PagingManager::init()
     posix_memalign((void **) &userPageDir, 4096, 512*sizeof(long));
     memset(userPageDir, 0, 4096);
 
-    userPageDir[1] = pageDirEntry(PhysicalMM::allocPage(), true);
     kernelPageDir[511] = pageDirEntry(kseg0PtrToPhysicalAddress(kernelPageDir), true);
-    physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[1]))[0] = pageDirEntry(PhysicalMM::allocPage(), true);
-    physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[1]))[1] = pageDirEntry(PhysicalMM::allocPage(), true);
+
+}
+
+AddressSpaceDescriptor PagingManager::switchAddressSpace(AddressSpaceDescriptor asDescriptor)
+{
+    userPageDir = asDescriptor.userPageDir;
+    switchASID(asDescriptor.asid);
 }
 
 void PagingManager::removePages(void *addr, unsigned long len)
@@ -119,29 +128,38 @@ void PagingManager::removePages(void *addr, unsigned long len)
 
 void PagingManager::newPage(uint32_t addr, unsigned long flags)
 {
-    printk("newPage: di: %i, ti: %i\n", addrToPageDirIndex(addr), addrToPageTableIndex(addr));
-    while(1);
+    int di = addrToPageDirIndex(addr);
+    int ti = addrToPageTableIndex(addr);
+
+    DEBUG_MSG("PagingManager::newPage(0x%x, 0x%x): directory index: %i, table index: %i\n", newPage, flags, di, ti);
+
+    if (userPageDir[di] == 0) {
+        userPageDir[di] = pageDirEntry(PhysicalMM::allocPage(), true);
+        memset(physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[di])), 0, 4096);
+    }
+
+    unsigned long *pageTable = physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[di]));
+    pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), true);
+
+    updateTLB(pageTable, di, ti, currentASID());
 }
 
 extern "C" void tlbModificationExceptionISR(unsigned long address, unsigned long epc, unsigned long regX)
 {
     printk("tlbModificationException: 0x%x (EPC: 0x%x), %x\n", address, epc, regX);
+
     while(1);
 }
 
 extern "C" void tlbLoadExceptionISR(unsigned long faultAddress, unsigned long epc, unsigned long regX)
 {
     MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
-
     memoryContext->handlePageFault((void *) faultAddress, (void *) epc, UserspaceMemoryManager::ReadOperation, UserspaceMemoryManager::MissingPageFault);
-    while(1);
 }
 
 
 extern "C" void tlbStoreExceptionISR(unsigned long faultAddress, unsigned long epc, unsigned long regX)
 {
     MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
-
     memoryContext->handlePageFault((void *) faultAddress, (void *) epc, UserspaceMemoryManager::WriteOperation, UserspaceMemoryManager::MissingPageFault);
-    while(1);
 }
