@@ -44,6 +44,9 @@ class PagingManager
 
         static void init();
 
+
+        static AddressSpaceDescriptor newAddressSpace();
+
         /**
           * Switch from old to new address space
           *

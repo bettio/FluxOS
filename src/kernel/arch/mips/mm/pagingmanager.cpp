@@ -31,15 +31,13 @@
 
 #include <cp0registers.h>
 #include <arch/mips/mm/physicalmm.h>
+#include <arch/mips/mm/tlbregisters.h>
 #include <mm/userspacememorymanager.h>
 #include <mm/memorycontext.h>
 #include <task/scheduler.h>
 
 #define PDE_VALID 1
 #define PTE_DIRTY 1
-
-extern "C" void updateTLB(unsigned long *pageTable, int pageDirectoryIndex, int pageTableIndex, uint8_t asid);
-extern "C" uint8_t switchASID(uint8_t asid);
 
 unsigned long *kernelPageDir;
 unsigned long *userPageDir;
@@ -97,6 +95,8 @@ inline int currentASID()
     return 0;
 }
 
+int nextASID = 0;
+
 void PagingManager::init()
 {
     //TODO: fix PhysicalMM code here
@@ -107,23 +107,71 @@ void PagingManager::init()
 
     posix_memalign((void **) &kernelPageDir, 4096, 512*sizeof(long));
     memset(kernelPageDir, 0, 4096);
-    posix_memalign((void **) &userPageDir, 4096, 512*sizeof(long));
-    memset(userPageDir, 0, 4096);
-
     kernelPageDir[511] = pageDirEntry(kseg0PtrToPhysicalAddress(kernelPageDir), true);
 
+    AddressSpaceDescriptor desc = newAddressSpace();
+    userPageDir = desc.userPageDir;
+    DEBUG_MSG("PagingManager::init(): done\n");
+}
+
+AddressSpaceDescriptor PagingManager::newAddressSpace()
+{
+    AddressSpaceDescriptor newAddressSpace;
+    posix_memalign((void **) &newAddressSpace.userPageDir, 4096, 512*sizeof(long));
+    memset(newAddressSpace.userPageDir, 0, 4096); 
+    newAddressSpace.asid = nextASID;
+    nextASID++;
+
+    return newAddressSpace;
 }
 
 AddressSpaceDescriptor PagingManager::switchAddressSpace(AddressSpaceDescriptor asDescriptor)
 {
+    AddressSpaceDescriptor oldDesc;
+    oldDesc.userPageDir = userPageDir;
+
     userPageDir = asDescriptor.userPageDir;
-    switchASID(asDescriptor.asid);
+    uint8_t oldASID = switchASID(asDescriptor.asid);
+
+    return oldDesc;
 }
 
+inline uint32_t pageTableEntryPhysicalAddress(uint32_t pageTableEntry)
+{
+    return pageTableEntry & 0xFFFFF000;
+}
+
+//TODO: useronly
 void PagingManager::removePages(void *addr, unsigned long len)
 {
-    printk("removePages\n");
-    while(1);
+    volatile unsigned long *pageDir = userPageDir;
+
+    uint32_t startAddress = (uint32_t) addr;
+    uint32_t endAddress = ((uint32_t) addr) + len;
+
+    int previousDirIndex = addrToPageDirIndex(startAddress);
+
+    DEBUG_MSG("PagingManager::removePages(0x%x, %i)\n", addr, len);
+
+    for (uint32_t address = startAddress; address < endAddress; address += 4096) {
+       int di = addrToPageDirIndex(address);
+       int ti = addrToPageTableIndex(address);
+       unsigned long *pageTable = physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[di]));
+       //volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+       uint32_t physicalAddress = pageTableEntryPhysicalAddress(pageTable[ti]);
+       pageTable[ti] = 0;
+
+       updateTLB(pageTable, di, ti, currentASID());
+
+       //TODO: we need to support somehow page ranges to avoid to waste time
+       PhysicalMM::freePage(physicalAddress);
+
+       if (previousDirIndex != di) {
+           // TODO: here we check if the previous page table has been left completely empty
+           // if so we remove it from the page directory
+       }
+    }
 }
 
 void PagingManager::newPage(uint32_t addr, unsigned long flags)
