@@ -25,7 +25,7 @@
 #include <core/printk.h>
 #include <cstdlib.h>
 
-#define ENABLE_DEBUG_MSG 1
+#define ENABLE_DEBUG_MSG 0
 #include <debugmacros.h>
 
 class FreeChunk
