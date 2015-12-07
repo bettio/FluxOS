@@ -121,6 +121,10 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
         return -EINVAL;
     }
 
+    if (length == 0) {
+        return -EINVAL;
+    }
+
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
 
     MemoryContext::MemoryAllocationHints hints = MemoryContext::NoHints;
