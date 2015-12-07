@@ -41,6 +41,7 @@
 #define TARGET_MACHINE_TYPE EM_MIPS
 #endif
 
+#if 0
 void ElfLoader::load(void *elfBinary)
 {
     elfHeader = (Elf *) elfBinary;
@@ -83,6 +84,7 @@ void ElfLoader::load(void *elfBinary)
         }
     }
 }
+#endif
 
 int ElfLoader::loadExecutableFile(const char *path)
 {
@@ -179,6 +181,7 @@ long ElfLoader::textOffset()
     return 0;
 }
 
+#if 0
 ElfSymbol *ElfLoader::symbols()
 {
     for (int i = 0; i < elfHeader->shnum; i++){
@@ -191,6 +194,7 @@ ElfSymbol *ElfLoader::symbols()
     
     return 0;
 }
+#endif
 
 void *ElfLoader::entryPoint()
 {
