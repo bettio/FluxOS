@@ -114,4 +114,15 @@ struct ElfSymbol
 #define ELF_PF_W 2
 #define ELF_PF_R 4
 
+/* Machine types */
+#define EM_SPARC 2
+#define EM_386 3
+#define EM_MIPS 8
+#define EM_PPC 20
+#define EM_PPC64 21
+#define EM_ARM 40
+#define EM_SPARCV9 43
+#define EM_X86_64 62
+#define EM_AARCH64 183
+
 #endif

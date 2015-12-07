@@ -30,8 +30,16 @@
 #include <core/printk.h>
 #include <cstring.h>
 #include <cstdlib.h>
+#include <arch.h>
 
 #warning 32 bit only code
+
+#ifdef ARCH_IA32
+#define TARGET_MACHINE_TYPE EM_386
+#endif
+#ifdef ARCH_MIPS
+#define TARGET_MACHINE_TYPE EM_MIPS
+#endif
 
 void ElfLoader::load(void *elfBinary)
 {
@@ -139,10 +147,21 @@ int ElfLoader::loadExecutableFile(const char *path)
 
 bool ElfLoader::isValid() const
 {
-    return (elfHeader->ident[0] == 0x7F) &&
+    if (!((elfHeader->ident[0] == 0x7F) &&
         (elfHeader->ident[1] == 'E') &&
         (elfHeader->ident[2] == 'L') &&
-        (elfHeader->ident[3] == 'F');
+        (elfHeader->ident[3] == 'F'))) {
+        printk("ELF loader:: ELF header magic is not valid: 0x%x 0x%x 0x%x 0x%x\n",
+               elfHeader->ident[0], elfHeader->ident[1], elfHeader->ident[2], elfHeader->ident[3]);
+        return false;
+    }
+
+    if (elfHeader->machine != TARGET_MACHINE_TYPE) {
+        printk("ELF loader: Error: unsupported machine type: %i\n", elfHeader->machine);
+        return false;
+    }
+
+    return true;
 }
 
 long ElfLoader::textOffset()
