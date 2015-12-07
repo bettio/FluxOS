@@ -47,11 +47,12 @@ int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoi
 {
     ElfLoader loader;
     int res = loader.loadExecutableFile(executablePath);
-    if (res < 0 || !loader.isValid()){
+    if (res < 0) {
         printk("Cannot load executable file: %s error: %i\n", executablePath, res);
         return res;
     }
     *entryPoint = loader.entryPoint();
+    return 0;
 }
 
 void UserProcessImage::buildNewEnvironment(userptr const char *const env[], int envCount, userptr char *envTable[], userptr char *envBlock)
@@ -141,7 +142,10 @@ int UserProcessImage::setupInitProcessImage()
     const char *initCWD = "CWD=/";
 
     void *entryPoint;
-    loadExecutable(initPath, &entryPoint);
+    if (loadExecutable(initPath, &entryPoint) < 0) {
+        printk("Kernel panic: cannot start init process\n");
+        while (1);
+    }
 
     int argc = 1;
     int argsBlockSize = strlen(initPath) + 1;
@@ -192,18 +196,21 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 
     char *tmpArgsBlock = (char *) malloc(argsBlockSize);
     ret = copyUserspaceStringsVectorToBlock(tmpArgsBlock, argv, argsBlockSize);
-    if (ret < 0) {
+    if (UNLIKELY(ret < 0)) {
         return ret;
     }
 
     char *tmpEnvBlock = (char *) malloc(envBlockSize);
     ret = copyUserspaceStringsVectorToBlock(tmpEnvBlock, envp, envBlockSize);
-    if (ret < 0 ) {
+    if (UNLIKELY(ret < 0)) {
         return ret;
     }
 
     void *entryPoint;
-    loadExecutable(filename, &entryPoint);
+    ret = loadExecutable(filename, &entryPoint);
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
 
     int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize);
 

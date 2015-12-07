@@ -99,7 +99,9 @@ int ElfLoader::loadExecutableFile(const char *path)
         return res;
     }
 
-    if (!isValid()) printk("Not an ELF file\n");
+    if (!isValid()) {
+        return -ENOEXEC;
+    }
 
     ElfProgramHeader *pHeader = (ElfProgramHeader *) malloc(elfHeader->phentsize * elfHeader->phnum);
     res = FS_CALL(node, read)(node, elfHeader->phoff, (char *) pHeader, elfHeader->phentsize * elfHeader->phnum);
