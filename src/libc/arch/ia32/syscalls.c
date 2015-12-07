@@ -158,6 +158,8 @@ SYSCALL_3(mknod, 14, int, const char *, mode_t, dev_t)
 SYSCALL_5(mount, 21, int, const char *, const char *, const char *, unsigned long, const void *)
 SYSCALL_2(umount2, 52, int, const char *, int)
 SYSCALL_2(creat, 8, int, const char *, mode_t)
+SYSCALL_2(munmap, 91, int, void *, size_t)
+SYSCALL_3(mprotect, 125, int, void *, size_t, int)
 
 void _exit(int status)
 {
@@ -601,15 +603,20 @@ void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset
 	mmapArg.offset = (unsigned long) offset;
 
 	/* Parameters */
-	register unsigned int syscall asm("%eax") = 90;
-	register unsigned int argAddr asm("%ebx") = &mmapArg;
+	register unsigned long syscall asm("%eax") = 90;
+	register unsigned long argAddr asm("%ebx") = (unsigned long) &mmapArg;
 
 	/* Result */
-	register unsigned int result asm("%eax");
+	register unsigned long result asm("%eax");
 
 	asm volatile("int $0x80" : "=r" (result) : "r" (syscall), "r" (argAddr));
 
-	return result;
+        if (result < 0xFFFFF000){
+            return (void *) result;
+        }else{
+            errno = -result;
+            return (void *) -1;
+        }
 }
 
 #define    SYS_SOCKET       1

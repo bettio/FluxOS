@@ -40,6 +40,7 @@ typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
 typedef unsigned int uint32_t;
 
+extern void abort(void);
 extern int atoi(const char *s);
 extern void itoaz(const int n, char *s, const unsigned int b);
 extern void uitoaz(const unsigned int n, char s[], const unsigned int b);

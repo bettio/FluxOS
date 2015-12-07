@@ -25,10 +25,37 @@
 
 #include <stdint.h>
 
+class AddressSpaceDescriptor
+{
+    public:
+        unsigned long *userPageDir;
+        uint8_t asid;
+};
+
 class PagingManager
 {
     public:
+        enum PageFlags
+        {
+            Present = 1,
+            Write = 2,
+            User = 4,
+        };
+
         static void init();
+
+
+        static AddressSpaceDescriptor newAddressSpace();
+
+        /**
+          * Switch from old to new address space
+          *
+          * @param asDescriptor new address space descriptor
+          * @return previous address space
+         **/
+        static AddressSpaceDescriptor switchAddressSpace(AddressSpaceDescriptor asDescriptor);
+        static void removePages(void *addr, unsigned long len);
+        static void newPage(uint32_t addr, unsigned long flags = 0);
 };
 
 #endif

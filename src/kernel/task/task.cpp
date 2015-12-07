@@ -20,6 +20,8 @@
  ***************************************************************************/
 
 #include <task/task.h>
+
+#include <mm/memorycontext.h>
 #include <task/scheduler.h>
 #include <filesystem/vnodemanager.h>
 #include <filesystem/fscalls.h>
@@ -42,7 +44,9 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->gid = 0;
 	process->name = strdup(name);
         process->parent = 0;
-	process->dataSegmentEnd = (void *) 0xC0000000;
+        process->memoryContext = new MemoryContext();
+	process->dataSegmentStart = (void *) 0xC0000000;
+	process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
         process->openFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *ttyNode;
         int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
@@ -50,6 +54,10 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
             return 0;
         }
+
+        process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+                                                    MemoryContext::FixedHint);
 
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
@@ -92,7 +100,9 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->gid = parent->gid;
     process->name = strdup(name);
     process->parent = parent;
-    process->dataSegmentEnd = (void *) 0xC0000000;
+    process->memoryContext = new MemoryContext();
+    process->dataSegmentStart = (void *) 0xC0000000;
+    process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
     process->openFiles = new ListWithHoles<FileDescriptor *>();
     for (int i = 0; i < parent->openFiles->size(); i++){
         FileDescriptor *oldFd = parent->openFiles->at(i);
@@ -106,6 +116,11 @@ ProcessControlBlock *Task::NewProcess(const char *name)
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
     process->umask = parent->umask;
+
+    /* Work around, don't hardcode memory descriptors */
+    process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+                                                    MemoryContext::FixedHint);
 
     process->status = READY;
 

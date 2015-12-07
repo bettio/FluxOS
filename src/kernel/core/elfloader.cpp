@@ -24,6 +24,8 @@
 #include <core/elf.h>
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
+#include <mm/memorycontext.h>
+#include <task/scheduler.h>
 #include <arch.h>
 #include <core/printk.h>
 #include <cstring.h>
@@ -98,19 +100,34 @@ int ElfLoader::loadExecutableFile(const char *path)
         return res;
     }
 
+    MemoryContext *mContext = Scheduler::currentThread()->parentProcess->memoryContext;
+
     for (int i = 0; i < elfHeader->phnum; i++){
-        if (pHeader[i].type == 1){
+        if (pHeader[i].type == ELF_PT_LOAD){
             char *segment = (char *) pHeader[i].virtualAddr;
-            #ifdef MIN_ELF_LOAD_ADDR
-            if ((unsigned long) segment < MIN_ELF_LOAD_ADDR) {
-                printk("ElfLoader: warning: skipping bad address: %x\n", segment);
+            if (((unsigned long) segment < USERSPACE_LOW_ADDR) || ((unsigned long) segment > USERSPACE_HI_ADDR)) {
+                printk("ElfLoader: warning: skipping bad address: %p\n", segment);
                 continue;
             }
-            #endif
-            res = FS_CALL(node, read)(node, pHeader[i].offset, segment, pHeader[i].segmentMemSize);
-            if (res < 0){
-                FileSystem::VNodeManager::PutVnode(node);
-                return res;
+            MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
+            if (pHeader[i].flags & ELF_PF_X) {
+                permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ExecutePermission);
+            }
+            if (pHeader[i].flags & ELF_PF_W) {
+                permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
+            }
+            if (pHeader[i].flags & ELF_PF_R) {
+                permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ReadPermission);
+            }
+            if (pHeader[i].segmentFileSize > 0) {
+                mContext->mapFileSegmentToMemory(node, segment, pHeader[i].segmentFileSize, pHeader[i].offset, permissions);
+            }
+            //TODO: we need to round up to page size everything here
+            if (pHeader[i].segmentMemSize > pHeader[i].segmentFileSize){
+                if (pHeader[i].segmentFileSize) {
+                    printk("WARNING: not yet properly supported here\n");
+                }
+                mContext->allocateAnonymousMemory(((char *) segment) + pHeader[i].segmentFileSize, pHeader[i].segmentMemSize, permissions, MemoryContext::FixedHint);
             }
 	}
     }

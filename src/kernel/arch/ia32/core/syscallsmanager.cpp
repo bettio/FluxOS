@@ -40,6 +40,7 @@
 #include <filesystem/pollfd.h>
 #include <net/netcalls.h>
 
+#include <uapi/memoryuapi.h>
 #include <uapi/processuapi.h>
 #include <uapi/socketsyscalls.h>
 
@@ -49,20 +50,8 @@
 #include <task/task.h>
 #include <task/archthreadsmanager.h>
 
-#include <mm/memcalls.h>
-
 #define SYSCALLTABLE_SIZE 256
 #define IA32_SYSCALL_TYPE uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
-
-struct MmapArgs
-{
-	unsigned long addr;
-	unsigned long len;
-	unsigned long prot;
-	unsigned long flags;
-	unsigned long fd;
-	unsigned long offset;
-};
 
 extern "C" void syscallHandler();
 uint32_t (*syscallsTable[SYSCALLTABLE_SIZE])(uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi);
@@ -193,7 +182,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(40, (void *) rmdir);
     registerSyscall(41, (void *) dup);
     registerSyscall(42, (void *) pipe);
-    registerSyscall(45, (void *) brk);
+    registerSyscall(45, (void *) MemoryUAPI::brk);
     registerSyscall(46, (void *) ProcessUAPI::setgid);
     registerSyscall(47, (void *) ProcessUAPI::getgid);
     //48 sys_signal
@@ -227,8 +216,8 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(85, (void *) readlink);
     //86 uselib
     registerSyscall(88, (void *) ArchManager::reboot);
-    registerSyscall(90, (void *) mmap);
-    //91 munmap
+    registerSyscall(90, (void *) mmap_i386);
+    registerSyscall(91, (void *) MemoryUAPI::munmap);
     registerSyscall(92, (void *) truncate);
     registerSyscall(93, (void *) ftruncate);
     registerSyscall(94, (void *) fchmod);
@@ -249,7 +238,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //120 clone
     registerSyscall(121, (void *) SetDomainName);
     registerSyscall(122, (void *) Uname);
-    //125 mprotect
+    registerSyscall(125, (void *) MemoryUAPI::mprotect);
     //126 sigprocmask
     //132 getpgid
     registerSyscall(133, (void *) fchdir);
@@ -258,19 +247,18 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(141, (void *) getdents);
     //142 select
     //143 flock
-    //144 msync
+    registerSyscall(144, (void *) MemoryUAPI::msync);
     //145 readv
     //146 writev
     //147 sys_getsid
     registerSyscall(148, (void *) fdatasync);
     //149 sysctl
-    //150 mlock
-    //151 munlock
-    //152 mlockall
-    //153 munlockall
+    registerSyscall(150, (void *) MemoryUAPI::mlock);
+    registerSyscall(151, (void *) MemoryUAPI::munlock);
+    registerSyscall(152, (void *) MemoryUAPI::mlockall);
+    registerSyscall(153, (void *) MemoryUAPI::munlockall);
     //162 nanosleep
-    //163 mremap
-    //164 setresuid
+    registerSyscall(163, (void *) MemoryUAPI::mremap);
     //165 getresuid
     registerSyscall(168, (void *) poll);
     //170 setresid

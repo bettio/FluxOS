@@ -55,7 +55,7 @@ macro(build_executable name sources)
 
     elseif (BUILD_TARGET MATCHES "MIPS_24K")
         add_executable (${name} ../crt0/crt0.mips.S ${sources})
-        SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "-Ttext=0x84100000 -Wl,--build-id=none" )
+        SET_TARGET_PROPERTIES(${name} PROPERTIES LINK_FLAGS "-Wl,--build-id=none" )
 
     endif ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_IA32"))
 

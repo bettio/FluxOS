@@ -22,15 +22,23 @@
 
 #include <mm/memcalls.h>
 
+#include <mm/memorycontext.h>
 #include <task/scheduler.h>
 
 //IMPLEMENT CHECKS
 void *brk(void *ptr)
 {
+    ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
+
     if (ptr != NULL){
-        Scheduler::currentThread()->parentProcess->dataSegmentEnd = ptr;
+        if (ptr > process->dataSegmentEnd) {
+            process->dataSegmentEnd = (void *) ((unsigned long) process->dataSegmentStart +
+                                                (unsigned long) process->memoryContext->growExtent(process->dataSegmentStart, (unsigned long) ptr - (unsigned long) process->dataSegmentEnd));
+        } else {
+            printk("Error cannot reduce data segment\n");
+        }
     }
 
-    return Scheduler::currentThread()->parentProcess->dataSegmentEnd;
+    return process->dataSegmentEnd;
 }
 

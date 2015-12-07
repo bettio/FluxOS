@@ -28,6 +28,9 @@
 #include <core/printk.h>
 #include <cstdlib.h>
 #include <defs.h>
+#include <mm/memorycontext.h>
+#include <task/scheduler.h>
+#include <gccbuiltins.h>
 
 extern "C" void pageFaultHandler();
 
@@ -217,7 +220,7 @@ void flushTLBEntry(volatile void *m)
     invalidateTLB();
 }
 
-void PagingManager::newPage(uint32_t addr)
+void PagingManager::newPage(uint32_t addr, unsigned long flags)
 {
    int di = addrToPageDirIndex(addr);
    int ti = addrToPageTableIndex(addr);
@@ -233,7 +236,7 @@ void PagingManager::newPage(uint32_t addr)
        }
    }
 
-  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE | User);
+  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), Present | User | flags);
   invalidateTLB();
   memset((void *) (addr & 0xFFFFF000), 0, 4096);
 }
@@ -299,6 +302,44 @@ void PagingManager::cleanUserspace()
      invalidateTLB();
 }
 
+inline volatile uint32_t *currentPageDir()
+{
+    return (volatile uint32_t *) 0xFFFFF000;
+}
+
+inline uint32_t pageTableEntryPhysicalAddress(uint32_t pageTableEntry)
+{
+    return pageTableEntry & 0xFFFFF000;
+}
+
+void PagingManager::removePages(void *addr, unsigned long len)
+{
+    volatile uint32_t *pageDir = currentPageDir();
+
+    uint32_t startAddress = (uint32_t) addr;
+    uint32_t endAddress = ((uint32_t) addr) + len;
+
+    int previousDirIndex = addrToPageDirIndex(startAddress);
+
+    for (uint32_t address = startAddress; address < endAddress; address += 4096) {
+       int di = addrToPageDirIndex(address);
+       int ti = addrToPageTableIndex(address);
+       volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+       uint32_t physicalAddress = pageTableEntryPhysicalAddress(pageTable[ti]);
+       pageTable[ti] = 0;
+
+       //TODO: we need to support somehow page ranges to avoid to waste time
+       PhysicalMM::freePage(physicalAddress);
+
+       if (previousDirIndex != di) {
+           // TODO: here we check if the previous page table has been left completely empty
+           // if so we remove it from the page directory
+       }
+    }
+    invalidateTLB();
+}
+
 #define hasMemoryPermissions(a, b) (1)
 #define isMissingPageError(errorCode) ( !(errorCode & 1) )
 #define GET_FAULT_EIP() *((uint32_t *) ((char *) &faultAddress + 32))
@@ -306,53 +347,52 @@ void PagingManager::cleanUserspace()
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
     //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
+ 
+    if (LIKELY(faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR)) {
 
     if (isMissingPageError(errorCode)){
-        if (hasMemoryPermissions(faultAddress, errorCode)){
-	    if (faultAddress < NULL_POINTERS_REGION_SIZE){
-                const char *errorString = (errorCode & 2) ? "write" : "read";
-                uint32_t eip = GET_FAULT_EIP();
-                printk("Instruction at 0x%x tried to %s null pointer (addr: 0x%x)\n", eip, errorString, faultAddress);
-		while (1);
-	    }
-	    PagingManager::newPage(faultAddress);
-	}else{
-            const char *errorString = (errorCode & 2) ? "write" : "read";
-            printk("Segmentation Fault while trying to %s unallocated address 0x%x\n", errorString, faultAddress);
-            while (1);
-	}
+        if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {
+            //TODO: make sure that it's not a kernel space fault
+            MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
+
+            UserspaceMemoryManager::MemoryOperation op = (errorCode & 2) ? UserspaceMemoryManager::WriteOperation : UserspaceMemoryManager::ReadOperation;
+            memoryContext->handlePageFault((void *) faultAddress, (void *) GET_FAULT_EIP(), op, UserspaceMemoryManager::MissingPageFault);
+        }
+
     }else{
-        const char *errorString = (errorCode & 2) ? "write" : "read";
-        //printk("Segmentation Fault while trying to %s address 0x%x\n", errorString, faultAddress);
    int di = PagingManager::addrToPageDirIndex(faultAddress & 0xFFFFF000);
    int ti = PagingManager::addrToPageTableIndex(faultAddress & 0xFFFFF000);
 
    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
    volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
 
-   if (!(pageDir[di] & Write)){
+   if (!(pageDir[di] & PagingManager::Write)){
        //while (1);
        void *newPage;
        posix_memalign(&newPage, 4096, 4096);
        //PagingManager::newPage((uint32_t) newPage);
        memcpy(newPage, (const void *) pageTable, 4096);
-       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);     
+       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
        pageTable = (volatile uint32_t *) newPage;
        //while (1);
    }
 
-   if (!(pageTable[ti] & Write)){
+   if (!(pageTable[ti] & PagingManager::Write)){
        //while (1);
        void *newPage;
        posix_memalign(&newPage, 4096, 4096);
        //PagingManager::newPage((uint32_t) newPage);
        memcpy(newPage, (const void *) (faultAddress & 0xFFFFF000), 4096);
-       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | User | Write);
+       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
    }
 
-   pageDir[di] |= (User);
-   pageTable[ti] |= (User);
+   pageDir[di] |= (PagingManager::User);
+   pageTable[ti] |= (PagingManager::User);
    invalidateTLB();
+    }
+    } else {
+        printk("Kernel page fault\n");
+        while(1);
     }
 }
 

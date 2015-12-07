@@ -30,6 +30,7 @@
 
 extern int errno;
 
+#define __NR_SYSCALLS   4000
 #define __NR_EXIT	4001
 #define __NR_FORK	4002
 #define __NR_READ	4003
@@ -52,24 +53,43 @@ extern int errno;
 #define __NR_GETPID     4020
 #define __NR_MOUNT      4021
 #define __NR_UMOUNT     4022
+#define __NR_SETUID     4023
 #define __NR_GETUID	4024
 #define __NR_RENAME	2038
 #define __NR_MKDIR	4039
 #define __NR_RMDIR	4040
 #define __NR_BRK        4045
+#define __NR_GETGID     4047
+#define __NR_GETEUID    4049
+#define __NR_GETEGID    4050
 #define __NR_UMOUNT2    4052
 #define __NR_IOCTL	4054
+#define __NR_SETGID     4046
+#define __NR_GETPPID    4064
+#define __NR_SETSID     4066
 #define __NR_SETHOSTNAME 4074
 #define __NR_SYMLINK    4083
 #define __NR_READLINK	4085
 #define __NR_REBOOT	4088
+#define __NR_MMAP       4090
+#define __NR_MUNMAP     4091
 #define __NR_FCHMOD	4094
 #define __NR_FCHOWN     4095
 #define __NR_LSTAT	4107
 #define __NR_SETDOMAINNAME 4121
+#define __NR_MPROTECT   4125
 #define __NR_UNAME      4122
 #define __NR_GETDENTS	4141
+#define __NR_MSYNC      4144
+#define __NR_GETSID     4151
+#define __NR_MLOCK      4154
+#define __NR_MUNLOCK    4155
+#define __NR_MLOCKALL   4156
+#define __NR_MUNLOCKALL 4157
+#define __NR_MREMAP     4167
 #define __NR_SOCKET     4183
+#define __NR_SETRESUID  4185
+#define __NR_SETRESGID  4190
 #define __NR_CHOWN	4202
 #define __NR_GETCWD	4203
 
@@ -188,11 +208,18 @@ SYSCALL_2(sethostname, __NR_SETHOSTNAME, int, const char *, size_t)
 SYSCALL_3(readlink, __NR_READLINK, ssize_t, const char *, char *, size_t)
 SYSCALL_2(lstat, __NR_LSTAT, int, const char *, struct stat *)
 SYSCALL_2(setdomainname, __NR_SETDOMAINNAME, int, const char *, size_t)
+SYSCALL_3(mprotect, __NR_MPROTECT, int, void *, size_t, int)
 SYSCALL_1(uname, __NR_UNAME, int, struct utsname *)
 SYSCALL_3(getdents, __NR_GETDENTS, int, unsigned int, struct dirent *, unsigned int)
+SYSCALL_3(msync, __NR_MSYNC, int, void *, size_t, int)
+SYSCALL_2(mlock, __NR_MLOCK, int, const void *, size_t)
+SYSCALL_2(munlock, __NR_MUNLOCK, int, const void *, size_t)
+SYSCALL_1(mlockall, __NR_MLOCKALL, int, int)
+SYSCALL_0(munlockall,  __NR_MUNLOCKALL, int)
 SYSCALL_2(rename, __NR_RENAME, int, const char *, const char *)
 //SYSCALL_4(reboot, __NR_REBOOT, int, int, int, int, void *)
 SYSCALL_2(chmod, __NR_CHMOD, int, const char *, mode_t)
+SYSCALL_2(munmap, __NR_MUNMAP, int, void *, size_t)
 SYSCALL_2(fchmod, __NR_FCHMOD, int, int, mode_t)
 SYSCALL_3(chown, __NR_CHOWN, int, const char *, uid_t, gid_t)
 SYSCALL_3(fchown, __NR_FCHOWN, int, int, uid_t, gid_t)
@@ -216,4 +243,10 @@ int mount(const char *source, const char *target, const char *filesystemtype, un
 int reboot(int magic, int magic2, int cmd, void *arg)
 {
     return 0;
+}
+
+//NEED A CUSTOM MMAP IMPLEMENTATION
+void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
+{
+
 }

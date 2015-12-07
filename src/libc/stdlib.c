@@ -29,66 +29,17 @@
 
 #define MAX_DIGIT 9
 
-unsigned int mem;
-
-void initmem()
+void abort()
 {
-	//heap on i386: mem = 0xD0000000;
-
-	mem = brk((void *) 0);
-
-	mem += (8 - (mem % 8));
-
-	brk((void *) mem);
+    printf("abort");
+    _exit(1);
 }
 
-void *calloc(size_t num, size_t size)
+void *sbrk(intptr_t increment)
 {
-	unsigned int tmp;
-
-	if (mem == 0){
-		///printf("mem: init\n");
-
-		mem = brk(0);
-	}
-
-	tmp = mem + (8 - ((mem + size) % 8));
-
-	mem += num*size + (8 - ((mem + size) % 8));
-
-	brk((void *) mem);
-
-	return (void*) tmp;
-}
-
-void free(void *ptr)
-{
-	return;
-}
-
-void *malloc(size_t size)
-{
-	unsigned int tmp;
-
-	if (mem == 0){
-		mem = brk(0);
-	}
-
-	tmp = mem + (8 - ((mem + size) % 8));
-
-	mem += size + (8 - ((mem + size) % 8));
-
-	brk((void *) mem);
-
-	return (void*) tmp;
-}
-
-void *realloc(void *ptr, size_t size)
-{
-	void *newarea = malloc(size);
-	memcpy(newarea, ptr, size);
-
-	return (void *) newarea;
+    unsigned long oldProgramBreak = brk(0);
+    brk((void *) oldProgramBreak + increment);
+    return (void *) oldProgramBreak;
 }
 
 int atoi(const char *s)

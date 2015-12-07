@@ -45,6 +45,7 @@
 
 #include <net/net.h>
 
+#include <uapi/memoryuapi.h>
 #include <uapi/processuapi.h>
 
 #include <core/system.h>
@@ -105,6 +106,7 @@ int main()
 	ArchManager::InitMultitasking();
 
         ProcessUAPI::init();
+        MemoryUAPI::init();
 
 	printk("Starting Init...\n");
 

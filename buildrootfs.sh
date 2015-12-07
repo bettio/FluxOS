@@ -49,4 +49,11 @@ umount
 uname
 EOF
 
+while read test
+do
+    cp "src/tests/${test}" "${DESTDIR}/bin/"
+done << EOF
+mmap
+EOF
+
 umount ${DESTDIR}

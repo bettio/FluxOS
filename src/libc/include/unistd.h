@@ -126,6 +126,8 @@ extern int lstat(const char *path, struct stat *buf);
 #define STDOUT_FILENO 1
 #define STDERR_FILENO 2
 
+typedef size_t intptr_t;
+extern void *sbrk(intptr_t increment);
 
 #if __cplusplus
 }

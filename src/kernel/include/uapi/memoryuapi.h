@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2015 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,59 +16,31 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: processcontrolblock.h                                           *
- *   Date: 24/10/2007                                                      *
+ *   Name: processuapi.h                                                   *
+ *   Date: 17/11/2015                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_PROCESSCONTROLBLOCK_H
-#define _TASK_PROCESSCONTROLBLOCK_H
-#include <KOOFCore>
-#include <filesystem/vfs.h>
-#include <filesystem/filedescriptor.h>
+#ifndef _UAPI_MEMORYUAPI_H_
+#define _UAPI_MEMORYUAPI_H_
+
 #include <kdef.h>
 
-#include <ListWithHoles>
+uint32_t mmap_i386(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t);
 
-#define ROOT_UID 0
-#define ROOT_GID 0
-
-class MemoryContext;
-class ThreadControlBlock;
-
-enum TaskStatus{
-    NOT_STARTED,
-	READY,
-	WAITING,
-	SLEEPING,
-	RUNNING,
-	TERMINATED
-};
-
-class ProcessControlBlock
+class MemoryUAPI
 {
     public:
-        unsigned int pid;
-        unsigned int uid;
-        unsigned int gid;
-        TaskStatus status;
-        int exitStatus;
-        char *name;
-        ProcessControlBlock *parent;
-        ThreadControlBlock *mainThread;
-        MemoryContext *memoryContext;
-
-        void *dataSegmentStart;
-        void *dataSegmentEnd;
-
-        ListWithHoles <FileDescriptor *> *openFiles;
-        VNode *currentWorkingDirNode;
-        mode_t umask;
-
-        inline mode_t calculateMode(mode_t mode)
-        {
-            return mode & (~umask);
-        }
+        static void init();
+        static void *brk(void *ptr);
+        static unsigned long mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, long fd, unsigned long offset);
+        static unsigned long munmap(void *addr, unsigned long length);        
+        static int mprotect(void *addr, unsigned long len, int prot);
+        static int msync(void *addr, unsigned long length, int flags);
+        static unsigned long mremap(void *old_address, unsigned long old_size, unsigned long new_size, int flags, ... /* void *new_address */);
+        static int mlock(const void *addr, unsigned long len);
+        static int munlock(const void *addr, unsigned long len);
+        static int mlockall(int flags);
+        static int munlockall();
 };
 
 #endif
-

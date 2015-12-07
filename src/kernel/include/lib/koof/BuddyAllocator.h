@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2007 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2015 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,59 +16,30 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: processcontrolblock.h                                           *
- *   Date: 24/10/2007                                                      *
+ *   Name: BuddyAllocator.h                                                *
+ *   Date: 25/11/2015                                                      *
  ***************************************************************************/
 
-#ifndef _TASK_PROCESSCONTROLBLOCK_H
-#define _TASK_PROCESSCONTROLBLOCK_H
-#include <KOOFCore>
-#include <filesystem/vfs.h>
-#include <filesystem/filedescriptor.h>
-#include <kdef.h>
+#ifndef _KOOF_BUDDYALLOCATOR_H_
+#define _KOOF_BUDDYALLOCATOR_H_
 
-#include <ListWithHoles>
+class FreeChunk;
 
-#define ROOT_UID 0
-#define ROOT_GID 0
-
-class MemoryContext;
-class ThreadControlBlock;
-
-enum TaskStatus{
-    NOT_STARTED,
-	READY,
-	WAITING,
-	SLEEPING,
-	RUNNING,
-	TERMINATED
-};
-
-class ProcessControlBlock
+class BuddyAllocator
 {
     public:
-        unsigned int pid;
-        unsigned int uid;
-        unsigned int gid;
-        TaskStatus status;
-        int exitStatus;
-        char *name;
-        ProcessControlBlock *parent;
-        ThreadControlBlock *mainThread;
-        MemoryContext *memoryContext;
+        ~BuddyAllocator();
+        void init(int sizeInBlocks);
 
-        void *dataSegmentStart;
-        void *dataSegmentEnd;
+        int allocateBlocks(int sizeInBlocks);
+        void freeBlocks(int firstBlockNumber, int sizeInBlocks);
+        int allocateBlocks(int blockIndex, int sizeInBlocks);
 
-        ListWithHoles <FileDescriptor *> *openFiles;
-        VNode *currentWorkingDirNode;
-        mode_t umask;
-
-        inline mode_t calculateMode(mode_t mode)
-        {
-            return mode & (~umask);
-        }
+     private:
+        int freeAlignedBlock(int blockIndex, int order);
+        int allocateAlignedBlocks(int blockIndex);
+        FreeChunk **m_lists;
+        int m_orders;
 };
 
 #endif
-
