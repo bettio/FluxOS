@@ -119,3 +119,12 @@ void ArchManager::reboot()
     while (1);   
 }
 
+void ArchManager::halt()
+{
+    asm(
+        "waitForever:\n"
+        "hlt\n"
+        "jmp waitForever\n"
+    );
+    while (1);
+}

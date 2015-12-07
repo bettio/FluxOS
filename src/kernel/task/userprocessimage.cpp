@@ -25,6 +25,7 @@
 #include <cstring.h>
 #include <core/elfloader.h>
 #include <core/printk.h>
+#include <core/systemerrors.h>
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>
@@ -143,8 +144,7 @@ int UserProcessImage::setupInitProcessImage()
 
     void *entryPoint;
     if (loadExecutable(initPath, &entryPoint) < 0) {
-        printk("Kernel panic: cannot start init process\n");
-        while (1);
+        kernelPanic("cannot start init process");
     }
 
     int argc = 1;

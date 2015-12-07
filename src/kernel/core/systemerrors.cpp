@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2006 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2015 by Davide Bettio <davide.bettio@kdemail.net>           *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,18 +16,23 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: archmanager.h                                                   *
+ *   Name: systemerrors.cpp                                                *
+ *   Date: 07/12/2015                                                      *
  ***************************************************************************/
 
-class ArchManager
+#include <core/systemerrors.h>
+
+#include <core/archmanager.h>
+#include <core/printk.h>
+
+extern "C"
 {
-	public:
-		static void Init();
-		static void InitArch();
-		static void InitMemoryManagment();
-		static void InitMultitasking();
-		static void InitHardware();
-        static void StartInit();
-	static void reboot();
-    static void halt();
-};
+
+void kernelPanic(const char *msg)
+{
+    printk("Kernel Panic: %s\n", msg);
+    printk("Halting.\n");
+    ArchManager::halt();
+}
+
+}

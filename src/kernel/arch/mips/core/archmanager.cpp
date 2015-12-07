@@ -65,5 +65,15 @@ void ArchManager::StartInit()
     UserProcessImage::setupInitProcessImage();
 }
 
+void ArchManager::halt()
+{
+    asm(
+        "waitForever:\n"
+        "wait\n"
+        "b waitForever\n"
+    );
+    while (1);
+}
+
 //TODO: please, move away this stuff
 unsigned long kernel_heap_free_pos = KERNEL_HEAP_START;
