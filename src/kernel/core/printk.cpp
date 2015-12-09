@@ -51,8 +51,12 @@ void printk(const char *s, ...)
 			case 's':{
 				char *str = va_arg(l, char *);
 
-				len = strlen(str);
-				Out->Write(Out, str, len);
+                                if (str) {
+				    len = strlen(str);
+				    Out->Write(Out, str, len);
+                                } else {
+				    Out->Write(Out, "(null)", strlen("(null)"));
+                                }
 
 				break;
 			}
