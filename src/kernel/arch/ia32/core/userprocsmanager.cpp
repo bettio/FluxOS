@@ -129,6 +129,14 @@ int UserProcsManager::fork(void *stack)
 
 int UserProcsManager::execve(const char *_filename, char *const _argv[], char *const _envp[])
 {
+    if (!_filename) {
+        printk("Error: execve: null filename\n");
+        return -EFAULT;
+    }
+    if (!_argv[1]) {
+        printk("Error: execve: null argument\n");
+        return -EFAULT;
+    }
     const char *filename = strdup(_filename);
     const char *argv = strdup(_argv[1]);
 
