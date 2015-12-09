@@ -24,6 +24,6 @@
 
 #include <unistd.h>
 
-extern reboot(int magic, int magic2, int cmd, void *arg);
+extern int reboot(int magic, int magic2, int cmd, void *arg);
 
 #endif
