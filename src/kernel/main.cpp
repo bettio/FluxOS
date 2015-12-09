@@ -26,6 +26,7 @@
 #include <cstdlib.h>
 
 #include <core/archmanager.h>
+#include <core/systemerrors.h>
 
 #include <drivers/chardevicemanager.h>
 #include <drivers/blockdevicemanager.h>
@@ -49,8 +50,6 @@
 #include <uapi/processuapi.h>
 
 #include <core/system.h>
-
-#define BOOT 1
 
 int main()
 {
@@ -83,25 +82,13 @@ int main()
 	FileSystem::TmpFS::Init();
 	FileSystem::DevFS::RegisterAsFileSystem();
 
-    #if BOOT == 0
-    FileSystem::VFS::Mount("null", "/", "tmpfs", 0, 0);
-    VNode *node;
-    bool fsError = (FileSystem::VFS::RelativePathToVnode(0, "/", &node) < 0);
-    fsError &= (FS_CALL(node, mkdir)(node, "dev", 0) < 0);
-    fsError &= (FS_CALL(node, mkdir)(node, "proc", 0) < 0);
-    fsError &= (FS_CALL(node, mkdir)(node, "tmp", 0) < 0);
-    if (fsError){
-        printk("Error while creating root fs directories\n");
-    }
-    FileSystem::VNodeManager::PutVnode(node);
-    #else
-	FileSystem::VFS::Mount("/dev/ramd0", "/", "ext2", 0, 0);
-	#endif
-
-	FileSystem::VFS::Mount("null", "/dev/", "devfs", 0, 0);
-	FileSystem::VFS::Mount("null", "/tmp/", "tmpfs", 0, 0);
-
-    FileSystem::VFS::Mount("null", "/proc", "procfs", 0, 0);
+        const char *rootDevice = "/dev/ramd0";
+        const char *rootFSType = "ext2";
+        if (FileSystem::VFS::Mount(rootDevice, "/", rootFSType, 0, 0) < 0) {
+            printk("root=%s, fstype=%s\n", rootDevice, rootFSType);
+            kernelPanic("cannot mount root filesystem.");
+        }
+        FileSystem::VFS::Mount("null", "/dev/", "devfs", 0, 0);
 
 	ArchManager::InitMultitasking();
 
@@ -110,9 +97,6 @@ int main()
 
 	printk("Starting Init...\n");
 
-#if BOOT == 1
         ArchManager::StartInit();
-#endif
-    
 	while(1);
 }
