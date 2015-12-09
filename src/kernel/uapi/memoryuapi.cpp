@@ -40,6 +40,9 @@
 #define MAP_FIXED       0x10
 #define MAP_ANONYMOUS   0x20
 
+#define ENABLE_DEBUG_MSG 0
+#include <debugmacros.h>
+
 #ifdef ARCH_IA32_NATIVE
 
 struct MmapArgs
@@ -96,19 +99,23 @@ void *MemoryUAPI::brk(void *ptr)
         if (ptr > process->dataSegmentEnd) {
             // check if we are going to overlap any existing mapping
             if (UNLIKELY(process->memoryContext->countDescriptorsByRange(dataSegmentDescriptor, (void *) ((unsigned long) ptr - (unsigned long) process->dataSegmentEnd)))) {
+                printk("brk: Failed to increase data segment due to overlapping memory memory region\n");
                 return (void *) -ENOMEM;
             }
-        } else {
+        } else if (ptr < process->dataSegmentEnd) {
             // it doesn't make any sense to shrink the data segment to a negative size
             // TODO: specification doesn't say anything about this, and I'm not sure if ENOMEM is the
             // error that has to be returned
             if (UNLIKELY(ptr < process->dataSegmentStart)) {
+                printk("brk: cannot shrink\n");
                 return (void *) -ENOMEM;
             }
         }
 
-        process->dataSegmentEnd = (void *) ((unsigned long) process->dataSegmentStart +
-                                            (unsigned long) process->memoryContext->resizeExtent(dataSegmentDescriptor, (long) ptr - (long) process->dataSegmentEnd));
+        if (ptr != process->dataSegmentEnd) {
+            process->dataSegmentEnd = (void *) ((unsigned long) process->dataSegmentEnd +
+                                                (unsigned long) process->memoryContext->resizeExtent(dataSegmentDescriptor, (long) ptr - (long) process->dataSegmentEnd));
+        }
     }
 
     return process->dataSegmentEnd;
@@ -116,6 +123,8 @@ void *MemoryUAPI::brk(void *ptr)
 
 unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long prot, unsigned long flags, long fd, unsigned long offset)
 {
+    DEBUG_MSG("mmap(0x%p, %li, %li, %li, %li, %li)\n", addr, length, prot, flags, fd, offset);
+
     // flags must be either MAP_SHARED or MAP_PRIVATE.
     if (((flags & (MAP_PRIVATE | MAP_SHARED)) == (MAP_PRIVATE | MAP_SHARED)) || ((flags & (MAP_PRIVATE | MAP_SHARED)) == 0)) {
         return -EINVAL;
@@ -151,8 +160,8 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
         if (ret != 0) {
             return (unsigned long) ret;
         }
-        process->memoryContext->mapFileSegmentToMemory(fdesc->node, addr, length, offset, permissions);
-        return (unsigned long) addr;
+
+        return (unsigned long) process->memoryContext->mapFileSegmentToMemory(fdesc->node, addr, length, offset, permissions);
     }
 }
 

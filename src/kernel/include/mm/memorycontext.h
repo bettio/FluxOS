@@ -104,12 +104,20 @@ class MemoryContext
          */
         int updatePermissions(MemoryDescriptor *descriptor, MemoryDescriptor::Permissions permissions);
 
-        void mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions);
+        void *mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions);
         int releaseDescriptor(MemoryDescriptor *d);
         MemoryDescriptor *makeCOWAnonymousMemory(MemoryDescriptor *descriptor);
 
     private:
+        void *allocVirtualMemory(unsigned long size);
+        void allocVirtualMemory(void *address, unsigned long size);
+        void freeVirtualMemory(void *address, unsigned long size);
+
         QList<MemoryDescriptor *> *m_descriptors;
+        int pageSize;
+        int pageSizeShift;
+        unsigned long userVirtualMemLowAddress;
+        unsigned long userVirtualMemSize;
         BuddyAllocator m_vmemAlloc;
 };
 

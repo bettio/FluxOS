@@ -71,12 +71,36 @@ void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager
 MemoryContext::MemoryContext()
 {
     m_descriptors = new QList<MemoryDescriptor *>();
-    m_vmemAlloc.init((1 << 29) - (2 << 10));
+
+    pageSize = 4096;
+    pageSizeShift = 12; // 4096 bytes
+    userVirtualMemLowAddress = USERSPACE_LOW_ADDR;
+    userVirtualMemSize = USERSPACE_HI_ADDR - USERSPACE_LOWER_ADDR;
+
+    m_vmemAlloc.init(userVirtualMemSize >> 12);
 }
 
 inline unsigned long roundToPageMultiples(unsigned long l)
 {
     return ((l & 0xFFFFF000) + ((l & 0xFFF) ? 0x1000 : 0));
+}
+
+void *MemoryContext::allocVirtualMemory(unsigned long size)
+{
+    unsigned long pageIndex = m_vmemAlloc.allocateBlocks(size >> pageSizeShift);
+    return (void *) ((pageIndex << pageSizeShift) + userVirtualMemLowAddress);
+}
+
+void MemoryContext::allocVirtualMemory(void *address, unsigned long size)
+{
+    unsigned long relativeAddress = ((unsigned long) address) - userVirtualMemLowAddress;
+    m_vmemAlloc.allocateBlocks(relativeAddress >> pageSizeShift, size >> pageSizeShift);
+}
+
+void MemoryContext::freeVirtualMemory(void *address, unsigned long size)
+{
+    unsigned long relativeAddress = ((unsigned long) address) - userVirtualMemLowAddress;
+    m_vmemAlloc.freeBlocks(relativeAddress, size >> pageSizeShift);
 }
 
 MemoryDescriptor *MemoryContext::findMemoryDescriptor(void *address) const
@@ -209,12 +233,11 @@ void *MemoryContext::findEmptyMemoryExtent(void *baseAddress, unsigned long leng
             printk("WARNING: Tried to allocate already used memory region\n");
             return NULL;
         } else if (descriptors->isEmpty()) {
-            m_vmemAlloc.allocateBlocks(((unsigned long) baseAddress >> 12), (length >> 12) + ((length & 0xFFF) != 0));
+            allocVirtualMemory(baseAddress, roundToPageMultiples(length));
         }
     }
     if (baseAddress == NULL) {
-        unsigned long pageIndex = m_vmemAlloc.allocateBlocks((length >> 12) + ((length & 0xFFF) != 0));
-        newAddress = (void *) ((1 << 29) + (pageIndex << 12));
+        newAddress = allocVirtualMemory(roundToPageMultiples(length));
     }
 
     return newAddress;
@@ -267,25 +290,33 @@ int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long leng
 
 long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
 {
-    int endOfDescriptorPageIndex = ((unsigned long) desc->baseAddress >> 12) + (desc->length >> 12) + ((desc->length & 0xFFF) != 0);
-
+    void *endOfDescriptor = (void *) roundToPageMultiples(((unsigned long) desc->baseAddress) + desc->length);
     if (increment > 0) {
-        int delta = (increment >> 12) + ((increment & 0xFFF) != 0);
-        m_vmemAlloc.allocateBlocks(endOfDescriptorPageIndex, delta);
+        int delta = roundToPageMultiples(increment);
+        allocVirtualMemory(endOfDescriptor, delta);
 
     } else if (increment < 0) {
-        int delta = ((-increment) >> 12);
-        m_vmemAlloc.freeBlocks(endOfDescriptorPageIndex - delta, delta);
+        int delta = (-increment) & ~(pageSize - 1);
+        freeVirtualMemory((void *) ((unsigned long) endOfDescriptor - delta), delta);
     }
 
     desc->length += increment;
     return increment;
 }
 
-void MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions)
+//TODO: map file to a certain fixed memory address
+void *MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions)
 {
+    void *foundBaseAddr = virtualAddress;
+    if (!virtualAddress) {
+        foundBaseAddr = findEmptyMemoryExtent(NULL, length, FixedHint);
+        if (UNLIKELY(!foundBaseAddr)) {
+            //return -ENOMEM;
+        }
+    }
+
     MemoryMappedFileDescriptor *mappedFileDesc = new MemoryMappedFileDescriptor();
-    mappedFileDesc->baseAddress = virtualAddress;
+    mappedFileDesc->baseAddress = foundBaseAddr;
     mappedFileDesc->length = length;
     mappedFileDesc->permissions = permissions;
     mappedFileDesc->flags = MemoryDescriptor::MemoryMappedFile;
@@ -294,6 +325,8 @@ void MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, un
     m_vmemAlloc.allocateBlocks(((unsigned long) virtualAddress >> 12), (length >> 12) + ((length & 0xFFF) != 0));
 
     insertMemoryDescriptor(mappedFileDesc);
+
+    return foundBaseAddr;
 }
 
 int MemoryContext::releaseDescriptor(MemoryDescriptor *descriptor)
