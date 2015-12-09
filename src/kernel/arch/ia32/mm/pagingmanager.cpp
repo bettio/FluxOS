@@ -391,7 +391,7 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
    invalidateTLB();
     }
     } else {
-        printk("Kernel page fault\n");
+        printk("Kernel page fault: Address 0x%x, EIP 0x%x\n", faultAddress, GET_FAULT_EIP());
         while(1);
     }
 }
