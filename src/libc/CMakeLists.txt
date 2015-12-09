@@ -18,6 +18,7 @@ endif ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_
 
 add_library(libc STATIC
     ${ARCH_SOURCES}
+    dirent.c
     malloc.c
     stdlib.c
     ctype.c
