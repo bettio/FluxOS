@@ -1,0 +1,5 @@
+{
+    "what" : "none",
+    "where" : "/proc",
+    "type" : "procfs"
+}
