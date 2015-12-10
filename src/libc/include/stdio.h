@@ -22,6 +22,10 @@
 #ifndef _STDIO_H
 #define _STDIO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef EOF
 # define EOF (-1)
 #endif
@@ -79,6 +83,10 @@ int fgetpos(FILE *stream, fpos_t *pos);
 int fsetpos(FILE *stream, fpos_t *pos);
 int fscanf(FILE *stream, const char *format, ...);
 int fclose(FILE *fp);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

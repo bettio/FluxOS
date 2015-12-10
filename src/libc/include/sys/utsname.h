@@ -19,6 +19,13 @@
  *   Name: utsname.h                                                       *
  ***************************************************************************/
 
+#ifndef _UTSNAME_H_
+#define _UTSNAME_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct utsname {
 	char sysname[65];
 	char nodename[65];
@@ -31,3 +38,9 @@ struct utsname {
 };
 
 extern int uname(struct utsname *buf);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

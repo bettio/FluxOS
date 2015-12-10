@@ -22,9 +22,16 @@
 #ifndef SYS_MOUNT_H
 #define SYS_MOUNT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data);
 extern int umount(const char *target);
 extern int umount2(const char *target, int flags);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

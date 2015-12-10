@@ -22,6 +22,10 @@
 #ifndef _STRING_H
 #define _STRING_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _SIZE_T_TYPE
 #define _SIZE_T_TYPE
 	typedef unsigned int size_t;
@@ -42,5 +46,9 @@ extern int memcmp(const void *s1, const void *s2, size_t n);
 extern void *memchr(const void *s, int c, size_t n);
 extern void *memcpy(void *dest, const void *src, size_t n);
 extern void *memset(void *s, int c, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
