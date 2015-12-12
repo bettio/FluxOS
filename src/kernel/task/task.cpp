@@ -28,6 +28,9 @@
 #include <arch.h>
 #include <ListWithHoles>
 
+#define ENABLE_DEBUG_MSG 0
+#include <debugmacros.h>
+
 ListWithHoles<ProcessControlBlock *> *Task::processes;
 
 void Task::init()
@@ -37,6 +40,8 @@ void Task::init()
 
 ProcessControlBlock *Task::CreateNewTask(const char *name)
 {
+    DEBUG_MSG("Task::CreateNewTask(%s)\n");
+
 	ProcessControlBlock *process = new ProcessControlBlock;
         int newTaskPid = processes->add(process);
 	process->pid = newTaskPid;
@@ -45,8 +50,7 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->name = strdup(name);
         process->parent = 0;
         process->memoryContext = new MemoryContext();
-	process->dataSegmentStart = (void *) 0xC0000000;
-	process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
+        process->dataSegmentStart = NULL;
         process->openFiles = new ListWithHoles<FileDescriptor *>();
 	VNode *ttyNode;
         int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
@@ -55,9 +59,15 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             return 0;
         }
 
-        process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-                                                    MemoryContext::FixedHint);
+    if (process->memoryContext->allocateAnonymousMemory(&process->dataSegmentStart, 4096,
+            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+            MemoryContext::FixedHint) < 0)
+    {
+        printk("Error: cannot allocate data segment for brk\n");
+        return 0;
+    }
+    DEBUG_MSG("process->dataSegmentStart: %p\n", process->dataSegmentStart);
+    process->dataSegmentEnd = (void *) (((unsigned long ) process->dataSegmentStart) + 4096);
 
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
@@ -91,6 +101,8 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 
 ProcessControlBlock *Task::NewProcess(const char *name)
 {
+    DEBUG_MSG("Task::CreateNewTask(%s)\n");
+
     ProcessControlBlock *parent = Scheduler::currentThread()->parentProcess;
 
     ProcessControlBlock *process = new ProcessControlBlock;
@@ -101,8 +113,7 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->name = strdup(name);
     process->parent = parent;
     process->memoryContext = new MemoryContext();
-    process->dataSegmentStart = (void *) 0xC0000000;
-    process->dataSegmentEnd = (void *) (0xC0000000 + 4096);
+    process->dataSegmentStart = NULL;
     process->openFiles = new ListWithHoles<FileDescriptor *>();
     for (int i = 0; i < parent->openFiles->size(); i++){
         FileDescriptor *oldFd = parent->openFiles->at(i);
@@ -117,10 +128,16 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
     process->umask = parent->umask;
 
-    /* Work around, don't hardcode memory descriptors */
-    process->memoryContext->allocateAnonymousMemory((void *) process->dataSegmentStart, (unsigned long) process->dataSegmentEnd - (unsigned long) process->dataSegmentStart,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-                                                    MemoryContext::FixedHint);
+    if (process->memoryContext->allocateAnonymousMemory(&process->dataSegmentStart, 4096,
+            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+            MemoryContext::FixedHint) < 0)
+    {
+
+         printk("Error: cannot allocate data segment for brk\n");
+         return 0;
+    }
+    DEBUG_MSG("process->dataSegmentStart: %p\n", process->dataSegmentStart);
+    process->dataSegmentEnd = (void *) (((unsigned long ) process->dataSegmentStart) + 4096);
 
     process->status = READY;
 
