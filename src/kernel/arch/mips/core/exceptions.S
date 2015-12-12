@@ -88,7 +88,7 @@ generalExceptionHandling:
       nop
     j callAddressLoadExceptionISR
       nop
-    j unknownException
+    j callAddressStoreExceptionISR
       nop
     j unknownException
       nop
@@ -130,6 +130,13 @@ generalExceptionHandling:
     mfc0 $5, CP0_EPC_Register
     addi $sp, $sp, -8
     jal addressLoadExceptionISR
+    j exitGeneralExceptionHandler
+
+  callAddressStoreExceptionISR:
+    mfc0 $4, CP0_BadVAddr_Register
+    mfc0 $5, CP0_EPC_Register
+    addi $sp, $sp, -8
+    jal addressStoreExceptionISR
     j exitGeneralExceptionHandler
 
   callSyscallISR:
