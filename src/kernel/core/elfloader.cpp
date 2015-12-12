@@ -32,6 +32,9 @@
 #include <cstdlib.h>
 #include <arch.h>
 
+#define ENABLE_DEBUG_MSG 0
+#include <debugmacros.h>
+
 #warning 32 bit only code
 
 #ifdef ARCH_IA32
@@ -86,8 +89,10 @@ void ElfLoader::load(void *elfBinary)
 }
 #endif
 
-int ElfLoader::loadExecutableFile(const char *path)
+int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
 {
+    interpEntryPoint = NULL;
+
     VNode *node;
     int res = FileSystem::VFS::RelativePathToVnode(0, path, &node);
     if (res < 0){
@@ -115,7 +120,8 @@ int ElfLoader::loadExecutableFile(const char *path)
     MemoryContext *mContext = Scheduler::currentThread()->parentProcess->memoryContext;
 
     for (int i = 0; i < elfHeader->phnum; i++){
-        if (pHeader[i].type == ELF_PT_LOAD){
+        switch (pHeader[i].type) {
+          case ELF_PT_LOAD: {
             char *segment = (char *) pHeader[i].virtualAddr;
             if (((unsigned long) segment < USERSPACE_LOW_ADDR) || ((unsigned long) segment > USERSPACE_HI_ADDR)) {
                 printk("ElfLoader: warning: skipping bad address: %p\n", segment);
@@ -141,6 +147,30 @@ int ElfLoader::loadExecutableFile(const char *path)
                 }
                 mContext->allocateAnonymousMemory(((char *) segment) + pHeader[i].segmentFileSize, pHeader[i].segmentMemSize, permissions, MemoryContext::FixedHint);
             }
+          }
+          break;
+          case ELF_PT_INTERP: {
+              if (flags & FailOnInterpreter) {
+                  return -ENOEXEC;
+              }
+
+              char *programInterpreter = (char *) malloc(pHeader[i].segmentMemSize);
+              int res = FS_CALL(node, read)(node, pHeader[i].offset, programInterpreter, pHeader[i].segmentFileSize);
+              DEBUG_MSG("ElfLoader::loadExecutableFile: program interpreter required: %s\n", programInterpreter);
+
+              ElfLoader loader;
+              res = loader.loadExecutableFile(programInterpreter, FailOnInterpreter);
+              if (res < 0) {
+                  printk("Cannot load executable interpreter: %s error: %i\n", programInterpreter, res);
+                  return res;
+              }
+              interpEntryPoint = loader.entryPoint();
+              return 0;
+          }
+          break;
+          default: {
+              DEBUG_MSG("Program header found, type: %i\n", pHeader[i].type);
+          }
 	}
     }
 
@@ -198,6 +228,10 @@ ElfSymbol *ElfLoader::symbols()
 
 void *ElfLoader::entryPoint()
 {
-     //When the entry point is not defined we use the first defined function
-    return (elfHeader->entry) ? (void *) elfHeader->entry : offsetToPtr(textOffset());
+    if (interpEntryPoint) {
+        return interpEntryPoint;
+    } else {
+        //When the entry point is not defined we use the first defined function
+        return (elfHeader->entry) ? (void *) elfHeader->entry : offsetToPtr(textOffset());
+    }
 }

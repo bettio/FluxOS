@@ -27,9 +27,14 @@
 
 class ElfLoader
 {
+    enum LoadELFFlags {
+        NoLoadELFFlags = 0,
+        FailOnInterpreter = 1
+    };
+
     public:
         void load(void *elfBin);
-        int loadExecutableFile(const char *path);
+        int loadExecutableFile(const char *path, LoadELFFlags = NoLoadELFFlags);
         bool isValid() const;
         void *entryPoint();
 
@@ -41,6 +46,7 @@ class ElfLoader
        inline void *offsetToPtr(long offset) { return (void *) (((long) elfHeader) + offset); }
        inline long offsetToAddr(long offset) { return (((long) elfHeader) + offset); }
        inline ElfShdr *sectionHeader(int i) { return (ElfShdr *) offsetToPtr(elfHeader->shoff + elfHeader->shentsize * i); }
+       void *interpEntryPoint;
 };
 
 #endif
