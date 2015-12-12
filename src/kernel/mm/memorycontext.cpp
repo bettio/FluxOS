@@ -90,18 +90,23 @@ inline unsigned long roundToPageMultiples(unsigned long l)
 
 void *MemoryContext::allocVirtualMemory(unsigned long size)
 {
+    DEBUG_MSG("MemoryContext::allocVirtualMemory(%li) ", size);
     unsigned long pageIndex = m_vmemAlloc.allocateBlocks(size >> pageSizeShift);
-    return (void *) ((pageIndex << pageSizeShift) + userVirtualMemLowAddress);
+    void *rptr = (void *) ((pageIndex << pageSizeShift) + userVirtualMemLowAddress);
+    DEBUG_MSG("-> %x\n", rptr);
+    return rptr;
 }
 
 void MemoryContext::allocVirtualMemory(void *address, unsigned long size)
 {
+    DEBUG_MSG("MemoryContext::allocVirtualMemory(%p, %li)\n", address, size);
     unsigned long relativeAddress = ((unsigned long) address) - userVirtualMemLowAddress;
     m_vmemAlloc.allocateBlocks(relativeAddress >> pageSizeShift, size >> pageSizeShift);
 }
 
 void MemoryContext::freeVirtualMemory(void *address, unsigned long size)
 {
+    DEBUG_MSG("MemoryContext::freeVirtualMemory(%p, %li)\n", address, size);
     unsigned long relativeAddress = ((unsigned long) address) - userVirtualMemLowAddress;
     m_vmemAlloc.freeBlocks(relativeAddress, size >> pageSizeShift);
 }
@@ -296,6 +301,7 @@ int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long leng
 
 long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
 {
+    DEBUG_MSG("MemoryContext::resizeExtent(desc->baseAddress: 0x%p, %i)\n", desc->baseAddress, increment);
     void *endOfDescriptor = (void *) roundToPageMultiples(((unsigned long) desc->baseAddress) + desc->length);
     if (increment > 0) {
         int delta = roundToPageMultiples(increment);
