@@ -25,6 +25,7 @@
 #include <uapi/syscallsnr.h>
 #include <core/printk.h>
 #include <core/system.h>
+#include <core/systemtimer.h>
 #include <filesystem/vfs.h>
 #include <filesystem/fscalls.h>
 #include <task/task.h>
@@ -62,45 +63,38 @@ void SyscallsManager::unregisterSyscall(int num)
 
 void SyscallsManager::registerDefaultSyscalls()
 {
-//    registerSyscall(__NR_EXIT, (void *)  exit);
+    registerSyscall(__NR_EXIT, (void *)  Task::exit);
     registerSyscall(__NR_FORK, (void *)  UserProcsManager::fork);
     registerSyscall(__NR_READ, (void *)  read);
     registerSyscall(__NR_WRITE, (void *)  write);
     registerSyscall(__NR_OPEN, (void *)  open);
-//    registerSyscall(__NR_CLOSE, (void *)  close);
+    registerSyscall(__NR_CLOSE, (void *)  close);
 //    registerSyscall(__NR_WAITPID, (void *)  waitpid);
     registerSyscall(__NR_EXECVE, (void *)  UserProcessImage::execve);
     registerSyscall(__NR_CHDIR, (void *)  chdir);
-//    registerSyscall(__NR_TIME, (void *)  time);
+    registerSyscall(__NR_TIME, (void *)  SystemTimer::time);
     registerSyscall(__NR_CHMOD, (void *)  chmod);
     registerSyscall(__NR_LCHOWN, (void *)  lchown);
 //    registerSyscall(__NR_STAT, (void *)  stat);
     registerSyscall(__NR_LSEEK, (void *)  lseek);
-//    registerSyscall(__NR_GETPID, (void *)  getpid);
-//    registerSyscall(__NR_MOUNT, (void *)  mount);
-//    registerSyscall(__NR_UMOUNT, (void *)  umount);
-//    registerSyscall(__NR_SETUID, (void *)  setuid);
-//    registerSyscall(__NR_GETUID, (void *)  getuid);
-//    registerSyscall(__NR_FSTAT, (void *)  fstat);
+    registerSyscall(__NR_MOUNT, (void *)  FileSystem::VFS::Mount);
+    registerSyscall(__NR_UMOUNT, (void *)  FileSystem::VFS::Umount);
+    registerSyscall(__NR_FSTAT, (void *)  fstat);
 //    registerSyscall(__NR_KILL, (void *)  kill);
-//    registerSyscall(__NR_SETGID, (void *)  setgid);
-//    registerSyscall(__NR_GETGID, (void *)  getgid);
     registerSyscall(__NR_IOCTL, (void *)  ioctl);
-//    registerSyscall(__NR_FCNTL, (void *)  fcntl);
-//    registerSyscall(__NR_GETPPID, (void *)  getppid);
-//    registerSyscall(__NR_SETHOSTNAME, (void *)  sethostname);
-//    registerSyscall(__NR_MMAP, (void *)  mmap);
-//    registerSyscall(__NR_TRUNCATE, (void *)  truncate);
-//    registerSyscall(__NR_FTRUNCATE, (void *)  ftruncate);
+    registerSyscall(__NR_FCNTL, (void *)  fcntl);
+    registerSyscall(__NR_SETHOSTNAME, (void *)  SetHostName);
+    registerSyscall(__NR_TRUNCATE, (void *)  truncate);
+    registerSyscall(__NR_FTRUNCATE, (void *)  ftruncate);
     registerSyscall(__NR_FCHMOD, (void *)  fchmod);
     registerSyscall(__NR_FCHOWN, (void *)  fchown);
     registerSyscall(__NR_LSTAT, (void *)  lstat);
     registerSyscall(__NR_READLINK, (void *)  readlink);
-//    registerSyscall(__NR_FSYNC, (void *)  fsync);
-//    registerSyscall(__NR_SETDOMAINNAME, (void *)  setdomainname);
+    registerSyscall(__NR_FSYNC, (void *)  fsync);
+    registerSyscall(__NR_SETDOMAINNAME, (void *)  SetDomainName);
     registerSyscall(__NR_UNAME, (void *)  Uname);
     registerSyscall(__NR_GETDENTS, (void *)  getdents);
-//    registerSyscall(__NR_FDATASYNC, (void *)  fdatasync);
+    registerSyscall(__NR_FDATASYNC, (void *)  fdatasync);
 //    registerSyscall(__NR_PREAD, (void *)  pread);
 //    registerSyscall(__NR_PWRITE, (void *)  pwrite);
     registerSyscall(__NR_SOCKET, (void *)  socket);
