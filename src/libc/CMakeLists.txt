@@ -16,7 +16,7 @@ elseif (BUILD_TARGET MATCHES "MIPS_24K")
     SET(ARCH_SOURCES arch/mips/syscalls.c)
 endif ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_IA32"))
 
-add_library(libc STATIC
+SET(LIBC_SOURCES
     ${ARCH_SOURCES}
     inet.c
     dirent.c
@@ -30,3 +30,6 @@ add_library(libc STATIC
     getopt-susv3.c
     syserrmsgs.c
 )
+
+add_library(c-static STATIC ${LIBC_SOURCES})
+add_library(c SHARED ${LIBC_SOURCES})

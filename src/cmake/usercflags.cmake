@@ -1,6 +1,11 @@
 if ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_IA32"))
+# cflags to support dynamic libraries:
+#  SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g -shared -fPIC -Wl,-dynamic-linker,/lib/ld-fluxos.so.1" )
+#  SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g -shared -fPIC -Wl,-dynamic-linker,/lib/ld-fluxos.so.1" )
+
   SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g" )
   SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g" )
+
 elseif ((BUILD_TARGET MATCHES "UMM_LINUX_X86_64"))
   SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g" )
   SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g")
