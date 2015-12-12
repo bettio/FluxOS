@@ -64,6 +64,7 @@ extern int errno;
 #define __NR_GETEGID    4050
 #define __NR_UMOUNT2    4052
 #define __NR_IOCTL	4054
+#define __NR_FCNTL      4055
 #define __NR_SETGID     4046
 #define __NR_GETPPID    4064
 #define __NR_SETSID     4066
@@ -73,15 +74,20 @@ extern int errno;
 #define __NR_REBOOT	4088
 #define __NR_MMAP       4090
 #define __NR_MUNMAP     4091
+#define __NR_TRUNCATE   4092
+#define __NR_FTRUNCATE  4093
 #define __NR_FCHMOD	4094
 #define __NR_FCHOWN     4095
 #define __NR_LSTAT	4107
+#define __NR_FSTAT	4108
+#define __NR_FSYNC      4118
 #define __NR_SETDOMAINNAME 4121
 #define __NR_MPROTECT   4125
 #define __NR_UNAME      4122
 #define __NR_GETDENTS	4141
 #define __NR_MSYNC      4144
 #define __NR_GETSID     4151
+#define __NR_FDATASYNC  4152
 #define __NR_MLOCK      4154
 #define __NR_MUNLOCK    4155
 #define __NR_MLOCKALL   4156
@@ -207,6 +213,7 @@ SYSCALL_1(brk, __NR_BRK, int, void *)
 SYSCALL_2(sethostname, __NR_SETHOSTNAME, int, const char *, size_t)
 SYSCALL_3(readlink, __NR_READLINK, ssize_t, const char *, char *, size_t)
 SYSCALL_2(lstat, __NR_LSTAT, int, const char *, struct stat *)
+SYSCALL_2(fstat, __NR_FSTAT, int, int, struct stat *)
 SYSCALL_2(setdomainname, __NR_SETDOMAINNAME, int, const char *, size_t)
 SYSCALL_3(mprotect, __NR_MPROTECT, int, void *, size_t, int)
 SYSCALL_1(uname, __NR_UNAME, int, struct utsname *)
