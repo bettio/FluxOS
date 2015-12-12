@@ -89,6 +89,8 @@ void *MemoryUAPI::brk(void *ptr)
 {
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
 
+    DEBUG_MSG("MemoryUAPI::brk(%p) (current process->dataSegmentEnd = 0x%p)\n", ptr, process->dataSegmentEnd);
+
     if (ptr != NULL){
         MemoryDescriptor *dataSegmentDescriptor = process->memoryContext->findMemoryDescriptor(process->dataSegmentStart);
         if (UNLIKELY(!dataSegmentDescriptor)) {
@@ -117,6 +119,8 @@ void *MemoryUAPI::brk(void *ptr)
                                                 (unsigned long) process->memoryContext->resizeExtent(dataSegmentDescriptor, (long) ptr - (long) process->dataSegmentEnd));
         }
     }
+
+    DEBUG_MSG("  return process->dataSegmentEnd = 0x%p\n", process->dataSegmentEnd);
 
     return process->dataSegmentEnd;
 }
