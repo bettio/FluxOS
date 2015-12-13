@@ -25,6 +25,7 @@
 
 #ifdef ENABLE_DEBUG_MSG
 #if ENABLE_DEBUG_MSG == 1
+    #include <core/printk.h>
     #define DEBUG_MSG printk
 #else
     #define DEBUG_MSG(...)
