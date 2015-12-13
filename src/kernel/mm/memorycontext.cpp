@@ -319,12 +319,10 @@ long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
 //TODO: map file to a certain fixed memory address
 void *MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, unsigned long length, unsigned long fileOffset, MemoryDescriptor::Permissions permissions)
 {
-    void *foundBaseAddr = virtualAddress;
-    if (!virtualAddress) {
-        foundBaseAddr = findEmptyMemoryExtent(NULL, length, FixedHint);
-        if (UNLIKELY(!foundBaseAddr)) {
-            //return -ENOMEM;
-        }
+    void *foundBaseAddr = findEmptyMemoryExtent(virtualAddress, length, FixedHint);
+    if (UNLIKELY(!foundBaseAddr)) {
+        printk("Error: mapFileSegment: ENOMEM\n");
+        return (void *) -ENOMEM;
     }
 
     MemoryMappedFileDescriptor *mappedFileDesc = new MemoryMappedFileDescriptor();
@@ -333,8 +331,6 @@ void *MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, u
     mappedFileDesc->permissions = permissions;
     mappedFileDesc->flags = MemoryDescriptor::MemoryMappedFile;
     mappedFileDesc->node = FileSystem::VNodeManager::ReferenceVnode(node);
-
-    m_vmemAlloc.allocateBlocks(((unsigned long) virtualAddress >> 12), (length >> 12) + ((length & 0xFFF) != 0));
 
     insertMemoryDescriptor(mappedFileDesc);
 
