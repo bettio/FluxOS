@@ -36,8 +36,11 @@ class BuddyAllocator
         int allocateBlocks(int blockIndex, int sizeInBlocks);
 
      private:
-        int freeAlignedBlock(int blockIndex, int order);
+        void freeAlignedBlock(int blockIndex, int order);
         int allocateAlignedBlocks(int blockIndex);
+        void prependNewNode(int index, int blockIndex);
+        void removeNode(int index, FreeChunk *fc);
+        void releaseNode(FreeChunk *fc);
         FreeChunk **m_lists;
         int m_orders;
 };

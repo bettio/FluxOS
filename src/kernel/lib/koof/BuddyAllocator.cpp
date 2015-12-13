@@ -68,6 +68,35 @@ void BuddyAllocator::init(int blocks)
     m_lists[m_orders - 1] = fc;
 }
 
+inline void BuddyAllocator::prependNewNode(int index, int blockIndex)
+{
+   FreeChunk *nC = new FreeChunk;
+   nC->blockIndex = blockIndex;
+   nC->prev = NULL;
+   nC->next = m_lists[index];
+   if (nC->next) {
+       nC->next->prev = nC;
+   }
+   m_lists[index] = nC;
+}
+
+inline void BuddyAllocator::removeNode(int index, FreeChunk *fc)
+{
+    if (fc->prev) {
+        fc->prev->next = fc->next;
+    } else {
+        m_lists[index] = fc->next;
+    }
+    if (fc->next) {
+        fc->next->prev = fc->prev;
+    }
+}
+
+inline void BuddyAllocator::releaseNode(FreeChunk *fc)
+{
+    delete fc;
+}
+
 int BuddyAllocator::allocateBlocks(int sizeInBlocks)
 {
     int index = log2i(sizeInBlocks, m_orders);
@@ -77,25 +106,19 @@ int BuddyAllocator::allocateBlocks(int sizeInBlocks)
     for (int i = index; i < m_orders; i++) {
         if (m_lists[i]) {
             FreeChunk *fc = m_lists[i];
+            removeNode(i, fc);
             // we just take the first one from the linked list
-            m_lists[i] = fc->next;
             foundBlockIndex = fc->blockIndex;
-            delete fc;
+            releaseNode(fc);
 
             int remainingFreeBlocks = (1 << i) - sizeInBlocks;
 
             DEBUG_MSG("BuddyAllocator::allocateBlocks(%i): ", sizeInBlocks);
             for (int j = i - 1; j >= 0; j--) {
                  if (remainingFreeBlocks & (1 << j)) {
-                     FreeChunk *nF = new FreeChunk;
-                     if (m_lists[j]) {
-                         m_lists[j]->prev = nF;
-                     }
-                     nF->blockIndex = foundBlockIndex + sizeInBlocks + remainingFreeBlocks - (1 << j);
+                     prependNewNode(j, foundBlockIndex + sizeInBlocks + remainingFreeBlocks - (1 << j));
                      DEBUG_MSG(" i: %i, s: %i. ", nF->blockIndex, (1 << j));
                      remainingFreeBlocks &= ~(1 << j);
-                     nF->next = m_lists[j];
-                     m_lists[j] = nF;
                  }
             }
             DEBUG_MSG("\n");
@@ -112,14 +135,8 @@ int BuddyAllocator::allocateAlignedBlocks(int blockIndex)
             FreeChunk *fc = m_lists[i];
             do {
                 if (fc->blockIndex == blockIndex) {
-                    if (fc->prev) {
-                        fc->prev->next = fc->next;
-                    } else {
-                        m_lists[i] = fc->next;
-                    }
-                    fc->next->prev = fc->prev;
-                    delete fc;
-
+                    removeNode(i, fc);
+                    releaseNode(fc);
                     return 1 << i;
                 }
 
@@ -132,38 +149,28 @@ int BuddyAllocator::allocateAlignedBlocks(int blockIndex)
 
 int BuddyAllocator::allocateBlocks(int blockIndex, int sizeInBlocks)
 {
+    DEBUG_MSG("BuddyAllocator::allocateBlocks(%i, %i): ", blockIndex, sizeInBlocks); 
     //I have no better idea than iterating all the chunks
     //let's start from bigger blocks, I really hope we'll find the right
     //free space block there before iterating a huge list of small chunks
     for (int i = m_orders - 1; i >= 0; i--) {
+        DEBUG_MSG("m_lists[i]: 0x%p\n", m_lists[i]);
         if (m_lists[i]) {
             FreeChunk *fc = m_lists[i];
+            DEBUG_MSG("   .m_lists[i]: fc->prev: 0x%p fc->next: 0x%p. ", fc->prev, fc->next);
             do {
                 int chunkSizeInBlocks = (1 << i);
                 if ((fc->blockIndex <= blockIndex) && (blockIndex <= fc->blockIndex + chunkSizeInBlocks)) {
-                    if (fc->prev) {
-                        fc->prev->next = fc->next;
-                    } else {
-                        m_lists[i] = fc->next;
-                    }
-                    if (fc->next) {
-                        fc->next->prev = fc->prev;
-                    }
+                    removeNode(i, fc);
                     int remainingFreeBlocks = blockIndex - fc->blockIndex;
                     int newBlockIndex = blockIndex - remainingFreeBlocks;
 
                     DEBUG_MSG("BuddyAllocator::allocateBlocks(%i, %i): ", blockIndex, sizeInBlocks);
                     for (int j = i - 1; j >= 0; j--) {
                         if (remainingFreeBlocks & (1 << j)) {
-                            FreeChunk *nF = new FreeChunk;
-                            if (m_lists[j]) {
-                                m_lists[j]->prev = nF;
-                            }
+                            prependNewNode(j, newBlockIndex);
                             DEBUG_MSG(" i: %i, s: %i. ", nF->blockIndex, (1 << j));
-                            nF->blockIndex = newBlockIndex;
                             newBlockIndex += (1 << j);
-                            nF->next = m_lists[j];
-                            m_lists[j] = nF;
                         }
                     }
                     DEBUG_MSG("\n");
@@ -191,20 +198,14 @@ int BuddyAllocator::allocateBlocks(int blockIndex, int sizeInBlocks)
                         remainingFreeBlocks = -blocksToRead;
                         for (int j = i - 1; j >= 0; j--) {
                             if (remainingFreeBlocks & (1 << j)) {
-                                FreeChunk *nF = new FreeChunk;
-                                if (m_lists[j]) {
-                                    m_lists[j]->prev = nF;
-                                }
-                                nF->blockIndex = newBlockIndex + remainingSize + remainingFreeBlocks - (1 << j);
+                                prependNewNode(j, newBlockIndex + remainingSize + remainingFreeBlocks - (1 << j));
                                 DEBUG_MSG(" i3: %i, s3: %i. ", nF->blockIndex, (1 << j));
                                 remainingFreeBlocks &= ~(1 << j);
-                                nF->next = m_lists[j];
-                                m_lists[j] = nF;
                             }
                         }
                         DEBUG_MSG("\n");
                     }
-                    delete fc;
+                    releaseNode(fc);
                     return blockIndex;
                 }
                 fc = fc->next;
@@ -214,23 +215,15 @@ int BuddyAllocator::allocateBlocks(int blockIndex, int sizeInBlocks)
     return -1;
 }
 
-int BuddyAllocator::freeAlignedBlock(int blockIndex, int order)
+void BuddyAllocator::freeAlignedBlock(int blockIndex, int order)
 {
-    FreeChunk *fc = new FreeChunk;
-    fc->prev = NULL;
-    fc->next = m_lists[order];
-    fc->blockIndex = blockIndex;
-    if (m_lists[order]) {
-        m_lists[order]->prev = fc;
-    }
-    m_lists[order] = fc;
+    prependNewNode(order, blockIndex);
 }
 
 void BuddyAllocator::freeBlocks(int firstBlockNumber, int sizeInBlocks)
 {
     int pos = firstBlockNumber;
-    int tmp = 0;
-    for (int i = 0; i < sizeof(int) * 8; i++) {
+    for (unsigned int i = 0; i < sizeof(int) * 8; i++) {
         if (pos & (1 << i)) {
             if (pos + (1 << i) <= firstBlockNumber + sizeInBlocks) {
                DEBUG_MSG("r: %i s: %i. ", pos, 1 << i);
