@@ -310,6 +310,7 @@ long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
     } else if (increment < 0) {
         int delta = (-increment) & ~(pageSize - 1);
         freeVirtualMemory((void *) ((unsigned long) endOfDescriptor - delta), delta);
+        PagingManager::removePages((void *) ((unsigned long) endOfDescriptor - delta), delta);
     }
 
     desc->length += increment;
