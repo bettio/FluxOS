@@ -280,7 +280,7 @@ int MemoryContext::allocateAnonymousMemory(void **baseAddress, unsigned long len
 
 int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints)
 {
-    void *foundBaseAddr = baseAddress;
+    void *foundBaseAddr = findEmptyMemoryExtent(baseAddress, length, hints);
     if (UNLIKELY(!foundBaseAddr)) {
         return -ENOMEM;
     }
