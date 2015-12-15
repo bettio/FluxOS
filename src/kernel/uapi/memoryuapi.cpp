@@ -73,7 +73,7 @@ inline MemoryDescriptor::Permissions protFlagsToPermissions(int prot)
         permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
     }
     if (prot & PROT_EXEC) {    
-        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::WritePermission);
+        permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ExecutePermission);
     }
     return permissions;
 }
