@@ -54,7 +54,6 @@ void UserProcsManager::processLoader()
 
 
     memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
-    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0);
 
     register long tmpEax asm("%eax");
 
