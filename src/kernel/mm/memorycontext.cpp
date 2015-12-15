@@ -116,7 +116,7 @@ MemoryDescriptor *MemoryContext::findMemoryDescriptor(void *address) const
     DEBUG_MSG("MemoryContext::findMemoryDescriptor(0x%p)\n", address);
     for (int i = 0; i < m_descriptors->count(); i++) {
         MemoryDescriptor *d = m_descriptors->at(i);
-        DEBUG_MSG("checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + ((d->length & 0xFFFFF000) + 0x1000));
+        DEBUG_MSG("checking: 0x%x - 0x%x\n", d->baseAddress, d->baseAddress + roundToPageMultiples(d->length));
         if (((unsigned long) address >= (unsigned long) d->baseAddress) &&
             ((unsigned long) address < ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length))) {
             DEBUG_MSG("found\n");
