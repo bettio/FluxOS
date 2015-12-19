@@ -49,6 +49,7 @@
 #include <task/processcontrolblock.h>
 #include <task/task.h>
 #include <task/archthreadsmanager.h>
+#include <task/userprocessimage.h>
 
 #define SYSCALLTABLE_SIZE 256
 #define IA32_SYSCALL_TYPE uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
@@ -154,7 +155,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(8, (void *) creat);
     registerSyscall(9, (void *) link);
     registerSyscall(10, (void *) unlink);
-    registerSyscall(11, (void *) UserProcsManager::execve);
+    registerSyscall(11, (void *) UserProcessImage::execve);
     registerSyscall(12, (void *) chdir);
     registerSyscall(13, (void *) SystemTimer::time);
     registerSyscall(14, (void *) mknod);

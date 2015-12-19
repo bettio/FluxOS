@@ -25,6 +25,7 @@
 #include <core/archmanager.h>
 #include <core/syscallsmanager.h>
 #include <drivers/vt.h>
+#include <task/userprocessimage.h>
 #include <arch/ia32/core/idt.h>
 #include <arch/ia32/drivers/ata.h>
 #include <arch/ia32/drivers/keyboard.h>
@@ -43,6 +44,8 @@
 
 #define ENABLE_VESAFB 1
 #define ENABLE_EXPERIMENTAL_DRIVERS 0
+
+void createInitProcess();
 
 void ArchManager::Init()
 {
@@ -103,7 +106,7 @@ void ArchManager::InitHardware()
 
 void ArchManager::StartInit()
 {
-    UserProcsManager::createInitProcess();
+    createInitProcess();
 }
 
 //try to triple fault to reset the CPU

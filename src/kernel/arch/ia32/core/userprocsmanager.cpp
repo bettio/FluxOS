@@ -20,8 +20,9 @@
  *   Date: 06/12/2011                                                      *
  ***************************************************************************/
 
-#include <arch/ia32/core/userprocsmanager.h>
+#include <task/userprocsmanager.h>
 
+#include <arch/ia32/core/registersframe.h>
 #include <arch/ia32/mm/pagingmanager.h>
 #include <core/elfloader.h>
 #include <mm/memorycontext.h>
@@ -31,11 +32,16 @@
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
 
-char *UserProcsManager::executable;
-char *UserProcsManager::args;
+char *executable;
+char *args;
 void *regs;
 
-void UserProcsManager::processLoader()
+static inline int padToWord(int addr)
+{
+    return (addr & 0xFFFFFFFC) + 4;
+}
+
+void processLoader()
 {
     ElfLoader loader;
     int res = loader.loadExecutableFile(executable);
@@ -76,13 +82,13 @@ void UserProcsManager::processLoader()
     while(1);
 }
 
-void UserProcsManager::createInitProcess()
+void createInitProcess()
 {
     executable = strdup("/sbin/init");
     args = strdup("");
     ProcessControlBlock *process = Task::CreateNewTask("init");
     ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
-    ArchThreadsManager::makeExecutable(thread, UserProcsManager::processLoader, 0, 0);
+    ArchThreadsManager::makeExecutable(thread, processLoader, 0, 0);
     thread->parentProcess = process;
     thread->status = Running;
 
@@ -94,7 +100,7 @@ void UserProcsManager::createInitProcess()
     Scheduler::threads->append(thread);
 }
 
-void UserProcsManager::setupChild()
+void setupChild()
 {
     asm("movl %0, %%esp\n"
         "addl $32, %0\n" 
@@ -126,64 +132,87 @@ int UserProcsManager::fork(void *stack)
     return process->pid;
 }
 
-int UserProcsManager::execve(const char *_filename, char *const _argv[], char *const _envp[])
+void UserProcsManager::setupStackAndRegisters(RegistersFrame *frame, void *entryPoint, void *userSpaceStack, unsigned long userStackSize,
+                            int argc, int argsSize, int envc, int envSize, int auxc, int auxSize,
+                            char **argsList[], char **argsBlock,
+                            char **envList[], char **envBlock,
+                            char **auxList[], char **auxBlock)
 {
-    if (!_filename) {
-        printk("Error: execve: null filename\n");
-        return -EFAULT;
-    }
-    if (!_argv[1]) {
-        printk("Error: execve: null argument\n");
-        return -EFAULT;
-    }
-    const char *filename = strdup(_filename);
-    const char *argv = strdup(_argv[1]);
+    unsigned long varsBlockSize = sizeof(unsigned long) +
+                                  sizeof(char *) * (argc + 1) + sizeof(char *) * (envc + 1) + sizeof(void *) * 2 * auxc
+                                  + padToWord(argsSize) + padToWord(envSize) + padToWord(auxSize);
 
-    PagingManager::cleanUserspace();
+    void *sp =  (void *) (((unsigned long) userSpaceStack) + userStackSize - varsBlockSize);
+    frame->null = (uint32_t) sp;
+    frame->eip = (uint32_t) entryPoint;
 
-    ElfLoader loader;
-    int res = loader.loadExecutableFile(filename);
-    if (res < 0 || !loader.isValid()){
-        printk("Cannot load executable file: %s error: %i\n", filename, res);
-        //exit
-        Scheduler::currentThread()->status = UWaiting;
-        Scheduler::currentThread()->parentProcess->status = TERMINATED;
-        while(1);
-    }
+    unsigned long *vars = (unsigned long *) sp;
+    /*
+     MIPS ABI, user process stack:
+     - Lower address
+     - argc <- SP
+     - pointers array to args
+     - 0
+     - pointers array to env vars
+     - 0
+     - aux vector
+     - 0
+     - Args block (args array point to this)
+     - env block (env vars array point to this)
+     - Higher address
+    */
+    int pos = 0;
 
-    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) USER_DEFAULT_ARGS_ADDR, 4096,
+    vars[pos] = argc;
+    pos++;
+
+    *argsList = (char **) &vars[pos];
+    pos += argc + 1;
+
+    *envList = (char **) &vars[pos];
+    pos += envc + 1;
+
+    *auxList = (char **) &vars[pos];
+    pos += (auxc + 1)*2;
+
+    *argsBlock = (char *) &vars[pos];
+    pos += (argsSize / 4) + 1;
+
+    *envBlock = (char *) &vars[pos];
+    pos += (envSize / 4) + 1;
+
+    *auxBlock = (char *) &vars[pos];
+}
+
+RegistersFrame *UserProcsManager::createNewRegistersFrame()
+{
+    return new RegistersFrame;
+}
+
+void *UserProcsManager::createUserProcessStack(unsigned int size)
+{
+    void *stackAddr = NULL;
+    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory(&stackAddr, size,
                                                     (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-                                                    MemoryContext::FixedHint);
-
-    strncpy((char *) USER_DEFAULT_ARGS_ADDR, argv, 4096);
-    char *arg = (char *) USER_DEFAULT_ARGS_ADDR;
-
-    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) (USER_DEFAULT_STACK_ADDR - 1024), 2048,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-                                                    MemoryContext::FixedHint);
+                                                    MemoryContext::NoHints);
+    return stackAddr;
+}
 
 
-    memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
-    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 4, 0, 1);
-
+void UserProcsManager::startRegsFrame(RegistersFrame *frame)
+{
     register long tmpEax asm("%eax");
 
-    asm("movl $0xD0000000, %%esp\n" /* 0xD0000000 = USER_DEFAULT_STACK_ADDR */ 
-        "pushl %1\n"
-        "pushl %2\n"
-        "pushl %3\n"
-        "movl %%esp, %4\n"
+    asm(
         "pushl $0x23\n"
-        "pushl %4\n"
+        "pushl %2\n"
         "pushf\n"
         "pushl $0x1B\n"
         "pushl %0\n"
-        "movl $0x23, %4\n"
-        "mov %4, %%ds\n"
-        "mov %4, %%es\n"
-        "mov %4, %%fs\n"
-        "mov %4, %%gs\n"
-        "iret\n" : : "r" (loader.entryPoint()), "r" (arg), "r" (filename), "r" (1 + (strlen(arg) != 0)), "r" (tmpEax));
-
-    return 0;
+        "movl $0x23, %1\n"
+        "mov %1, %%ds\n"
+        "mov %1, %%es\n"
+        "mov %1, %%fs\n"
+        "mov %1, %%gs\n"
+        "iret\n" : : "r" (frame->eip), "r" (tmpEax), "r" (frame->null));
 }

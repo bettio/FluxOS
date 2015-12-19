@@ -11,9 +11,7 @@ if (NOT UMM)
 endif (NOT UMM)
 
 if (NOT UMM)
-if (NOT NATIVE_IA32)
     set(KERNEL_SRCS ${KERNEL_SRCS}
         task/userprocessimage.cpp
     )
-endif (NOT NATIVE_IA32)
 endif (NOT UMM)

@@ -23,9 +23,11 @@
 #include <task/userprocessimage.h>
 
 #include <cstring.h>
+#include <arch/ia32/mm/pagingmanager.h>
 #include <core/elfloader.h>
 #include <core/printk.h>
 #include <core/systemerrors.h>
+#include <mm/memorycontext.h>
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>
@@ -177,12 +179,28 @@ int UserProcessImage::setupInitProcessImage()
 
     //TODO: remove this
     UserProcsManager::startRegsFrame(regsFrame);
+
+    return 0;
 }
 
 //TODO: not completely implemented
 int UserProcessImage::execve(userptr const char *filename, userptr char *const argv[], userptr char *const envp[])
 {
     int ret = 0;
+
+    if (filename == NULL) {
+        printk("Invalid executable path\n");
+        return -ENOEXEC;
+    }
+    if (argv == NULL) {
+        printk("Invalid arguments\n");
+        return -EINVAL;
+    }
+    if (envp == NULL) {
+        printk("Invalid environment\n");
+        return -EINVAL;
+    }
+    const char *executablePath = strdup(filename);
 
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
 
@@ -205,9 +223,29 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
         return ret;
     }
 
+    //We don't need previous address space anymore, but we still keep it so in case of failure we just restore it
+    ThreadControlBlock *thread = Scheduler::currentThread();
+    MemoryContext *previousMemoryContext = thread->parentProcess->memoryContext;
+    void *previousAddressSpace = thread->addressSpaceTable;
+    void *newAddressSpace = (void *) PagingManager::createPageDir();
+    if (IS_NULL_PTR(newAddressSpace)) {
+        printk("Error: cannot create a new address space");
+        return -ENOMEM;
+    }
+    MemoryContext *newMemoryContext = new MemoryContext();
+    if (IS_NULL_PTR(newMemoryContext)) {
+        //TODO newAddressSpace
+        printk("Error: cannot create a new memory context\n");
+        return -ENOMEM;
+    }
+    thread->addressSpaceTable = newAddressSpace;
+    thread->parentProcess->memoryContext = newMemoryContext;
+
     void *entryPoint;
-    ret = loadExecutable(filename, &entryPoint);
+    ret = loadExecutable(executablePath, &entryPoint);
     if (UNLIKELY(ret < 0)) {
+        thread->addressSpaceTable = previousAddressSpace;
+        thread->parentProcess->memoryContext = previousMemoryContext;
         return ret;
     }
 
@@ -232,6 +270,17 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 
     buildAuxVector(auxList, auxBlock);
 
+    if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096,
+            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+            MemoryContext::FixedHint) < 0)
+    {
+        printk("Error: cannot allocate data segment for brk\n");
+        return -ENOMEM;
+    }
+    thread->parentProcess->dataSegmentEnd = (void *) (((unsigned long ) thread->parentProcess->dataSegmentStart) + 4096);
+
     //TODO: remove this
     UserProcsManager::startRegsFrame(regsFrame);
+
+    return 0;
 }

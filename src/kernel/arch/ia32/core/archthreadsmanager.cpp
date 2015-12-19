@@ -22,25 +22,11 @@
 
 #include <task/archthreadsmanager.h>
 
+#include <arch/ia32/core/registersframe.h>
 #include <arch/ia32/mm/pagingmanager.h>
 #include <cstdlib.h>
 #include <cstring.h>
 #include <stdint.h>
-
-struct RegistersFrame
-{
-    uint32_t edi;
-    uint32_t esi;
-    uint32_t ebp;
-    uint32_t null;
-    uint32_t ebx;
-    uint32_t edx;
-    uint32_t ecx;
-    uint32_t eax;
-    uint32_t eip;
-    uint32_t cs;
-    uint32_t eflags;
-};
 
 /**
  * @return a pointer to the the stack memory area, useful to free() it. Don't use it for the stack.
