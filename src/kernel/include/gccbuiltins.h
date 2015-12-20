@@ -33,4 +33,6 @@
 #define READ_PREFETCH_L(addr, locality) __builtin_prefetch(addr, 0, locality)
 #define WRITE_PREFETCH_L(addr, locality)  __builtin_prefetch(addr, 1, locality)
 
+#define IS_NULL_PTR(x) __builtin_expect(!!(x == NULL), 0)
+
 #endif
