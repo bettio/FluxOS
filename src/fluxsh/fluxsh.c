@@ -38,9 +38,11 @@ void shell_main(void);
 void command_switch(const char *c);
 
 char *cd;
+char **environ;
 
 int main(int argc, char *argv[], char *envp[])
 {
+        environ = envp;
 	char *c = malloc(256);
 
 	cd = malloc(256);
@@ -109,7 +111,9 @@ void command_switch(const char *c)
             int pid = fork();
             if (!pid){
                 char *a[] = {tmp, myargs, 0};
-                execve(tmp, a, 0);
+                if (execve(tmp, a, environ) < 0) {
+                    printf("FluxSH: cannot execute %s\n");
+                }
             }
 
 			waitpid(pid, &status, 0);
