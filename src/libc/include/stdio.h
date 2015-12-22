@@ -52,6 +52,7 @@ extern FILE *fopen(const char *path, const char *mode);
 extern FILE *fdopen(int fildes, const char *mode);
 
 extern size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t getc(FILE *stream);
 extern size_t fwrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream);
 
 extern int fputc(int c, FILE *stream);

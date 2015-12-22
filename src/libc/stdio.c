@@ -72,6 +72,11 @@ size_t fread(void *ptr, size_t size, size_t nmemb, FILE *stream){
 	return read(FD(stream), ptr, size*nmemb); //TODO: fix return value
 }
 
+size_t getc(FILE *stream){
+        char c;
+	return (read(FD(stream), &c, 1) == 1) ? c : (size_t) -1;
+}
+
 size_t fwrite(const  void  *ptr,  size_t  size,  size_t  nmemb,  FILE *stream){
 	return write(FD(stream), ptr, size*nmemb); //TODO: fix return value
 }
@@ -311,4 +316,19 @@ int fclose(FILE *fp)
 {
 	//ASSUME: EOF == -1
 	return close(FD(fp));
+}
+
+int ferror(FILE *stream)
+{
+    return 0;
+}
+
+void clearerr(FILE *stream)
+{
+
+}
+
+int fileno(FILE *stream)
+{
+    return FD(stream);
 }
