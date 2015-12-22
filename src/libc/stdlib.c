@@ -200,3 +200,9 @@ void *_Znwj(unsigned int s)
 {
 	return malloc(s);
 }
+
+//TODO
+int isatty(int fd)
+{
+    return 1;
+}
