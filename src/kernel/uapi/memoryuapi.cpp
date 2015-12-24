@@ -95,14 +95,16 @@ void *MemoryUAPI::brk(void *ptr)
         MemoryDescriptor *dataSegmentDescriptor = process->memoryContext->findMemoryDescriptor(process->dataSegmentStart);
         if (UNLIKELY(!dataSegmentDescriptor)) {
             printk("Error: data segment does not point to any valid MemoryDescriptor\n");
+            //I think we should crash here
             return NULL;
         }
 
         if (ptr > process->dataSegmentEnd) {
             // check if we are going to overlap any existing mapping
-            if (UNLIKELY(process->memoryContext->countDescriptorsByRange(dataSegmentDescriptor, (void *) ((unsigned long) ptr - (unsigned long) process->dataSegmentEnd)))) {
+            if (UNLIKELY(process->memoryContext->countDescriptorsByRange(process->dataSegmentEnd, ptr))) {
                 printk("brk: Failed to increase data segment due to overlapping memory memory region\n");
-                return (void *) -ENOMEM;
+                //On error return the same unchanged data segment
+                return process->dataSegmentEnd;
             }
         } else if (ptr < process->dataSegmentEnd) {
             // it doesn't make any sense to shrink the data segment to a negative size
@@ -110,7 +112,8 @@ void *MemoryUAPI::brk(void *ptr)
             // error that has to be returned
             if (UNLIKELY(ptr < process->dataSegmentStart)) {
                 printk("brk: cannot shrink\n");
-                return (void *) -ENOMEM;
+                //On error return the same unchanged data segment
+                return process->dataSegmentEnd;
             }
         }
 
