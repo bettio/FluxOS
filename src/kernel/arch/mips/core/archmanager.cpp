@@ -27,6 +27,7 @@
 #include <arch/mips/mm/pagingmanager.h>
 #include <arch/mips/core/exceptionsvector.h>
 #include <core/syscallsmanager.h>
+#include <task/scheduler.h>
 #include <task/userprocessimage.h>
 
 #include <drivers/vt.h>
@@ -52,6 +53,10 @@ void ArchManager::InitMemoryManagment()
 void ArchManager::InitMultitasking()
 {
     SyscallsManager::init();
+    Scheduler::init();
+    ThreadControlBlock *thread = new ThreadControlBlock;
+    Scheduler::threads->append(thread);
+    thread->status = Running;
 }
 
 void ArchManager::InitHardware()

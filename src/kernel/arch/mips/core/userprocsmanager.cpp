@@ -101,6 +101,10 @@ void *UserProcsManager::createUserProcessStack(unsigned int size)
     return malloc(size);
 }
 
+void UserProcsManager::makeUserThread(ThreadControlBlock *thread)
+{
+}
+
 //TODO: remove this
 void UserProcsManager::startRegsFrame(RegistersFrame *frame)
 {

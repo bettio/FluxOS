@@ -23,7 +23,6 @@
 #include <task/userprocessimage.h>
 
 #include <cstring.h>
-#include <arch/ia32/mm/pagingmanager.h>
 #include <core/elfloader.h>
 #include <core/printk.h>
 #include <core/systemerrors.h>
@@ -34,6 +33,14 @@
 #include <task/userprocsmanager.h>
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
+
+#include <arch.h>
+#ifdef ARCH_IA32_NATIVE
+#include <arch/ia32/mm/pagingmanager.h>
+#endif
+#ifdef ARCH_MIPS
+ #include <arch/mips/mm/pagingmanager.h>
+#endif
 
 #define INIT_USER_STACK_SIZE 8192
 #define MAX_ENV_VARS_NUMBER 10
@@ -130,12 +137,9 @@ void UserProcessImage::buildAuxVector(userptr char *auxTable[], userptr char *au
 
 int UserProcessImage::setupInitProcessImage()
 {
-    Scheduler::init();
-    ThreadControlBlock *thread = new ThreadControlBlock;
-    Scheduler::threads->append(thread);
+    ThreadControlBlock *thread = Scheduler::currentThread();
     ProcessControlBlock *process = Task::CreateNewTask("init");
     thread->parentProcess = process;
-    thread->status = Running;
 
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
 
@@ -177,7 +181,16 @@ int UserProcessImage::setupInitProcessImage()
     buildNewEnvironment(env, envc, envList, envBlock);
     buildAuxVector(auxList, auxBlock);
 
-    //TODO: remove this
+    if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
+            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
+            MemoryContext::FixedHint) < 0)
+    {
+        printk("Error: cannot allocate data segment for brk\n");
+        return -ENOMEM;
+    }
+    thread->parentProcess->dataSegmentEnd = (void *) (((unsigned long ) thread->parentProcess->dataSegmentStart) + 4096);
+
+    UserProcsManager::makeUserThread(thread);
     UserProcsManager::startRegsFrame(regsFrame);
 
     return 0;
@@ -270,7 +283,7 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 
     buildAuxVector(auxList, auxBlock);
 
-    if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096,
+    if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
             MemoryContext::FixedHint) < 0)
     {

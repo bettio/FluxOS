@@ -24,6 +24,8 @@
 
 #include <arch/ia32/core/registersframe.h>
 #include <arch/ia32/mm/pagingmanager.h>
+#include <arch/ia32/core/tss.h>
+#include <arch/ia32/mm/pagingmanager.h>
 #include <core/elfloader.h>
 #include <mm/memorycontext.h>
 #include <task/archthreadsmanager.h>
@@ -32,72 +34,11 @@
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
 
-char *executable;
-char *args;
 void *regs;
 
 static inline int padToWord(int addr)
 {
     return (addr & 0xFFFFFFFC) + 4;
-}
-
-void processLoader()
-{
-    ElfLoader loader;
-    int res = loader.loadExecutableFile(executable);
-    if (res < 0 || !loader.isValid()){
-        printk("Cannot load executable file: %s error: %i\n", executable, res);
-        //exit
-        Scheduler::currentThread()->status = UWaiting;
-        Scheduler::currentThread()->parentProcess->status = TERMINATED;
-	while(1);
-    }
-
-    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory((void *) (USER_DEFAULT_STACK_ADDR - 1024), 2048,
-                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-                                                    MemoryContext::FixedHint);
-
-
-
-    memset((void *) (USER_DEFAULT_STACK_ADDR - 1024), 0, 2048);
-
-    register long tmpEax asm("%eax");
-
-    asm("movl $0xD0000000, %%esp\n" /* 0xD0000000 = USER_DEFAULT_STACK_ADDR */ 
-        "pushl %1\n"
-        "pushl %2\n"
-        "pushl %3\n"
-        "movl %%esp, %4\n"
-        "pushl $0x23\n"
-        "pushl %4\n"
-        "pushf\n"
-        "pushl $0x1B\n"
-        "pushl %0\n"
-        "movl $0x23, %4\n"
-        "mov %4, %%ds\n"
-        "mov %4, %%es\n"
-        "mov %4, %%fs\n"
-        "mov %4, %%gs\n"
-        "iret\n" : : "r" (loader.entryPoint()), "r" (args), "r" (executable), "r" (1 + (strlen(args) != 0)), "r" (tmpEax));
-    while(1);
-}
-
-void createInitProcess()
-{
-    executable = strdup("/sbin/init");
-    args = strdup("");
-    ProcessControlBlock *process = Task::CreateNewTask("init");
-    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
-    ArchThreadsManager::makeExecutable(thread, processLoader, 0, 0);
-    thread->parentProcess = process;
-    thread->status = Running;
-
-    #ifndef NO_MMU
-        thread->addressSpaceTable = (void *) PagingManager::createPageDir(); 
-    #endif
-
-    process->mainThread = thread;
-    Scheduler::threads->append(thread);
 }
 
 void setupChild()
@@ -198,6 +139,15 @@ void *UserProcsManager::createUserProcessStack(unsigned int size)
     return stackAddr;
 }
 
+void UserProcsManager::makeUserThread(ThreadControlBlock *thread)
+{
+    Scheduler::inhibitPreemption();
+    void *tmpStack;
+    ArchThreadsManager::allocateKernelStack((void **) &tmpStack);
+    thread->kernelStack = tmpStack;
+    TSS::setKernelStack(thread->kernelStack);
+    Scheduler::restorePreemption();
+}
 
 void UserProcsManager::startRegsFrame(RegistersFrame *frame)
 {

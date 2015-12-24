@@ -24,6 +24,7 @@
 #define _USER_PROCS_MANAGER_H
 
 struct RegistersFrame;
+struct ThreadControlBlock;
 
 class UserProcsManager
 {
@@ -36,6 +37,7 @@ class UserProcsManager
         static int fork(void *stack);
         static void *createUserProcessStack(unsigned int size);
         static void startRegsFrame(RegistersFrame *frame);
+        static void makeUserThread(ThreadControlBlock *thread);
         static RegistersFrame *createNewRegistersFrame();
 };
 

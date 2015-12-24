@@ -45,8 +45,6 @@
 #define ENABLE_VESAFB 1
 #define ENABLE_EXPERIMENTAL_DRIVERS 0
 
-void createInitProcess();
-
 void ArchManager::Init()
 {
     GDT::init();
@@ -106,7 +104,7 @@ void ArchManager::InitHardware()
 
 void ArchManager::StartInit()
 {
-    createInitProcess();
+    UserProcessImage::setupInitProcessImage();
 }
 
 //try to triple fault to reset the CPU

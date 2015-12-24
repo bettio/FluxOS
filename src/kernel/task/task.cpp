@@ -59,16 +59,6 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
             return 0;
         }
 
-    if (process->memoryContext->allocateAnonymousMemory(&process->dataSegmentStart, 4096,
-            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-            MemoryContext::FixedHint) < 0)
-    {
-        printk("Error: cannot allocate data segment for brk\n");
-        return 0;
-    }
-    DEBUG_MSG("process->dataSegmentStart: %p\n", process->dataSegmentStart);
-    process->dataSegmentEnd = (void *) (((unsigned long ) process->dataSegmentStart) + 4096);
-
 	//stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
     fdesc->flags = O_RDONLY;
@@ -93,7 +83,6 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	    
     process->currentWorkingDirNode = cwdNode;
     process->umask = 0;
-
     process->status = READY;
 
 	return process;
@@ -127,18 +116,6 @@ ProcessControlBlock *Task::NewProcess(const char *name)
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
     process->umask = parent->umask;
-
-    if (process->memoryContext->allocateAnonymousMemory(&process->dataSegmentStart, 4096,
-            (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-            MemoryContext::FixedHint) < 0)
-    {
-
-         printk("Error: cannot allocate data segment for brk\n");
-         return 0;
-    }
-    DEBUG_MSG("process->dataSegmentStart: %p\n", process->dataSegmentStart);
-    process->dataSegmentEnd = (void *) (((unsigned long ) process->dataSegmentStart) + 4096);
-
     process->status = READY;
 
     return process;
