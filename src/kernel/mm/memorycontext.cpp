@@ -151,17 +151,17 @@ QList<MemoryDescriptor *> *MemoryContext::findMemoryDescriptorsByRange(void *low
 
 int MemoryContext::countDescriptorsByRange(void *low, void *hi) const
 {
-//    printk("range: %p - %p\n", low, hi);
+    DEBUG_MSG("MemoryContext::countDescriptorsByRange(0x%p, 0x%p)\n", low, hi);
     int count = 0;
 
     for (int i = 0; i < m_descriptors->count(); i++) {
         MemoryDescriptor *d = m_descriptors->at(i);
-//        printk("checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
+        DEBUG_MSG("count checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
         if (
             ( ((unsigned long) low) <= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) ) &&
             ( ((unsigned long) hi) >= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) )
            ) {
-//        printk("found: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
+            DEBUG_MSG("count found: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
             count++;
         }
     }
