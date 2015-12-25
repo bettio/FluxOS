@@ -151,6 +151,10 @@ void UserProcsManager::makeUserThread(ThreadControlBlock *thread)
 
 void UserProcsManager::startRegsFrame(RegistersFrame *frame)
 {
+    uint32_t esp = frame->null;
+    uint32_t eip = frame->eip;
+    delete frame;
+
     register long tmpEax asm("%eax");
 
     asm(
@@ -164,5 +168,5 @@ void UserProcsManager::startRegsFrame(RegistersFrame *frame)
         "mov %1, %%es\n"
         "mov %1, %%fs\n"
         "mov %1, %%gs\n"
-        "iret\n" : : "r" (frame->eip), "r" (tmpEax), "r" (frame->null));
+        "iret\n" : : "r" (eip), "r" (tmpEax), "r" (esp));
 }
