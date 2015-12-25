@@ -26,23 +26,39 @@
 #define SIGSEGV  11
 
 #include <task/processcontrolblock.h>
-#include <ListWithHoles>
+#include <QHash>
 #include <arch.h>
 
 class ThreadControlBlock;
 
 class Task{
 	public:
+            class ProcessIterator
+            {
+                public:
+                    QHash<int, ProcessControlBlock *>::const_iterator hIt;
+
+                    bool operator!=(const ProcessIterator other) const;
+                    bool operator==(const ProcessIterator other) const;
+                    ProcessIterator &operator++();
+                    inline int pid() { return hIt.value()->pid; }
+            };
+
         static void init();
+        static ProcessIterator processEnumerationBegin();
+        static ProcessIterator processEnumerationEnd();
         static ProcessControlBlock *CreateNewTask();
         static ProcessControlBlock *NewProcess();
-        static ListWithHoles<ProcessControlBlock *> *processes;
+        static QHash<int, ProcessControlBlock *> *processes;
+        static bool isValidPID(int pid);
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);
         static int waitpid(int pid, int *status, int options);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static int kill(int pid, int signal);
         static void notify(ProcessControlBlock *p);
+        private:
+            static int lastUsedPID;
 };
 
 #endif

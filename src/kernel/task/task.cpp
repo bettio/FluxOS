@@ -27,24 +27,66 @@
 #include <filesystem/fscalls.h>
 #include <arch.h>
 #include <ListWithHoles>
+#include <core/systemerrors.h>
 
 #define ENABLE_DEBUG_MSG 0
 #include <debugmacros.h>
 
-ListWithHoles<ProcessControlBlock *> *Task::processes;
+QHash<int, ProcessControlBlock *> *Task::processes;
+int Task::lastUsedPID;
+
+bool Task::ProcessIterator::operator!=(const ProcessIterator other) const
+{
+    return other.hIt != hIt;
+}
+
+bool Task::ProcessIterator::operator==(const ProcessIterator other) const
+{
+    return other.hIt == hIt;
+}
+
+Task::ProcessIterator &Task::ProcessIterator::operator++()
+{
+    ++hIt;
+    return *this;
+}
 
 void Task::init()
 {
-    processes = new ListWithHoles<ProcessControlBlock *>();
+    processes = new QHash<int, ProcessControlBlock *>();
+    if (IS_NULL_PTR(processes)) {
+        kernelPanic("failed to init processes hash table.");
+    }
+}
+
+bool Task::isValidPID(int pid)
+{
+    return processes->value(pid) != NULL;
+}
+
+Task::ProcessIterator Task::processEnumerationBegin()
+{
+    ProcessIterator it;
+    it.hIt = processes->constBegin();
+    return it;
+}
+
+Task::ProcessIterator Task::processEnumerationEnd()
+{
+    ProcessIterator it;
+    it.hIt = processes->constEnd();
+    return it;
 }
 
 ProcessControlBlock *Task::CreateNewTask()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
 
+    lastUsedPID++;
+
 	ProcessControlBlock *process = new ProcessControlBlock;
-        int newTaskPid = processes->add(process);
-	process->pid = newTaskPid;
+        processes->insert(lastUsedPID, process);
+	process->pid = lastUsedPID;
         process->uid = 0;
 	process->gid = 0;
         process->parent = 0;
@@ -91,11 +133,13 @@ ProcessControlBlock *Task::NewProcess()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
 
+    lastUsedPID++;
+
     ProcessControlBlock *parent = Scheduler::currentThread()->parentProcess;
 
     ProcessControlBlock *process = new ProcessControlBlock;
-    int newTaskPid = processes->add(process);
-    process->pid = newTaskPid;
+    processes->insert(lastUsedPID, process);
+    process->pid = lastUsedPID;
     process->uid = parent->uid;
     process->gid = parent->gid;
     process->parent = parent;
@@ -139,17 +183,17 @@ int Task::waitpid(int pid, int *status, int options)
     ProcessControlBlock *p;
 
     if (pid != -1){
-        if ((pid >= Task::processes->size())) return -ECHILD;
-    
-        p = Task::processes->at(pid);
-        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) return -ECHILD;
+        p = Task::processes->value(pid);
+        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) {
+            return -ECHILD;
+        }
 
         while (p->status != TERMINATED) Scheduler::waitForEvents();
     
     }else{
         while (1){
             for (int i = 0; i < Task::processes->size(); i++){
-                p = Task::processes->at(i);
+                p = Task::processes->value(i);
                 if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)) break;
             }
             if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)){
@@ -184,8 +228,7 @@ int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
 
 int Task::kill(int pid, int signal)
 {
-    if ((pid >= Task::processes->size())) return -ESRCH;
-    ProcessControlBlock *target = Task::processes->at(pid);
+    ProcessControlBlock *target = Task::processes->value(pid);
     if (target == NULL) return -ESRCH;
 
     ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;
