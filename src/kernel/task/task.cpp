@@ -198,6 +198,10 @@ int Task::kill(int pid, int signal)
             //TODO: kill all threads
             terminateProcess(target->mainThread, -1);
             return 0;
+        case SIGSEGV:
+            //TODO: kill all threads
+            terminateProcess(target->mainThread, -1);
+            return 0;
 
         default:
             return -EINVAL;

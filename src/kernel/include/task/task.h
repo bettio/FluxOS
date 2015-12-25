@@ -23,6 +23,7 @@
 #define _TASK_TASK_H
 
 #define SIGKILL 9
+#define SIGSEGV  11
 
 #include <task/processcontrolblock.h>
 #include <ListWithHoles>

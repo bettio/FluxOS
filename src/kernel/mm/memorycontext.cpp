@@ -28,6 +28,7 @@
 #include <core/printk.h>
 #include <filesystem/vnodemanager.h>
 #include <task/scheduler.h>
+#include <task/task.h>
 
 #ifdef ARCH_IA32_NATIVE
 #include <arch/ia32/mm/pagingmanager.h>
@@ -68,7 +69,8 @@ void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager
     }
 
     printk("[Process %i] Segmentation Fault: instruction at 0x%p tried to %s %s memory address 0x%p.\n", pid, faultPC, memoryOperationToString(op), memoryDescriptorTypeString, faultAddress);
-    while(1);
+    Task::kill(pid, SIGSEGV);
+    //TODO: do not execute anything else
 }
 
 MemoryContext::MemoryContext()
