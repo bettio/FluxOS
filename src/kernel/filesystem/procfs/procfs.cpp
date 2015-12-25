@@ -28,6 +28,11 @@
 #include <filesystem/vfs.h>
 #include <filesystem/procfs/procfs.h>
 #include <filesystem/vnodemanager.h>
+#include <task/task.h>
+
+#define PID_TO_VNODE_ID(pid) (1024 + pid)
+#define VNODE_ID_TO_PID(id) (id - 1024)
+#define IS_PID(id) (id > 1024)
 
 using namespace FileSystem;
 
@@ -86,6 +91,20 @@ int ProcFS::dupfd(VNode *node, FileDescriptor *fdesc)
      return -EINVAL;
 }
 
+bool isNum(const char *s)
+{
+    if (*s == 0) {
+        return false;
+    }
+    while (*s) {
+        if ((*s < '0') || (*s > '9')) {
+            return false;
+        }
+        s++;
+    }
+    return true;
+}
+
 int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype)
 {
 	if ((node->vnid.id == 1) && (!strcmp("version", name))){
@@ -117,7 +136,21 @@ int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntyp
 		*vnd = tmp;
 
 		return 0;
-	}
+    }else if ((node->vnid.id == 1) && (isNum(name))) {
+        int pid = atoi(name);
+        if (!Task::isValidPID(pid)) {
+            *vnd = 0;
+            return -ENOENT;
+        }
+        VNodeManager::GetVnode(node->mount->mountId, PID_TO_VNODE_ID(pid), vnd);
+
+        VNode *tmp = *vnd;
+        tmp->mount = node->mount;
+
+        *vnd = tmp;
+
+        return 0;
+    }
 
 	*vnd = 0;
 
@@ -139,9 +172,9 @@ int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 		}else{
 		    return 0;
 		}
-	}
+    }
 
-	return 0;
+    return 0;
 }
 
 int ProcFS::readlink(VNode *node, char *buffer, size_t bufsize)
@@ -158,6 +191,7 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 {
     int size = 0;
 
+    if ((node->vnid.id == 1)) {
 	strcpy(dirp->d_name, ".");
 	dirp->d_reclen = sizeof(dirent);
 	dirp->d_off = 268;
@@ -177,8 +211,30 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 	dirp->d_off = 268;
     size += dirp->d_reclen;
 
-	return size;
+    for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
+        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+        char buf[32];
+        itoaz(it.pid(), buf, 10);
+        strcpy(dirp->d_name, buf);
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = 268;
+        size += dirp->d_reclen;
+    }
+    } else if (IS_PID(node->vnid.id)) {
+	strcpy(dirp->d_name, ".");
+	dirp->d_reclen = sizeof(dirent);
+	dirp->d_off = 268;
+    size += dirp->d_reclen;
 
+	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+
+	strcpy(dirp->d_name, "..");
+	dirp->d_reclen = sizeof(dirent);
+	dirp->d_off = 268;
+    size += dirp->d_reclen;
+    }
+
+    return size;
 }
 
 int ProcFS::stat(VNode *node, struct stat *buf)
@@ -211,10 +267,30 @@ int ProcFS::stat(VNode *node, struct stat *buf)
 		buf->st_atime = 0;//time(0);
 		buf->st_mtime = 0;//time(0);
 		buf->st_ctime = 0;//time(0);
-	}
+    } else if (IS_PID(node->vnid.id)) {
+        int pid = VNODE_ID_TO_PID(node->vnid.id);
+        ProcessControlBlock *p = Task::processes->value(pid);
+        if (IS_NULL_PTR(p)) {
+            printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
+            return -ENOENT;
+        }
 
-	return 0;
+        buf->st_dev = 0;
+        buf->st_ino = 1;
+        buf->st_mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH;
+        buf->st_nlink = 1;
+        buf->st_uid = p->uid;
+        buf->st_gid = p->gid;
+        buf->st_rdev = 0;
+        buf->st_size = 0;
+        buf->st_blksize = 0;
+        buf->st_blocks = 0;
+        buf->st_atime = 0;//time(0);
+        buf->st_mtime = 0;//time(0);
+        buf->st_ctime = 0;//time(0);
+    }
 
+    return 0;
 }
 
 int ProcFS::access(VNode *node, int aMode, int uid, int gid)
