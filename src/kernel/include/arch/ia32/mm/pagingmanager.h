@@ -20,6 +20,9 @@
  *   Date: 23/09/2005                                                      *
  ***************************************************************************/
 
+#ifndef _IA32_MM_PAGINGMANAGER_H_
+#define _IA32_MM_PAGINGMANAGER_H_
+
 #include <stdint.h>
 
 #define MISSING_PAGE 0
@@ -73,3 +76,4 @@ class PagingManager
         static void enable();
 };
 
+#endif
