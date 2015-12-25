@@ -55,6 +55,7 @@ mkdir
 mknod
 mount
 mv
+ps
 pwd
 readlink
 reboot
