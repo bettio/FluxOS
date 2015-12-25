@@ -38,7 +38,7 @@ void Task::init()
     processes = new ListWithHoles<ProcessControlBlock *>();
 }
 
-ProcessControlBlock *Task::CreateNewTask(const char *name)
+ProcessControlBlock *Task::CreateNewTask()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
 
@@ -47,7 +47,6 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	process->pid = newTaskPid;
         process->uid = 0;
 	process->gid = 0;
-	process->name = strdup(name);
         process->parent = 0;
         process->memoryContext = new MemoryContext();
         process->dataSegmentStart = NULL;
@@ -88,7 +87,7 @@ ProcessControlBlock *Task::CreateNewTask(const char *name)
 	return process;
 }
 
-ProcessControlBlock *Task::NewProcess(const char *name)
+ProcessControlBlock *Task::NewProcess()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
 
@@ -99,7 +98,6 @@ ProcessControlBlock *Task::NewProcess(const char *name)
     process->pid = newTaskPid;
     process->uid = parent->uid;
     process->gid = parent->gid;
-    process->name = strdup(name);
     process->parent = parent;
     process->memoryContext = new MemoryContext();
     process->dataSegmentStart = NULL;

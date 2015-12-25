@@ -33,8 +33,8 @@ class ThreadControlBlock;
 class Task{
 	public:
         static void init();
-        static ProcessControlBlock *CreateNewTask(const char *name);
-        static ProcessControlBlock *NewProcess(const char *name);
+        static ProcessControlBlock *CreateNewTask();
+        static ProcessControlBlock *NewProcess();
         static ListWithHoles<ProcessControlBlock *> *processes;
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);

@@ -52,7 +52,6 @@ class ProcessControlBlock
         unsigned int gid;
         TaskStatus status;
         int exitStatus;
-        char *name;
         ProcessControlBlock *parent;
         ThreadControlBlock *mainThread;
         MemoryContext *memoryContext;

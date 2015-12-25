@@ -138,7 +138,7 @@ void UserProcessImage::buildAuxVector(userptr char *auxTable[], userptr char *au
 int UserProcessImage::setupInitProcessImage()
 {
     ThreadControlBlock *thread = Scheduler::currentThread();
-    ProcessControlBlock *process = Task::CreateNewTask("init");
+    ProcessControlBlock *process = Task::CreateNewTask();
     thread->parentProcess = process;
 
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
