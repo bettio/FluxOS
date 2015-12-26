@@ -55,7 +55,16 @@ int main(int argc, char **argv)
         lstat(buf, s);
 
         if(S_ISDIR(s->st_mode) && isdigit(ent->d_name[0])){
-            printf("%s\n", ent->d_name);
+            char processPath[64];
+            int processCmdLineFd;
+            sprintf(processPath, "/proc/%s/cmdline", ent->d_name);
+            processCmdLineFd = open(processPath, O_RDONLY, 0);
+            printf("%s ", ent->d_name);
+            char c;
+            while (read(processCmdLineFd, &c, 1) && c) {
+                printf("%c", c);
+            }
+            printf("\n");
         }
 
         pos += ent->d_reclen;
