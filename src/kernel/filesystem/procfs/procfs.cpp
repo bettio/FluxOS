@@ -30,9 +30,13 @@
 #include <filesystem/vnodemanager.h>
 #include <task/task.h>
 
-#define PID_TO_VNODE_ID(pid) (1024 + pid)
-#define VNODE_ID_TO_PID(id) (id - 1024)
-#define IS_PID(id) (id > 1024)
+#define PID_TO_VNODE_ID(pid) (1024 * pid)
+#define VNODE_ID_TO_PID(id) (id / 1024)
+#define IS_PID(id) ((id >= 1024) && !(id % 1024))
+#define IS_PID_SUBDIR(id) ((id >= 1024) && (id % 1024))
+#define PID_SUBDIR(id) (id % 1024)
+
+#define CMDLINE_FILE_ID 1
 
 using namespace FileSystem;
 
@@ -150,6 +154,17 @@ int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntyp
         *vnd = tmp;
 
         return 0;
+    }else if (IS_PID(node->vnid.id)) {
+        if (!strcmp("cmdline", name)) {
+            VNodeManager::GetVnode(node->mount->mountId, node->vnid.id + CMDLINE_FILE_ID, vnd);
+
+            VNode *tmp = *vnd;
+            tmp->mount = node->mount;
+
+            *vnd = tmp;
+
+            return 0;
+        }
     }
 
 	*vnd = 0;
@@ -172,6 +187,19 @@ int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 		}else{
 		    return 0;
 		}
+    } else if (IS_PID_SUBDIR(node->vnid.id)) {
+        int pid = VNODE_ID_TO_PID(node->vnid.id);
+        ProcessControlBlock *p = Task::processes->value(pid);
+        if (IS_NULL_PTR(p)) {
+            printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
+            return -ENOENT;
+        }
+        switch (PID_SUBDIR(node->vnid.id)) {
+            case CMDLINE_FILE_ID:
+                unsigned int buflen = ((bufsize + pos) > (unsigned int) p->cmdlineSize) ? (p->cmdlineSize - pos) : bufsize;
+                memcpy(buffer, p->cmdline + pos, buflen);
+                return buflen;
+        }
     }
 
     return 0;
@@ -221,17 +249,24 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
         size += dirp->d_reclen;
     }
     } else if (IS_PID(node->vnid.id)) {
-	strcpy(dirp->d_name, ".");
-	dirp->d_reclen = sizeof(dirent);
-	dirp->d_off = 268;
-    size += dirp->d_reclen;
+        strcpy(dirp->d_name, ".");
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = 268;
+        size += dirp->d_reclen;
 
-	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
 
-	strcpy(dirp->d_name, "..");
-	dirp->d_reclen = sizeof(dirent);
-	dirp->d_off = 268;
-    size += dirp->d_reclen;
+        strcpy(dirp->d_name, "..");
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = 268;
+        size += dirp->d_reclen;
+
+        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+
+        strcpy(dirp->d_name, "cmdline");
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = 268;
+        size += dirp->d_reclen;
     }
 
     return size;
