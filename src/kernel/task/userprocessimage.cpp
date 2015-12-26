@@ -144,7 +144,7 @@ int UserProcessImage::setupInitProcessImage()
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
 
     //TODO: no hardcoded here
-    const char *initPath = "/sbin/init";
+    const char *initPath = strdup("/sbin/init");
     const char *initCWD = "CWD=/";
 
     void *entryPoint;
@@ -158,6 +158,9 @@ int UserProcessImage::setupInitProcessImage()
     int envBlockSize = strlen(initCWD) + 1;
     int auxc = 1; /* TODO: Implement here */
     int auxSize = 16;
+    thread->parentProcess->cmdline = initPath;
+    thread->parentProcess->cmdlineSize = argsBlockSize;
+
 
     int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize);
 
@@ -215,6 +218,8 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     }
     const char *executablePath = strdup(filename);
 
+    ThreadControlBlock *thread = Scheduler::currentThread();
+
     RegistersFrame *regsFrame = UserProcsManager::createNewRegistersFrame();
 
     int argc;
@@ -237,7 +242,6 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     }
 
     //We don't need previous address space anymore, but we still keep it so in case of failure we just restore it
-    ThreadControlBlock *thread = Scheduler::currentThread();
     MemoryContext *previousMemoryContext = thread->parentProcess->memoryContext;
     void *previousAddressSpace = thread->addressSpaceTable;
     void *newAddressSpace = (void *) PagingManager::createPageDir();
@@ -291,6 +295,13 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
         return -ENOMEM;
     }
     thread->parentProcess->dataSegmentEnd = (void *) (((unsigned long ) thread->parentProcess->dataSegmentStart) + 4096);
+
+    //Here begins no return point, if something goes wrong it would be better to crash instead
+    if (thread->parentProcess->cmdline) {
+        free((void *) thread->parentProcess->cmdline);
+    }
+    thread->parentProcess->cmdline = tmpArgsBlock;
+    thread->parentProcess->cmdlineSize = argsBlockSize;
 
     //TODO: remove this
     UserProcsManager::startRegsFrame(regsFrame);

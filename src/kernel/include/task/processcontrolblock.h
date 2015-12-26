@@ -63,6 +63,9 @@ class ProcessControlBlock
         VNode *currentWorkingDirNode;
         mode_t umask;
 
+        const char *cmdline;
+        int cmdlineSize;
+
         inline mode_t calculateMode(mode_t mode)
         {
             return mode & (~umask);

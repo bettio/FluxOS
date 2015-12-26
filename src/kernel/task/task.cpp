@@ -124,6 +124,8 @@ ProcessControlBlock *Task::CreateNewTask()
 	    
     process->currentWorkingDirNode = cwdNode;
     process->umask = 0;
+    process->cmdline = NULL;
+    process->cmdlineSize = 0;
     process->status = READY;
 
 	return process;
@@ -158,6 +160,8 @@ ProcessControlBlock *Task::NewProcess()
 
     process->currentWorkingDirNode = FileSystem::VNodeManager::ReferenceVnode(parent->currentWorkingDirNode);
     process->umask = parent->umask;
+    process->cmdline = NULL;
+    process->cmdlineSize = 0;
     process->status = READY;
 
     return process;
