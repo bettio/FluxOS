@@ -27,6 +27,8 @@
 #include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <sys/dirent.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <dirent.h>
 #include <sys/mount.h>
 #include <fcntl.h>
@@ -47,17 +49,22 @@
 
 #include "libDataStore/bson.c"
 #include "libDataStore/StoredObject.cpp"
+#include "libDataStore/QHash"
 
 void setHostName();
 void setDomainName();
 int configureNetwork();
 int mountFilesystems();
 int startServices(int argc, char *argv[], char *envp[]);
+void processStatusChange(int pid, int status, char *envp[]);
 
+QHash<int, const char *> *processes;
 
 int main(int argc, char *argv[], char *envp[])
 {
     printf("\n\ninit 0.1 - Starting FluxOS...\n\n");
+
+    processes = new QHash<int, const char *>;
 
     mountFilesystems();
     configureNetwork();
@@ -68,7 +75,29 @@ int main(int argc, char *argv[], char *envp[])
     startServices(argc, argv, envp);
 
     //TODO: event loop here
-    while (1);
+    while (1) {
+        int status;
+        int pid = waitpid(-1, &status, 0);
+        processStatusChange(pid, status, envp);
+    }
+}
+
+void processStatusChange(int pid, int status, char *envp[])
+{
+    const char *pExec = processes->value(pid);
+    printf("init: restarting %s\n", pExec);
+
+    int oldPid = pid;
+    pid = fork();
+    if (!pid){
+        char *a[] = {(char *) pExec, 0};
+        if (execve(pExec, a, envp)) {
+            perror("init: cannot execute: ");
+        }
+    } else {
+        processes->insert(pid, strdup(pExec));
+        processes->remove(oldPid);
+    }
 }
 
 int startServices(int argc, char *argv[], char *envp[])
@@ -101,13 +130,14 @@ int startServices(int argc, char *argv[], char *envp[])
                 continue;
             }
 
-            int status;
             int pid = fork();
             if (!pid){
                 char *a[] = {(char *) serviceExecutable, "", 0};
                 if (execve(serviceExecutable, a, envp)) {
                     perror("init: cannot execute: ");
                 }
+            } else {
+                processes->insert(pid, strdup(serviceExecutable));
             }
 
             printf("\n");
