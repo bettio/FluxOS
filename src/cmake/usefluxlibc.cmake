@@ -4,11 +4,11 @@ if ((BUILD_TARGET MATCHES "UMM_LINUX_I386") OR (BUILD_TARGET MATCHES "NATIVE_IA3
 #  SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g -lc -Wl,-dynamic-linker,/lib/ld-fluxos.so.1" )
 
   SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g" )
-  SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -g" )
+  SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-rtti -g" )
 
 elseif ((BUILD_TARGET MATCHES "UMM_LINUX_X86_64"))
   SET(CMAKE_C_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g" )
-  SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -g") 
+  SET(CMAKE_CXX_FLAGS "-nostdlib -nostdinc -Wall -fno-builtin -fno-exceptions -fno-rtti -g") 
 
 elseif (BUILD_TARGET MATCHES "VERSATILE_ARM")
     SET(NATIVE_ARM ON)
