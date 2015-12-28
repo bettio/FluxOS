@@ -196,8 +196,8 @@ int Task::waitpid(int pid, int *status, int options)
     
     }else{
         while (1){
-            for (int i = 0; i < Task::processes->size(); i++){
-                p = Task::processes->value(i);
+            for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
+                p = it.process();
                 if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)) break;
             }
             if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)){
@@ -214,7 +214,7 @@ int Task::waitpid(int pid, int *status, int options)
     delete p->openFiles;
     delete p;
 
-    return 0;
+    return pid;
 }
 
 int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)

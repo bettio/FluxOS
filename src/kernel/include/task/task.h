@@ -42,6 +42,7 @@ class Task{
                     bool operator==(const ProcessIterator other) const;
                     ProcessIterator &operator++();
                     inline int pid() { return hIt.value()->pid; }
+                    inline ProcessControlBlock *process() { return hIt.value(); }
             };
 
         static void init();
