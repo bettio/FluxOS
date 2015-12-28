@@ -23,6 +23,7 @@
 #include <uapi/memoryuapi.h>
 
 #include <mm/memorycontext.h>
+#include <mm/usermemoryops.h>
 #include <task/scheduler.h>
 #ifndef ARCH_IA32
 #include <uapi/syscallsnr.h>
@@ -57,8 +58,12 @@ struct MmapArgs
 
 uint32_t mmap_i386(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 {
-    MmapArgs *args = (MmapArgs *) ebx;
-    return (uint32_t) MemoryUAPI::mmap((void *) args->addr, (size_t) args->len, (int) args->prot, (int) args->flags, (int) args->fd, (size_t) args->offset);
+    MmapArgs args;
+    int ret = memcpyFromUser(&args, (const void *) ebx, sizeof(MmapArgs));
+    if (UNLIKELY(ret < 0)) {
+        return (uint32_t ) ret;
+    }
+    return (uint32_t) MemoryUAPI::mmap((void *) args.addr, (size_t) args.len, (int) args.prot, (int) args.flags, (int) args.fd, (size_t) args.offset);
 }
 
 #endif
