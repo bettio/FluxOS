@@ -29,6 +29,7 @@
 #include <core/syscallsmanager.h>
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
+#include <task/task.h>
 
 #define pid_t unsigned long
 #define uid_t unsigned long
@@ -137,6 +138,50 @@ int ProcessUAPI::setgid(gid_t gid)
 int ProcessUAPI::setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 {
     return -EFAULT;
+}
+
+int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
+{
+    if (UNLIKELY(!canWriteUserMemory(status, sizeof(int *)))) {
+        return -EFAULT;
+    }
+
+    ProcessControlBlock *p;
+
+    if (pid != (pid_t) -1) {
+        p = Task::processes->value(pid);
+        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) {
+            return -ECHILD;
+        }
+
+        while (p->status != TERMINATED) Scheduler::waitForEvents();
+
+    } else {
+        while (true) {
+            for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
+                p = it.process();
+                if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)) {
+                    break;
+                }
+            }
+            if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)){
+                pid = p->pid;
+                break;
+            }
+            Scheduler::waitForEvents();
+        }
+    }
+
+    int ret = putToUser(p->exitStatus, status);
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    Task::processes->remove(pid);
+    delete p->openFiles;
+    delete p;
+
+    return pid;
 }
 
 #undef pid_t

@@ -182,40 +182,6 @@ void Task::exit(int exitStatus)
     while (1);
 }
 
-int Task::waitpid(int pid, int *status, int options)
-{
-    ProcessControlBlock *p;
-
-    if (pid != -1){
-        p = Task::processes->value(pid);
-        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) {
-            return -ECHILD;
-        }
-
-        while (p->status != TERMINATED) Scheduler::waitForEvents();
-    
-    }else{
-        while (1){
-            for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
-                p = it.process();
-                if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)) break;
-            }
-            if ((p->status == TERMINATED) && (p->parent == Scheduler::currentThread()->parentProcess)){
-                pid = p->pid;
-                break;
-            }
-            Scheduler::waitForEvents();
-        }
-    }
-
-    *status = p->exitStatus;
-
-    Task::processes->remove(pid);
-    delete p->openFiles;
-    delete p;
-
-    return pid;
-}
 
 int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
 {

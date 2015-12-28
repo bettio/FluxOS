@@ -151,7 +151,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(4, (void *) write);
     registerSyscall(5, (void *) open);
     registerSyscall(6, (void *) close);
-    registerSyscall(7, (void *) Task::waitpid);
+    registerSyscall(7, (void *) ProcessUAPI::waitpid);
     registerSyscall(8, (void *) creat);
     registerSyscall(9, (void *) link);
     registerSyscall(10, (void *) unlink);

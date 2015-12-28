@@ -54,7 +54,6 @@ class Task{
         static bool isValidPID(int pid);
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);
-        static int waitpid(int pid, int *status, int options);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static int kill(int pid, int signal);
         static void notify(ProcessControlBlock *p);
