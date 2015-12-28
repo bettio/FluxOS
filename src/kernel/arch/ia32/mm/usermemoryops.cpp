@@ -35,8 +35,9 @@ extern "C"
 
 bool canWriteUserMemory(void *ptr, unsigned long size)
 {
-    if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && ((unsigned long) ptr <= USERSPACE_HI_ADDR))) {
-        return true;
+    if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && (((unsigned long) ptr) + size <= USERSPACE_HI_ADDR))) {
+       //TODO: need to check page table here
+       return true;
     } else {
        return false;
     }
@@ -44,8 +45,9 @@ bool canWriteUserMemory(void *ptr, unsigned long size)
 
 bool canReadUserMemory(const void *ptr, unsigned long size)
 {
-    if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && ((unsigned long) ptr <= USERSPACE_HI_ADDR))) {
-        return true;
+    if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && (((unsigned long) ptr + size) <= USERSPACE_HI_ADDR))) {
+       //TODO: need to check page table here
+       return true;
     } else {
        return false;
     }
