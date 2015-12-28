@@ -30,15 +30,8 @@
 
 extern "C"
 {
-    bool canWriteUserMemory(void *ptr, int size);
-    bool canReadUserMemory(void *ptr, int size);
-
-    char *strndupUser(const char *s, int maxsize);
-    int strnlenUser(const char *s, int maxsize);
-    char *strncpyordupUser(const char *s, int maxsize, char *tmpbuf, int tmpbufmaxsize);
-
-    bool canWriteUserMemory(void *ptr, int size);
-    bool canReadUserMemory(void *ptr, int size);
+    bool canWriteUserMemory(void *ptr, unsigned long size);
+    bool canReadUserMemory(const void *ptr, unsigned long size);
 
     char *strndupUser(const char *s, int maxsize);
     int strnlenUser(const char *s, int maxsize);

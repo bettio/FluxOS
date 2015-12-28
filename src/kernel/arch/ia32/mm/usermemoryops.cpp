@@ -24,6 +24,7 @@
 
 #include <arch.h>
 #include <errors.h>
+#include <cstdlib.h>
 #include <gccbuiltins.h>
 
 #define ENABLE_DEBUG_MSG 1
@@ -32,7 +33,7 @@
 extern "C"
 {
 
-bool canWriteUserMemory(void *ptr, int size)
+bool canWriteUserMemory(void *ptr, unsigned long size)
 {
     if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && ((unsigned long) ptr <= USERSPACE_HI_ADDR))) {
         return true;
@@ -41,12 +42,34 @@ bool canWriteUserMemory(void *ptr, int size)
     }
 }
 
-bool canReadUserMemory(void *ptr, int size)
+bool canReadUserMemory(const void *ptr, unsigned long size)
 {
     if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && ((unsigned long) ptr <= USERSPACE_HI_ADDR))) {
         return true;
     } else {
        return false;
+    }
+}
+
+int memcpyToUser(userptr void *dest, const void *src, unsigned long size)
+{
+    if (LIKELY(canWriteUserMemory(dest, size))) {
+        memcpy(dest, src, size);
+        return 0;
+    } else {
+        DEBUG_MSG("memcpyToUser: Warning: cannot write to 0x%p, size: %lu\n", dest, size);
+        return -EFAULT;
+    }
+}
+
+int memcpyFromUser(void *dest, userptr const void *src, unsigned long size)
+{
+    if (LIKELY(canReadUserMemory(src, size))) {
+        memcpy(dest, src, size);
+        return 0;
+    } else {
+        DEBUG_MSG("memcpyFromUser: Warning: cannot write to 0x%p, size: %lu\n", src, size);
+        return -EFAULT;
     }
 }
 
