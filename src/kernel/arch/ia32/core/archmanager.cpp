@@ -26,6 +26,7 @@
 #include <core/syscallsmanager.h>
 #include <drivers/vt.h>
 #include <task/userprocessimage.h>
+#include <mm/usermemoryops.h>
 #include <arch/ia32/core/idt.h>
 #include <arch/ia32/drivers/ata.h>
 #include <arch/ia32/drivers/keyboard.h>

@@ -27,6 +27,7 @@
 #include <core/printk.h>
 #include <core/systemerrors.h>
 #include <mm/memorycontext.h>
+#include <mm/usermemoryops.h>
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>

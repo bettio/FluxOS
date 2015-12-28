@@ -24,7 +24,7 @@
 #define _USERPROCESSIMAGE_H_
 
 #include <QList>
-#include <kdef.h>
+#include <mm/usermemoryops.h>
 
 extern "C" void schedule();
 

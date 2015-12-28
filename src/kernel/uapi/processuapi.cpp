@@ -27,6 +27,7 @@
 #include <uapi/syscallsnr.h>
 #endif
 #include <core/syscallsmanager.h>
+#include <mm/usermemoryops.h>
 #include <task/scheduler.h>
 
 #define pid_t unsigned long
