@@ -53,6 +53,39 @@ bool canReadUserMemory(const void *ptr, unsigned long size)
     }
 }
 
+int strnlenUser(userptr const char *s, int maxsize)
+{
+    if (LIKELY(canReadUserMemory(s, maxsize))) {
+        return strlen(s);
+    } else {
+        DEBUG_MSG("strlenUser: Warning: cannot write to 0x%p, size: %i\n", s, maxsize);
+        return -EFAULT;
+    }
+}
+
+int strndupUser(userptr const char *s, int maxsize, char **newString)
+{
+    if (LIKELY(canReadUserMemory(s, maxsize))) {
+        *newString = strndup(s, maxsize);
+        return 0;
+    } else {
+        DEBUG_MSG("strlenUser: Warning: cannot write to 0x%p, size: %i\n", s, maxsize);
+        return -EFAULT;
+    }
+}
+
+int strncpyFromUser(char *dest, userptr const char *src, int size)
+{
+    if (LIKELY(canReadUserMemory(src, size))) {
+        strncpy(dest, src, size);
+        return 0;
+    } else {
+        DEBUG_MSG("strncpyFromUser: Warning: cannot write to 0x%p, size: %i\n", src, size);
+        return -EFAULT;
+    }
+
+}
+
 int memcpyToUser(userptr void *dest, const void *src, unsigned long size)
 {
     if (LIKELY(canWriteUserMemory(dest, size))) {

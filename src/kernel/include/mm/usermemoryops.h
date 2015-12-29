@@ -33,9 +33,9 @@ extern "C"
     bool canWriteUserMemory(void *ptr, unsigned long size);
     bool canReadUserMemory(const void *ptr, unsigned long size);
 
-    char *strndupUser(const char *s, int maxsize);
-    int strnlenUser(const char *s, int maxsize);
-    char *strncpyordupUser(const char *s, int maxsize, char *tmpbuf, int tmpbufmaxsize);
+    int strndupUser(const char *s, int maxsize, char **newStr);
+    int strnlenUser(userptr const char *s, int maxsize);
+    int strncpyFromUser(char *dest, userptr const char *src, int size);
 
     int memcpyToUser(userptr void *dest, const void *src, unsigned long size);
     int memcpyFromUser(void *dest, userptr const void *src, unsigned long size);
@@ -79,6 +79,53 @@ template<typename T> inline int putToUser(T value, T *ptr)
     } else {
         return memcpyToUser(ptr, &value, sizeof(T));
     }
+};
+
+class UserString
+{
+  public:
+    inline UserString(userptr const char *user, int maxBufLen)
+    {
+        m_buf = NULL;
+        m_len = strnlenUser(user, maxBufLen);
+        int ret = 0;
+        if (m_len < 0) {
+            return;
+        } else if (m_len < 64) {
+            ret = strncpyFromUser(m_smallBuf, user, 64);
+        } else {
+            int dupSize = (m_len < maxBufLen) ? m_len : maxBufLen;
+            ret = strndupUser(user, dupSize, &m_buf);
+        }
+        if (ret < 0) {
+            m_len = ret;
+        }
+    }
+
+    inline bool isValid()
+    {
+        return m_len >= 0;
+    }
+
+    inline int len()
+    {
+        return m_len;
+    }
+
+    inline int errorCode()
+    {
+        return m_len;
+    }
+
+    char *buf()
+    {
+        return m_buf ? m_buf : m_smallBuf;
+    }
+
+  private:
+    char *m_buf;
+    int m_len;
+    char m_smallBuf[64];
 };
 
 #endif

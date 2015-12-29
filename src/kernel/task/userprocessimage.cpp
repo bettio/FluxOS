@@ -92,8 +92,22 @@ int UserProcessImage::copyUserspaceStringsVectorToBlock(char *destStringsBlock, 
     int remainingSize = destStringsBlockSize;
 
     while (srcStringsVect[i]) {
-        int size = strnlen(srcStringsVect[i], remainingSize - 1) + 1;
-        strncpy(destStringsBlock, srcStringsVect[i], size);
+        const char *srcString;
+        int ret = getFromUser(&srcString, (const char **) &srcStringsVect[i]);
+        if (UNLIKELY(ret < 0)) {
+            return ret;
+        }
+        int len = strnlenUser(srcString, remainingSize - 1);
+        if (UNLIKELY(len < 0)) {
+            //bad string here, return with an error value
+            return len;
+        }
+        int size = len + 1;
+        ret = strncpyFromUser(destStringsBlock, srcStringsVect[i], size);
+        if (UNLIKELY(ret < 0)) {
+            //failed to copy string to dest
+            return ret;
+        }
         destStringsBlock += size;
         i++;
     }
@@ -117,13 +131,21 @@ int UserProcessImage::stringsVectorSize(userptr char *const v[], int *num, int m
 {
     int size = 0;
     for (int i = 0; i < maxNum; i++) {
-        //TODO: check env[i] address validity
-        if (!v[i]) {
+        const char *srcString;
+        int ret = getFromUser(&srcString, (const char **) &v[i]);
+        if (UNLIKELY(ret < 0)) {
+            return ret;
+        }
+        if (!srcString) {
             *num = i;
             break;
         } else {
-            //TODO: user
-            size += strnlen(v[i], maxStrLen) + 1;
+            int len = strnlenUser(srcString, maxStrLen);
+            if (UNLIKELY(len < 0)) {
+                //bad string here for some reason, return an error
+                return len;
+            }
+            size += len + 1;
         }
     }
 
@@ -205,19 +227,19 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 {
     int ret = 0;
 
-    if (filename == NULL) {
-        printk("Invalid executable path\n");
-        return -ENOEXEC;
+    UserString fileNameBuf(filename, 1024);
+    if (UNLIKELY(!fileNameBuf.isValid())) {
+        return fileNameBuf.errorCode();
     }
-    if (argv == NULL) {
-        printk("Invalid arguments\n");
+    const char *executablePath = fileNameBuf.buf();
+    if (UNLIKELY(argv == NULL)) {
+        printk("execve: invalid arguments\n");
         return -EINVAL;
     }
-    if (envp == NULL) {
-        printk("Invalid environment\n");
+    if (UNLIKELY(envp == NULL)) {
+        printk("execve: invalid environment\n");
         return -EINVAL;
     }
-    const char *executablePath = strdup(filename);
 
     ThreadControlBlock *thread = Scheduler::currentThread();
 
