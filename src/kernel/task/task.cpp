@@ -176,13 +176,6 @@ void Task::closeAllFiles(ProcessControlBlock *process)
     }
 }
 
-void Task::exit(int exitStatus)
-{
-    terminateProcess(Scheduler::currentThread(), exitStatus);
-    while (1);
-}
-
-
 int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
 {
     ProcessControlBlock *process = thread->parentProcess;

@@ -53,11 +53,11 @@ class Task{
         static QHash<int, ProcessControlBlock *> *processes;
         static bool isValidPID(int pid);
         static void closeAllFiles(ProcessControlBlock *process);
-        static void exit(int exitStatus);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static void notify(ProcessControlBlock *p);
         private:
             static int lastUsedPID;
+            static QMutex processesTableMutex;
 };
 
 #endif

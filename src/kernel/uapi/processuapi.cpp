@@ -209,6 +209,12 @@ int ProcessUAPI::kill(pid_t pid, int signal)
     }
 }
 
+void ProcessUAPI::exit(int exitStatus)
+{
+    Task::terminateProcess(Scheduler::currentThread(), exitStatus);
+    while (1);
+}
+
 #undef pid_t
 #undef uid_t
 #undef gid_t

@@ -51,6 +51,7 @@ class ProcessUAPI
         static int setegid(gid_t egid);
         static int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
+        static void exit(int exitStatus);
         static int waitpid(pid_t pid, int *status, int options);
         static int kill(pid_t pid, int signal);
 };

@@ -146,7 +146,7 @@ uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 
 void SyscallsManager::registerDefaultSyscalls()
 {
-    registerSyscall(1, (void *) Task::exit);
+    registerSyscall(1, (void *) ProcessUAPI::exit);
     registerSyscall(3, (void *) read);
     registerSyscall(4, (void *) write);
     registerSyscall(5, (void *) open);
