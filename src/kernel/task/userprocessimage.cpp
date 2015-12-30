@@ -231,7 +231,7 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     if (UNLIKELY(!fileNameBuf.isValid())) {
         return fileNameBuf.errorCode();
     }
-    const char *executablePath = fileNameBuf.buf();
+    const char *executablePath = fileNameBuf.constData();
     if (UNLIKELY(argv == NULL)) {
         printk("execve: invalid arguments\n");
         return -EINVAL;
@@ -326,7 +326,8 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     thread->parentProcess->cmdline = tmpArgsBlock;
     thread->parentProcess->cmdlineSize = argsBlockSize;
 
-    //TODO: remove this
+    fileNameBuf.releaseMemory();
+
     UserProcsManager::startRegsFrame(regsFrame);
 
     return 0;

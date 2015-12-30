@@ -24,6 +24,7 @@
 #define USERMEMORYOPS_H_
 
 #include <cstdlib.h>
+#include <errors.h>
 #include <stdint.h>
 
 #define userptr
@@ -102,22 +103,39 @@ class UserString
         }
     }
 
-    inline bool isValid()
+    inline void releaseMemory()
+    {
+        delete m_buf;
+        m_buf = 0;
+        m_len = -EINVAL;
+    }
+
+    inline ~UserString()
+    {
+        delete m_buf;
+    }
+
+    inline bool isValid() const
     {
         return m_len >= 0;
     }
 
-    inline int len()
+    inline int len() const
     {
         return m_len;
     }
 
-    inline int errorCode()
+    inline int errorCode() const
     {
         return m_len;
     }
 
-    char *buf()
+    char *data()
+    {
+        return m_buf ? m_buf : m_smallBuf;
+    }
+
+    const char *constData() const
     {
         return m_buf ? m_buf : m_smallBuf;
     }
