@@ -26,27 +26,31 @@
 #include <filesystem/vnodemanager.h>
 #include <filesystem/fscalls.h>
 #include <arch.h>
-#include <ListWithHoles>
 #include <core/systemerrors.h>
+#include <QMutexLocker>
 
 #define ENABLE_DEBUG_MSG 0
 #include <debugmacros.h>
 
 QHash<int, ProcessControlBlock *> *Task::processes;
 int Task::lastUsedPID;
+QMutex Task::processesTableMutex;
 
 bool Task::ProcessIterator::operator!=(const ProcessIterator other) const
 {
+    QMutexLocker locker(&Task::processesTableMutex);
     return other.hIt != hIt;
 }
 
 bool Task::ProcessIterator::operator==(const ProcessIterator other) const
 {
+    QMutexLocker locker(&Task::processesTableMutex);
     return other.hIt == hIt;
 }
 
 Task::ProcessIterator &Task::ProcessIterator::operator++()
 {
+    QMutexLocker locker(&Task::processesTableMutex);
     ++hIt;
     return *this;
 }
@@ -61,11 +65,13 @@ void Task::init()
 
 bool Task::isValidPID(int pid)
 {
+    QMutexLocker locker(&processesTableMutex);
     return processes->value(pid) != NULL;
 }
 
 Task::ProcessIterator Task::processEnumerationBegin()
 {
+    QMutexLocker locker(&processesTableMutex);
     ProcessIterator it;
     it.hIt = processes->constBegin();
     return it;
@@ -73,6 +79,7 @@ Task::ProcessIterator Task::processEnumerationBegin()
 
 Task::ProcessIterator Task::processEnumerationEnd()
 {
+    QMutexLocker locker(&processesTableMutex);
     ProcessIterator it;
     it.hIt = processes->constEnd();
     return it;
@@ -194,3 +201,22 @@ void Task::notify(ProcessControlBlock *p)
 {    
 }
 
+ProcessControlBlock *Task::process(int pid)
+{
+    QMutexLocker locker(&processesTableMutex);
+    return processes->value(pid);
+}
+
+
+void Task::deleteProcess(int pid)
+{
+    QMutexLocker locker(&processesTableMutex);
+    ProcessControlBlock *p = processes->value(pid);
+    if (IS_NULL_PTR(p)) {
+        printk("error: cannot find process %i\n", pid);
+        return;
+    }
+    Task::processes->remove(pid);
+    delete p->openFiles;
+    delete p;
+}

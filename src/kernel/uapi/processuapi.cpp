@@ -149,7 +149,7 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
     ProcessControlBlock *p;
 
     if (pid != (pid_t) -1) {
-        p = Task::processes->value(pid);
+        p = Task::process(pid);
         if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) {
             return -ECHILD;
         }
@@ -177,16 +177,14 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
         return ret;
     }
 
-    Task::processes->remove(pid);
-    delete p->openFiles;
-    delete p;
+    Task::deleteProcess(pid);
 
     return pid;
 }
 
 int ProcessUAPI::kill(pid_t pid, int signal)
 {
-    ProcessControlBlock *target = Task::processes->value(pid);
+    ProcessControlBlock *target = Task::process(pid);
     if (target == NULL) return -ESRCH;
 
     ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;

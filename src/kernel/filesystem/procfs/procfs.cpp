@@ -189,7 +189,7 @@ int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 		}
     } else if (IS_PID_SUBDIR(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
-        ProcessControlBlock *p = Task::processes->value(pid);
+        ProcessControlBlock *p = Task::process(pid);
         if (IS_NULL_PTR(p)) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;
@@ -304,7 +304,7 @@ int ProcFS::stat(VNode *node, struct stat *buf)
 		buf->st_ctime = 0;//time(0);
     } else if (IS_PID(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
-        ProcessControlBlock *p = Task::processes->value(pid);
+        ProcessControlBlock *p = Task::process(pid);
         if (IS_NULL_PTR(p)) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;

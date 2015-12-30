@@ -27,6 +27,7 @@
 
 #include <task/processcontrolblock.h>
 #include <QHash>
+#include <QMutex>
 #include <arch.h>
 
 class ThreadControlBlock;
@@ -50,14 +51,16 @@ class Task{
         static ProcessIterator processEnumerationEnd();
         static ProcessControlBlock *CreateNewTask();
         static ProcessControlBlock *NewProcess();
-        static QHash<int, ProcessControlBlock *> *processes;
         static bool isValidPID(int pid);
         static void closeAllFiles(ProcessControlBlock *process);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static void notify(ProcessControlBlock *p);
+        static ProcessControlBlock *process(int pid);
+        static void deleteProcess(int pid);
         private:
             static int lastUsedPID;
             static QMutex processesTableMutex;
+            static QHash<int, ProcessControlBlock *> *processes;
 };
 
 #endif
