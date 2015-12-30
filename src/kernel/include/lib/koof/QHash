@@ -78,6 +78,8 @@ template <typename Key, typename T> class QHash
         {
             public:
                 Node *next;
+                bool pendingRemoval : 1;
+                bool busy : 1;
                 Key key;
                 T body;
       
@@ -86,6 +88,8 @@ template <typename Key, typename T> class QHash
                     CHECK_THIS_OBJECT();
 
                     next = 0;
+                    pendingRemoval = false;
+                    busy = false;
                     key = k;
                     body = value;
                 }
@@ -404,7 +408,13 @@ template <typename Key, typename T> class QHash
         int remove(const Key &key)
         {
             Node *node = removeFromTable(key);
-            delete node;
+            if (node) {
+                if (node->busy) {
+                    node->pendingRemoval = true;
+                } else {
+                    delete node;
+                }
+            }
             return node != 0;
         }
 
@@ -430,7 +440,12 @@ template <typename Key, typename T> class QHash
             public:
                 const_iterator &operator++()
                 {
+                    currentNode->busy = false;
+
                     if (currentNode->next != 0){
+                        if (currentNode->pendingRemoval) {
+                            delete currentNode;
+                        }
                         currentNode = currentNode->next;
 
                     }else{
@@ -446,7 +461,8 @@ template <typename Key, typename T> class QHash
 
                         currentNode = m_hash->m_array[currentHashArrayIndex];
                     }
-                    
+
+                    currentNode->busy = true;
                     return *this;
                 }
 
