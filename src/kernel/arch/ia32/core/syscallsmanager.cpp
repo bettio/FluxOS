@@ -177,7 +177,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(33, (void *) access);
     //34 nice
     //36 sync
-    registerSyscall(37, (void *) Task::kill);
+    registerSyscall(37, (void *) ProcessUAPI::kill);
     registerSyscall(38, (void *) rename);
     registerSyscall(39, (void *) mkdir);
     registerSyscall(40, (void *) rmdir);

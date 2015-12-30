@@ -55,7 +55,6 @@ class Task{
         static void closeAllFiles(ProcessControlBlock *process);
         static void exit(int exitStatus);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
-        static int kill(int pid, int signal);
         static void notify(ProcessControlBlock *p);
         private:
             static int lastUsedPID;

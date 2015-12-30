@@ -184,6 +184,31 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
     return pid;
 }
 
+int ProcessUAPI::kill(pid_t pid, int signal)
+{
+    ProcessControlBlock *target = Task::processes->value(pid);
+    if (target == NULL) return -ESRCH;
+
+    ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;
+    if (currentProcess->uid != ROOT_UID){
+        if (currentProcess->uid != target->uid) return -EPERM;
+    }
+
+    switch (signal){
+        case SIGKILL:
+            //TODO: kill all threads
+            Task::terminateProcess(target->mainThread, -1);
+            return 0;
+        case SIGSEGV:
+            //TODO: kill all threads
+            Task::terminateProcess(target->mainThread, -1);
+            return 0;
+
+        default:
+            return -EINVAL;
+    }
+}
+
 #undef pid_t
 #undef uid_t
 #undef gid_t

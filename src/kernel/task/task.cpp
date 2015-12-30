@@ -196,31 +196,6 @@ int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
     return 0;
 }
 
-int Task::kill(int pid, int signal)
-{
-    ProcessControlBlock *target = Task::processes->value(pid);
-    if (target == NULL) return -ESRCH;
-
-    ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;
-    if (currentProcess->uid != ROOT_UID){
-        if (currentProcess->uid != target->uid) return -EPERM;
-    }
-
-    switch (signal){
-        case SIGKILL:
-            //TODO: kill all threads
-            terminateProcess(target->mainThread, -1);
-            return 0;
-        case SIGSEGV:
-            //TODO: kill all threads
-            terminateProcess(target->mainThread, -1);
-            return 0;
-
-        default:
-            return -EINVAL;
-    }
-}
-
 //TODO: implement notify as soon as waitForEvents is implemented.
 void Task::notify(ProcessControlBlock *p)
 {    
