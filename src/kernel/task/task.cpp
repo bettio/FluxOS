@@ -24,7 +24,7 @@
 #include <mm/memorycontext.h>
 #include <task/scheduler.h>
 #include <filesystem/vnodemanager.h>
-#include <filesystem/fscalls.h>
+#include <uapi/fsuapi.h>
 #include <arch.h>
 #include <core/systemerrors.h>
 #include <QMutexLocker>
@@ -178,6 +178,7 @@ void Task::closeAllFiles(ProcessControlBlock *process)
 {
     for (int i = 0; i < process->openFiles->size(); i++){
 	    if (process->openFiles->at(i) != NULL){
+            //TODO: do not use UAPI close here
             close(i);
         }
     }

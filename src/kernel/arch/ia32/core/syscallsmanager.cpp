@@ -36,10 +36,10 @@
 #include <drivers/chardevicemanager.h>
 #include <core/system.h>
 #include <task/task.h>
-#include <filesystem/fscalls.h>
 #include <filesystem/pollfd.h>
 #include <net/netcalls.h>
 
+#include <uapi/fsuapi.h>
 #include <uapi/memoryuapi.h>
 #include <uapi/processuapi.h>
 #include <uapi/socketsyscalls.h>

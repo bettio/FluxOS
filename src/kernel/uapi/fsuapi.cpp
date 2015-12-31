@@ -22,7 +22,7 @@
 
 #define ENABLE_DEBUG_MSG 0
 
-#include <filesystem/fscalls.h>
+#include <uapi/fsuapi.h>
 
 #include <debugmacros.h>
 #include <cstdlib.h>
