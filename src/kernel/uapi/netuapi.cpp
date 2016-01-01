@@ -35,7 +35,7 @@ using namespace FileSystem;
 #define CHECK_FOR_EBADF(fd) \
 if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
 
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+int NetUAPI::accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -52,7 +52,7 @@ int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     return retVal;
 }
 
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+int NetUAPI::bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -61,7 +61,7 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
     return FS_CALL(fdesc->node, bind)(fdesc->node, addr, addrlen);
 }
 
-int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
+int NetUAPI::connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -70,7 +70,7 @@ int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen)
     return FS_CALL(fdesc->node, connect)(fdesc->node, addr, addrlen);
 }
 
-int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+int NetUAPI::getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -79,7 +79,7 @@ int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     return FS_CALL(fdesc->node, getpeername)(fdesc->node, addr, addrlen);
 }
 
-int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
+int NetUAPI::getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -88,7 +88,7 @@ int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen)
     return FS_CALL(fdesc->node, getsockname)(fdesc->node, addr, addrlen);
 }
 
-int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen)
+int NetUAPI::getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -97,7 +97,7 @@ int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optl
     return FS_CALL(fdesc->node, getsockopt)(fdesc->node, level, optname, optval, optlen);
 }
 
-int listen(int sockfd, int backlog)
+int NetUAPI::listen(int sockfd, int backlog)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -106,7 +106,7 @@ int listen(int sockfd, int backlog)
     return FS_CALL(fdesc->node, listen)(fdesc->node, backlog);
 }
 
-ssize_t recv(int sockfd, void *buf, size_t len, int flags)
+ssize_t NetUAPI::recv(int sockfd, void *buf, size_t len, int flags)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -115,7 +115,7 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags)
     return FS_CALL(fdesc->node, recv)(fdesc->node, buf, len, flags);
 }
 
-ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen)
+ssize_t NetUAPI::recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -124,7 +124,7 @@ ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *
     return FS_CALL(fdesc->node, recvfrom)(fdesc->node, buf, len, flags, src_addr, addrlen);
 }
 
-ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
+ssize_t NetUAPI::recvmsg(int sockfd, struct msghdr *msg, int flags)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -133,7 +133,7 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
     return FS_CALL(fdesc->node, recvmsg)(fdesc->node, msg, flags);
 }
 
-ssize_t send(int sockfd, const void *buf, size_t len, int flags)
+ssize_t NetUAPI::send(int sockfd, const void *buf, size_t len, int flags)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -142,7 +142,7 @@ ssize_t send(int sockfd, const void *buf, size_t len, int flags)
     return FS_CALL(fdesc->node, send)(fdesc->node, buf, len, flags);
 }
 
-ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
+ssize_t NetUAPI::sendmsg(int sockfd, const struct msghdr *msg, int flags)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -151,7 +151,7 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
     return FS_CALL(fdesc->node, sendmsg)(fdesc->node, msg, flags);
 }
 
-ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen)
+ssize_t NetUAPI::sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -160,7 +160,7 @@ ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct 
     return FS_CALL(fdesc->node, sendto)(fdesc->node, buf, len, flags, dest_addr, addrlen);
 }
 
-int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
+int NetUAPI::setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);
@@ -169,7 +169,7 @@ int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t
     return FS_CALL(fdesc->node, setsockopt)(fdesc->node, level, optname, optval, optlen);
 }
 
-int shutdown(int sockfd, int how)
+int NetUAPI::shutdown(int sockfd, int how)
 {
     CHECK_FOR_EBADF(sockfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(sockfd);

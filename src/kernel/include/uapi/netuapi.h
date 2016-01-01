@@ -25,21 +25,25 @@
 
 #include <net/nettypes.h>
 
-int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
-int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
-int listen(int sockfd, int backlog);
-ssize_t recv(int sockfd, void *buf, size_t len, int flags);
-ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
-ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
-ssize_t send(int sockfd, const void *buf, size_t len, int flags);
-ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
-ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
-int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
-int shutdown(int sockfd, int how);
+class NetUAPI
+{
+    public:
+        static int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+        static int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+        static int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+        static int getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+        static int getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+        static int getsockopt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
+        static int listen(int sockfd, int backlog);
+        static ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+        static ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
+        static ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+        static ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+        static ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+        static ssize_t sendto(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+        static int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+        static int shutdown(int sockfd, int how);
+};
 
 #endif
 

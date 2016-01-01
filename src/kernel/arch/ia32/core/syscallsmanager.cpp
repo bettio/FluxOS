@@ -122,19 +122,19 @@ uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
             break;
         
         case SYS_BIND:
-            retval = bind(args[0], (const sockaddr *) args[1], args[2]);
+            retval = NetUAPI::bind(args[0], (const sockaddr *) args[1], args[2]);
             break;
 
         case SYS_CONNECT:
-            retval = connect(args[0], (const sockaddr *) args[1], args[2]);
+            retval = NetUAPI::connect(args[0], (const sockaddr *) args[1], args[2]);
             break;
 
         case SYS_SEND:
-            retval = send(args[0], (const void *) args[1], args[2], args[3]);
+            retval = NetUAPI::send(args[0], (const void *) args[1], args[2], args[3]);
             break;
 
         case SYS_SENDTO:
-            retval = sendto(args[0], (const void *) args[1], args[2], args[3], (const sockaddr *) args[4], args[5]);
+            retval = NetUAPI::sendto(args[0], (const void *) args[1], args[2], args[3], (const sockaddr *) args[4], args[5]);
             break;
 
         default:
