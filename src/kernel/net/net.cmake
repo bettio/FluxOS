@@ -3,7 +3,6 @@ set(KERNEL_SRCS ${KERNEL_SRCS}
     net/ipsocketcalls.cpp
     net/ip6socketcalls.cpp
     net/udpsocketcalls.cpp
-    net/netcalls.cpp
     net/netutils.cpp
     net/ethernet.cpp
     net/arp.cpp

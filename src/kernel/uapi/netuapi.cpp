@@ -19,7 +19,7 @@
  *   Name: netcalls.cpp                                                    *
  ***************************************************************************/
 
-#include <net/netcalls.h>
+#include <uapi/netuapi.h>
 
 #include <cstdlib.h>
 #include <core/printk.h>
