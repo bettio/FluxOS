@@ -118,7 +118,7 @@ uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 
     switch (ebx){
         case SYS_SOCKET:
-            retval = socket(args[0], args[1], args[2]);
+            retval = FSUAPI::socket(args[0], args[1], args[2]);
             break;
         
         case SYS_BIND:
@@ -147,22 +147,22 @@ uint32_t socketcall(uint32_t ebx, uint32_t ecx, uint32_t, uint32_t, uint32_t)
 void SyscallsManager::registerDefaultSyscalls()
 {
     registerSyscall(1, (void *) ProcessUAPI::exit);
-    registerSyscall(3, (void *) read);
-    registerSyscall(4, (void *) write);
-    registerSyscall(5, (void *) open);
-    registerSyscall(6, (void *) close);
+    registerSyscall(3, (void *) FSUAPI::read);
+    registerSyscall(4, (void *) FSUAPI::write);
+    registerSyscall(5, (void *) FSUAPI::open);
+    registerSyscall(6, (void *) FSUAPI::close);
     registerSyscall(7, (void *) ProcessUAPI::waitpid);
-    registerSyscall(8, (void *) creat);
-    registerSyscall(9, (void *) link);
-    registerSyscall(10, (void *) unlink);
+    registerSyscall(8, (void *) FSUAPI::creat);
+    registerSyscall(9, (void *) FSUAPI::link);
+    registerSyscall(10, (void *) FSUAPI::unlink);
     registerSyscall(11, (void *) UserProcessImage::execve);
-    registerSyscall(12, (void *) chdir);
+    registerSyscall(12, (void *) FSUAPI::chdir);
     registerSyscall(13, (void *) SystemTimer::time);
-    registerSyscall(14, (void *) mknod);
-    registerSyscall(15, (void *) chmod);
-    registerSyscall(16, (void *) lchown);
-    registerSyscall(18, (void *) stat);
-    registerSyscall(19, (void *) lseek);
+    registerSyscall(14, (void *) FSUAPI::mknod);
+    registerSyscall(15, (void *) FSUAPI::chmod);
+    registerSyscall(16, (void *) FSUAPI::lchown);
+    registerSyscall(18, (void *) FSUAPI::stat);
+    registerSyscall(19, (void *) FSUAPI::lseek);
     registerSyscall(20, (void *) ProcessUAPI::getpid);
     registerSyscall(21, (void *) FileSystem::VFS::Mount);
     registerSyscall(22, (void *) FileSystem::VFS::Umount);
@@ -171,18 +171,18 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(25, (void *) SystemTimer::stime);
     //26 ptrace
     //27 alarm
-    registerSyscall(28, (void *) fstat);
+    registerSyscall(28, (void *) FSUAPI::fstat);
     //29 pause
-    registerSyscall(30, (void *) utime);
-    registerSyscall(33, (void *) access);
+    registerSyscall(30, (void *) FSUAPI::utime);
+    registerSyscall(33, (void *) FSUAPI::access);
     //34 nice
     //36 sync
     registerSyscall(37, (void *) ProcessUAPI::kill);
-    registerSyscall(38, (void *) rename);
-    registerSyscall(39, (void *) mkdir);
-    registerSyscall(40, (void *) rmdir);
-    registerSyscall(41, (void *) dup);
-    registerSyscall(42, (void *) pipe);
+    registerSyscall(38, (void *) FSUAPI::rename);
+    registerSyscall(39, (void *) FSUAPI::mkdir);
+    registerSyscall(40, (void *) FSUAPI::rmdir);
+    registerSyscall(41, (void *) FSUAPI::dup);
+    registerSyscall(42, (void *) FSUAPI::pipe);
     registerSyscall(45, (void *) MemoryUAPI::brk);
     registerSyscall(46, (void *) ProcessUAPI::setgid);
     registerSyscall(47, (void *) ProcessUAPI::getgid);
@@ -190,13 +190,13 @@ void SyscallsManager::registerDefaultSyscalls()
     //49 geteuid
     //50 getegid
     //52 umount2
-    registerSyscall(54, (void *) ioctl);
-    registerSyscall(55, (void *) fcntl);
+    registerSyscall(54, (void *) FSUAPI::ioctl);
+    registerSyscall(55, (void *) FSUAPI::fcntl);
     //57 setpgid
-    registerSyscall(60, (void *) umask);
+    registerSyscall(60, (void *) FSUAPI::umask);
     //61 chroot
     //62 ustat
-    registerSyscall(32, (void *) dup2);
+    registerSyscall(32, (void *) FSUAPI::dup2);
     registerSyscall(64, (void *) ProcessUAPI::getppid);
     //65 getpgrp
     //66 setsid
@@ -212,29 +212,29 @@ void SyscallsManager::registerDefaultSyscalls()
     //settimeofday 79
     //getgroups 80
     //setgroups 81
-    registerSyscall(83, (void *) symlink);
-    registerSyscall(84, (void *) lstat);
-    registerSyscall(85, (void *) readlink);
+    registerSyscall(83, (void *) FSUAPI::symlink);
+    registerSyscall(84, (void *) FSUAPI::lstat);
+    registerSyscall(85, (void *) FSUAPI::readlink);
     //86 uselib
     registerSyscall(88, (void *) ArchManager::reboot);
     registerSyscall(90, (void *) mmap_i386);
     registerSyscall(91, (void *) MemoryUAPI::munmap);
-    registerSyscall(92, (void *) truncate);
-    registerSyscall(93, (void *) ftruncate);
-    registerSyscall(94, (void *) fchmod);
-    registerSyscall(95, (void *) fchown);
+    registerSyscall(92, (void *) FSUAPI::truncate);
+    registerSyscall(93, (void *) FSUAPI::ftruncate);
+    registerSyscall(94, (void *) FSUAPI::fchmod);
+    registerSyscall(95, (void *) FSUAPI::fchown);
     //96 getpriority
     //97 setpriority
-    registerSyscall(99, (void *) statfs);
-    registerSyscall(100, (void *) fstatfs);
+    registerSyscall(99, (void *) FSUAPI::statfs);
+    registerSyscall(100, (void *) FSUAPI::fstatfs);
     registerSyscall(102, (void *) socketcall);
     //104 setitimer
     //105 getitimer
-    registerSyscall(107, (void *) lstat);
+    registerSyscall(107, (void *) FSUAPI::lstat);
     //111 vhangup
     //114 wait4
     //116 sysinfo
-    registerSyscall(118, (void *) fsync);
+    registerSyscall(118, (void *) FSUAPI::fsync);
     //119 sigreturn
     //120 clone
     registerSyscall(121, (void *) SetDomainName);
@@ -242,17 +242,17 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(125, (void *) MemoryUAPI::mprotect);
     //126 sigprocmask
     //132 getpgid
-    registerSyscall(133, (void *) fchdir);
+    registerSyscall(133, (void *) FSUAPI::fchdir);
     //138 setfsuid
     //139 setfsgid 
-    registerSyscall(141, (void *) getdents);
+    registerSyscall(141, (void *) FSUAPI::getdents);
     //142 select
     //143 flock
     registerSyscall(144, (void *) MemoryUAPI::msync);
     //145 readv
     //146 writev
     //147 sys_getsid
-    registerSyscall(148, (void *) fdatasync);
+    registerSyscall(148, (void *) FSUAPI::fdatasync);
     //149 sysctl
     registerSyscall(150, (void *) MemoryUAPI::mlock);
     registerSyscall(151, (void *) MemoryUAPI::munlock);
@@ -261,14 +261,14 @@ void SyscallsManager::registerDefaultSyscalls()
     //162 nanosleep
     registerSyscall(163, (void *) MemoryUAPI::mremap);
     //165 getresuid
-    registerSyscall(168, (void *) poll);
+    registerSyscall(168, (void *) FSUAPI::poll);
     //170 setresid
     //171 getresid
     //172 prctl
-    registerSyscall(180, (void *) pread);
-    registerSyscall(181, (void *) pwrite);
-    registerSyscall(182, (void *) chown);
-    registerSyscall(183, (void *) getcwd);
+    registerSyscall(180, (void *) FSUAPI::pread);
+    registerSyscall(181, (void *) FSUAPI::pwrite);
+    registerSyscall(182, (void *) FSUAPI::chown);
+    registerSyscall(183, (void *) FSUAPI::getcwd);
     //184 capget
     //185 capset
     //186 sigaltstack

@@ -54,7 +54,7 @@ using namespace FileSystem;
 #define CHECK_FOR_EBADF(fd) \
 if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
 
-int isValidFileName(const char *name)
+int FSUAPI::isValidFileName(const char *name)
 {
     int len = strlen(name);
 
@@ -67,7 +67,7 @@ int isValidFileName(const char *name)
     }
 }
 
-int isValidUserFileName(const char *name)
+int FSUAPI::isValidUserFileName(const char *name)
 {
     int retVal = isValidFileName(name);
     
@@ -82,7 +82,7 @@ int isValidUserFileName(const char *name)
 
 //TODO: testare se un file descriptor e` valido
 
-int getcwd(char *buf, size_t size)
+int FSUAPI::getcwd(char *buf, size_t size)
 {
     char *path;
     int retVal = VFS::GetDirPathFromVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, &path);
@@ -101,7 +101,7 @@ int getcwd(char *buf, size_t size)
     }
 }
 
-int chdir(userptr const char *path)
+int FSUAPI::chdir(userptr const char *path)
 {
     UserString dirPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!dirPath.isValid())) {
@@ -128,7 +128,7 @@ int chdir(userptr const char *path)
 }
 
 
-int fchdir(int fd)
+int FSUAPI::fchdir(int fd)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -143,7 +143,7 @@ int fchdir(int fd)
     return 0;
 }
 
-int stat(userptr const char *path, struct stat *buf)
+int FSUAPI::stat(userptr const char *path, struct stat *buf)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -173,7 +173,7 @@ int stat(userptr const char *path, struct stat *buf)
     return result;
 }
 
-int lstat(userptr const char *path, struct stat *buf)
+int FSUAPI::lstat(userptr const char *path, struct stat *buf)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -203,7 +203,7 @@ int lstat(userptr const char *path, struct stat *buf)
     return result;
 }
 
-int fstat(int filedes, struct stat *buf)
+int FSUAPI::fstat(int filedes, struct stat *buf)
 {
     CHECK_FOR_EBADF(filedes);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
@@ -229,7 +229,7 @@ int fstat(int filedes, struct stat *buf)
     return result;
 }
 
-int stat64(userptr const char *path, struct stat64 *buf64)
+int FSUAPI::stat64(userptr const char *path, struct stat64 *buf64)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -274,7 +274,7 @@ int stat64(userptr const char *path, struct stat64 *buf64)
     return result;
 }
 
-int lstat64(userptr const char *path, struct stat64 *buf64)
+int FSUAPI::lstat64(userptr const char *path, struct stat64 *buf64)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -319,7 +319,7 @@ int lstat64(userptr const char *path, struct stat64 *buf64)
     return result;
 }
 
-int fstat64(int filedes, struct stat64 *buf64)
+int FSUAPI::fstat64(int filedes, struct stat64 *buf64)
 {
     CHECK_FOR_EBADF(filedes);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
@@ -362,7 +362,7 @@ int fstat64(int filedes, struct stat64 *buf64)
 
 }
 
-int readlink(userptr const char *path, char *buf, size_t bufsiz)
+int FSUAPI::readlink(userptr const char *path, char *buf, size_t bufsiz)
 {
     UserString linkPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!linkPath.isValid())) {
@@ -378,7 +378,7 @@ int readlink(userptr const char *path, char *buf, size_t bufsiz)
 	return FS_CALL(tmpnode, readlink)(tmpnode, buf, bufsiz);
 }
 
-int getdents(int fd, dirent *dirp, unsigned int count)
+int FSUAPI::getdents(int fd, dirent *dirp, unsigned int count)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -387,7 +387,7 @@ int getdents(int fd, dirent *dirp, unsigned int count)
 	return FS_CALL(fdesc->node, getdents)(fdesc->node, dirp, count);
 }
 
-int access(userptr const char *pathname, int mode)
+int FSUAPI::access(userptr const char *pathname, int mode)
 {
     UserString fPath(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -403,7 +403,7 @@ int access(userptr const char *pathname, int mode)
 	return result;
 }
 
-int createNewFile(const char *pathname, mode_t mode, VNode **node)
+int FSUAPI::createNewFile(const char *pathname, mode_t mode, VNode **node)
 {
     char *name;
     
@@ -423,7 +423,7 @@ int createNewFile(const char *pathname, mode_t mode, VNode **node)
     return result;
 }
 
-mode_t umask(mode_t mode)
+mode_t FSUAPI::umask(mode_t mode)
 {
     ProcessControlBlock *process = Scheduler::currentThread()->parentProcess;
     mode_t oldMask = process->umask;
@@ -431,7 +431,7 @@ mode_t umask(mode_t mode)
     return oldMask;
 }
 
-int open(VNode *dirNode, userptr const char *pathname, int flags)
+int FSUAPI::openAtVNode(VNode *dirNode, userptr const char *pathname, int flags)
 {
     UserString path(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!path.isValid())) {
@@ -458,12 +458,12 @@ int open(VNode *dirNode, userptr const char *pathname, int flags)
     return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
-int open(const char *pathname, int flags)
+int FSUAPI::open(const char *pathname, int flags)
 {
-    return open(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, flags);
+    return openAtVNode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, pathname, flags);
 }
 
-int openat(int dirfd, const char *pathname, int flags)
+int FSUAPI::openat(int dirfd, const char *pathname, int flags)
 {
     CHECK_FOR_EBADF(dirfd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(dirfd);
@@ -473,10 +473,10 @@ int openat(int dirfd, const char *pathname, int flags)
     if (retVal < 0) return retVal;
     if ((type & S_IFDIR) == 0) return -ENOTDIR;
 
-    return open(fdesc->node, pathname, flags);
+    return openAtVNode(fdesc->node, pathname, flags);
 }
 
-int closePB(ProcessControlBlock *process, int fd)
+int FSUAPI::closePB(ProcessControlBlock *process, int fd)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -490,12 +490,12 @@ int closePB(ProcessControlBlock *process, int fd)
     return 0;
 }
 
-int close(int fd)
+int FSUAPI::close(int fd)
 {
     return closePB(Scheduler::currentThread()->parentProcess, fd);
 }
 
-int write(int fd, const void *buf, size_t count)
+int FSUAPI::write(int fd, const void *buf, size_t count)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -509,7 +509,7 @@ int write(int fd, const void *buf, size_t count)
     return ret;
 }
 
-int read(int fd, void *buf, size_t count)
+int FSUAPI::read(int fd, void *buf, size_t count)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -523,7 +523,7 @@ int read(int fd, void *buf, size_t count)
     return ret;
 }
 
-int lseek(int fd, off_t offset, int whence)
+int FSUAPI::lseek(int fd, off_t offset, int whence)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -561,7 +561,7 @@ int lseek(int fd, off_t offset, int whence)
 	return fdesc->fpos;
 }
 
-int fsync(int fd)
+int FSUAPI::fsync(int fd)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -570,7 +570,7 @@ int fsync(int fd)
 	return FS_CALL(fdesc->node, fsync)(fdesc->node);
 }
 
-int fdatasync(int fd)
+int FSUAPI::fdatasync(int fd)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -580,7 +580,7 @@ int fdatasync(int fd)
 }
 
 //NOTE: 64 bit implementation
-int truncate(userptr const char *path, uint64_t length)
+int FSUAPI::truncate(userptr const char *path, uint64_t length)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -597,7 +597,7 @@ int truncate(userptr const char *path, uint64_t length)
 }
 
 //NOTE: 64 bit implementation
-int ftruncate(int fd, uint64_t length)
+int FSUAPI::ftruncate(int fd, uint64_t length)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -606,7 +606,7 @@ int ftruncate(int fd, uint64_t length)
 	return FS_CALL(fdesc->node, truncate)(fdesc->node, length);
 }
 
-int chmod(userptr const char *path, mode_t mode)
+int FSUAPI::chmod(userptr const char *path, mode_t mode)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -622,7 +622,7 @@ int chmod(userptr const char *path, mode_t mode)
 	return result;
 }
 
-int fchmod(int fildes, mode_t mode)
+int FSUAPI::fchmod(int fildes, mode_t mode)
 {
         CHECK_FOR_EBADF(fildes);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fildes);
@@ -631,7 +631,7 @@ int fchmod(int fildes, mode_t mode)
 	return FS_CALL(fdesc->node, chmod)(fdesc->node, mode);
 }
 
-int chown(userptr const char *path, uid_t owner, gid_t group)
+int FSUAPI::chown(userptr const char *path, uid_t owner, gid_t group)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -647,7 +647,7 @@ int chown(userptr const char *path, uid_t owner, gid_t group)
 	return result;
 }
 
-int fchown(int fd, uid_t owner, gid_t group)
+int FSUAPI::fchown(int fd, uid_t owner, gid_t group)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -656,7 +656,7 @@ int fchown(int fd, uid_t owner, gid_t group)
 	return FS_CALL(fdesc->node, chown)(fdesc->node, owner, group);
 }
 
-int lchown(userptr const char *path, uid_t owner, gid_t group)
+int FSUAPI::lchown(userptr const char *path, uid_t owner, gid_t group)
 {
     UserString fPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -672,7 +672,7 @@ int lchown(userptr const char *path, uid_t owner, gid_t group)
 	return result;
 }
 
-int pread(int fd, void *buf, size_t count, uint64_t offset)
+int FSUAPI::pread(int fd, void *buf, size_t count, uint64_t offset)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -681,7 +681,7 @@ int pread(int fd, void *buf, size_t count, uint64_t offset)
 	return FS_CALL(fdesc->node, read)(fdesc->node, offset, (char *) buf, count);
 }
 
-int pwrite(int fd, const void *buf, size_t count, uint64_t offset)
+int FSUAPI::pwrite(int fd, const void *buf, size_t count, uint64_t offset)
 {
         CHECK_FOR_EBADF(fd);
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -691,12 +691,12 @@ int pwrite(int fd, const void *buf, size_t count, uint64_t offset)
 }
 
 //TODO
-int fcntl(int fd, int cmd, long arg)
+int FSUAPI::fcntl(int fd, int cmd, long arg)
 {
 	return -EINVAL;
 }
 
-int ioctl(int d, int request, long arg)
+int FSUAPI::ioctl(int d, int request, long arg)
 {
     CHECK_FOR_EBADF(d);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(d);
@@ -717,7 +717,7 @@ int ioctl(int d, int request, long arg)
     return retVal;
 }
 
-int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name)
+int FSUAPI::pathToParentAndName(const char *pathname, VNode **parentDirectory, char **name)
 {
     int currentPathToken = 0;
     int i = 0;
@@ -750,7 +750,7 @@ int pathToParentAndName(const char *pathname, VNode **parentDirectory, char **na
     return 0;
 }
 
-int creat(const char *pathname, mode_t mode)
+int FSUAPI::creat(const char *pathname, mode_t mode)
 {
     VNode *node;
     
@@ -759,7 +759,7 @@ int creat(const char *pathname, mode_t mode)
 }
 
 
-int utime(userptr const char *filename, userptr const struct utimbuf *buf)
+int FSUAPI::utime(userptr const char *filename, userptr const struct utimbuf *buf)
 {
     UserString fPath(filename, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -784,7 +784,7 @@ int utime(userptr const char *filename, userptr const struct utimbuf *buf)
     return result;
 }
 
-int statfs(userptr const char *path, userptr struct statfs *buf)
+int FSUAPI::statfs(userptr const char *path, userptr struct statfs *buf)
 {
     UserString fsPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fsPath.isValid())) {
@@ -809,7 +809,7 @@ int statfs(userptr const char *path, userptr struct statfs *buf)
     return result;
 }
 
-int fstatfs(int fd, userptr struct statfs *buf)
+int FSUAPI::fstatfs(int fd, userptr struct statfs *buf)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
@@ -828,7 +828,7 @@ int fstatfs(int fd, userptr struct statfs *buf)
     return statFSRet;
 }
 
-int unlink(userptr const char *pathname)
+int FSUAPI::unlink(userptr const char *pathname)
 {
     UserString fPath(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -855,7 +855,7 @@ int unlink(userptr const char *pathname)
     return result;
 }
 
-int link(userptr const char *oldpath, userptr const char *newpath)
+int FSUAPI::link(userptr const char *oldpath, userptr const char *newpath)
 {
     UserString oldPath(oldpath, MAX_FILENAME_LEN);
     if (UNLIKELY(!oldPath.isValid())) {
@@ -890,7 +890,7 @@ int link(userptr const char *oldpath, userptr const char *newpath)
     return result;
 }
 
-int symlink(userptr const char *oldpath, userptr const char *newpath)
+int FSUAPI::symlink(userptr const char *oldpath, userptr const char *newpath)
 {
     UserString oldPath(oldpath, MAX_FILENAME_LEN);
     if (UNLIKELY(!oldPath.isValid())) {
@@ -918,7 +918,7 @@ int symlink(userptr const char *oldpath, userptr const char *newpath)
     return result;  
 }
 
-int mknod(userptr const char *pathname, mode_t mode, dev_t dev)
+int FSUAPI::mknod(userptr const char *pathname, mode_t mode, dev_t dev)
 {
     UserString fPath(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -945,7 +945,7 @@ int mknod(userptr const char *pathname, mode_t mode, dev_t dev)
     return result;
 }
 
-int mkdir(userptr const char *pathname, mode_t mode)
+int FSUAPI::mkdir(userptr const char *pathname, mode_t mode)
 {
     UserString fPath(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -972,7 +972,7 @@ int mkdir(userptr const char *pathname, mode_t mode)
     return result;
 }
 
-int rmdir(userptr const char *pathname)
+int FSUAPI::rmdir(userptr const char *pathname)
 {
     UserString fPath(pathname, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -999,7 +999,7 @@ int rmdir(userptr const char *pathname)
     return result;
 }
 
-int rename(userptr const char *oldpath, userptr const char *newpath)
+int FSUAPI::rename(userptr const char *oldpath, userptr const char *newpath)
 {
     UserString oldPath(oldpath, MAX_FILENAME_LEN);
     if (UNLIKELY(!oldPath.isValid())) {
@@ -1051,7 +1051,7 @@ int rename(userptr const char *oldpath, userptr const char *newpath)
     return result;
 }
 
-int dup(int oldfd)
+int FSUAPI::dup(int oldfd)
 {
     CHECK_FOR_EBADF(oldfd);
     FileDescriptor *oldFdesc = Scheduler::currentThread()->parentProcess->openFiles->at(oldfd);
@@ -1064,7 +1064,7 @@ int dup(int oldfd)
     return Scheduler::currentThread()->parentProcess->openFiles->add(fdesc);
 }
 
-int dup2(int oldfd, int newfd)
+int FSUAPI::dup2(int oldfd, int newfd)
 {
     if (newfd == oldfd){
         return newfd;
@@ -1074,7 +1074,7 @@ int dup2(int oldfd, int newfd)
     }
 }
 
-int dup3(int oldfd, int newfd, int flags)
+int FSUAPI::dup3(int oldfd, int newfd, int flags)
 {
     if (newfd < 0) return -EBADF;
     CHECK_FOR_EBADF(oldfd);
@@ -1099,7 +1099,7 @@ int dup3(int oldfd, int newfd, int flags)
 }
 
 //TODO: check pipefd address
-int pipe2(int pipefd[2], int flags)
+int FSUAPI::pipe2(int pipefd[2], int flags)
 {
     VNode *node = Pipe::newPipe();
     if (node == NULL) return -ENOMEM;
@@ -1117,7 +1117,7 @@ int pipe2(int pipefd[2], int flags)
     return 0;
 }
 
-int pipe(int pipefd[2])
+int FSUAPI::pipe(int pipefd[2])
 {
     return pipe2(pipefd, 0);
 }
@@ -1130,7 +1130,7 @@ int pipe(int pipefd[2])
  - Check if some IO is already waiting
  - Schedule
 */
-int poll(pollfd *fds, int nfds, int timeout)
+int FSUAPI::poll(pollfd *fds, int nfds, int timeout)
 {
     if (timeout == 0) return 0;
 
@@ -1173,7 +1173,7 @@ int poll(pollfd *fds, int nfds, int timeout)
     return 0;
 }
 
-int socket(int domain, int type, int protocol)
+int FSUAPI::socket(int domain, int type, int protocol)
 {
     VNode *node = Socket::newSocket(domain, type, protocol);
     if (node == NULL) return -ENOMEM;

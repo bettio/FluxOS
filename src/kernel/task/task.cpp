@@ -179,7 +179,7 @@ void Task::closeAllFiles(ProcessControlBlock *process)
     for (int i = 0; i < process->openFiles->size(); i++){
 	    if (process->openFiles->at(i) != NULL){
             //TODO: do not use UAPI close here
-            close(i);
+            FSUAPI::close(i);
         }
     }
 }
