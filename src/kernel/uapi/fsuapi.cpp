@@ -36,6 +36,7 @@
 #include <filesystem/socket.h>
 #include <filesystem/vnodemanager.h>
 #include <filesystem/pollfd.h>
+#include <mm/usermemoryops.h>
 
 using namespace FileSystem;
 
@@ -98,10 +99,15 @@ int getcwd(char *buf, size_t size)
     }
 }
 
-int chdir(const char *path)
+int chdir(userptr const char *path)
 {
+    UserString dirPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!dirPath.isValid())) {
+        return dirPath.errorCode();
+    }
+
     VNode *node;
-    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, dirPath.data(), &node);
     if (result < 0) return result;
     int type = 0;
     int retVal = FS_CALL(node, type)(node, &type);
@@ -135,11 +141,16 @@ int fchdir(int fd)
     return 0;
 }
 
-int stat(const char *path, struct stat *buf)
+int stat(userptr const char *path, struct stat *buf)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
 	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
 
@@ -148,11 +159,16 @@ int stat(const char *path, struct stat *buf)
 	return result;
 }
 
-int lstat(const char *path, struct stat *buf)
+int lstat(userptr const char *path, struct stat *buf)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);	
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);	
 
 	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
 
@@ -170,11 +186,16 @@ int fstat(int filedes, struct stat *buf)
 	return FS_CALL(tmpnode, stat)(tmpnode, buf);
 }
 
-int stat64(const char *path, struct stat64 *buf64)
+int stat64(userptr const char *path, struct stat64 *buf64)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
 	struct stat buf;
 
@@ -199,11 +220,16 @@ int stat64(const char *path, struct stat64 *buf64)
 	return result;
 }
 
-int lstat64(const char *path, struct stat64 *buf64)
+int lstat64(userptr const char *path, struct stat64 *buf64)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
 
 	struct stat buf;
 
@@ -259,11 +285,16 @@ int fstat64(int filedes, struct stat64 *buf64)
 	return result;
 }
 
-int readlink(const char *path, char *buf, size_t bufsiz)
+int readlink(userptr const char *path, char *buf, size_t bufsiz)
 {
+    UserString linkPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!linkPath.isValid())) {
+        return linkPath.errorCode();
+    }
+
 	VNode *tmpnode;
 
-	int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &tmpnode, false);
+	int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, linkPath.data(), &tmpnode, false);
 
 	if (result < 0) return result;
 
@@ -279,11 +310,16 @@ int getdents(int fd, dirent *dirp, unsigned int count)
 	return FS_CALL(fdesc->node, getdents)(fdesc->node, dirp, count);
 }
 
-int access(const char *pathname, int mode)
+int access(userptr const char *pathname, int mode)
 {
+    UserString fPath(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) pathname, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
 
 	if (result >= 0) result = FS_CALL(node, access)(node, mode, Scheduler::currentThread()->parentProcess->uid, Scheduler::currentThread()->parentProcess->gid);
 
@@ -318,18 +354,23 @@ mode_t umask(mode_t mode)
     return oldMask;
 }
 
-int open(VNode *dirNode, const char *pathname, int flags)
+int open(VNode *dirNode, userptr const char *pathname, int flags)
 {
+    UserString path(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!path.isValid())) {
+        return path.errorCode();
+    }
+
     int result;
     VNode *node;
-    result = FileSystem::VFS::RelativePathToVnode(dirNode, pathname, &node, true);
+    result = FileSystem::VFS::RelativePathToVnode(dirNode, path.constData(), &node, true);
 
     if (result < 0){
         if (flags & O_CREAT){
-            createNewFile(pathname, flags, &node);
+            createNewFile(path.constData(), flags, &node);
 
         }else{
-            DEBUG_MSG("Failed to open %s\n", pathname);
+            DEBUG_MSG("Failed to open %s\n", path.constData());
             return result;
         }
     }
@@ -462,11 +503,16 @@ int fdatasync(int fd)
 }
 
 //NOTE: 64 bit implementation
-int truncate(const char *path, uint64_t length)
+int truncate(userptr const char *path, uint64_t length)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
 	if (result >= 0) result = FS_CALL(node, truncate)(node, length);
 
@@ -483,11 +529,16 @@ int ftruncate(int fd, uint64_t length)
 	return FS_CALL(fdesc->node, truncate)(fdesc->node, length);
 }
 
-int chmod(const char *path, mode_t mode)
+int chmod(userptr const char *path, mode_t mode)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
 	if (result >= 0) result = FS_CALL(node, chmod)(node, mode);
 
@@ -503,11 +554,16 @@ int fchmod(int fildes, mode_t mode)
 	return FS_CALL(fdesc->node, chmod)(fdesc->node, mode);
 }
 
-int chown(const char *path, uid_t owner, gid_t group)
+int chown(userptr const char *path, uid_t owner, gid_t group)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
 	if (result >= 0) result = FS_CALL(node, chown)(node, owner, group);
 
@@ -523,11 +579,16 @@ int fchown(int fd, uid_t owner, gid_t group)
 	return FS_CALL(fdesc->node, chown)(fdesc->node, owner, group);
 }
 
-int lchown(const char *path, uid_t owner, gid_t group)
+int lchown(userptr const char *path, uid_t owner, gid_t group)
 {
+    UserString fPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
 	VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, (char *) path, &node, false);
+	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
 
 	if (result >= 0) result = FS_CALL(node, chown)(node, owner, group);
 
@@ -621,21 +682,31 @@ int creat(const char *pathname, mode_t mode)
 }
 
 
-int utime(const char *filename, const struct utimbuf *buf)
+int utime(userptr const char *filename, const struct utimbuf *buf)
 {
+    UserString fPath(filename, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
     VNode *tmpnode;
 
-    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, filename, &tmpnode, false);
+    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &tmpnode, false);
 
     if (result < 0) return result;
 
     return FS_CALL(tmpnode, utime)(tmpnode, buf);
 }
 
-int statfs(const char *path, struct statfs *buf)
+int statfs(userptr const char *path, struct statfs *buf)
 {
+    UserString fsPath(path, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fsPath.isValid())) {
+        return fsPath.errorCode();
+    }
+
     VNode *tmpnode;
-    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &tmpnode, false);
+    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fsPath.data(), &tmpnode, false);
     if (result < 0) return result;
 
     result = FS_CALL(tmpnode, statfs)(tmpnode, buf);
@@ -653,12 +724,17 @@ int fstatfs(int fd, struct statfs *buf)
     return FS_CALL(fdesc->node, statfs)(fdesc->node, buf);
 }
 
-int unlink(const char *pathname)
+int unlink(userptr const char *pathname)
 {
+    UserString fPath(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
     VNode *node;
     char *name;
     
-    int result = pathToParentAndName(pathname, &node, &name);
+    int result = pathToParentAndName(fPath.data(), &node, &name);
     if (result < 0){
       return result;
     }
@@ -675,17 +751,27 @@ int unlink(const char *pathname)
     return result;
 }
 
-int link(const char *oldpath, const char *newpath)
+int link(userptr const char *oldpath, userptr const char *newpath)
 {
+    UserString oldPath(oldpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!oldPath.isValid())) {
+        return oldPath.errorCode();
+    }
+
+    UserString newPath(newpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!newPath.isValid())) {
+        return newPath.errorCode();
+    }
+
     VNode *oldNode;
-    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, oldpath, &oldNode, false);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, oldPath.data(), &oldNode, false);
     if (result < 0){
         return result;
     }
     
     VNode *node;
     char *name;
-    result = pathToParentAndName(newpath, &node, &name);
+    result = pathToParentAndName(newPath.data(), &node, &name);
     if (result < 0){
       VNodeManager::PutVnode(oldNode);
       return result;
@@ -700,17 +786,27 @@ int link(const char *oldpath, const char *newpath)
     return result;
 }
 
-int symlink(const char *oldpath, const char *newpath)
+int symlink(userptr const char *oldpath, userptr const char *newpath)
 {
+    UserString oldPath(oldpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!oldPath.isValid())) {
+        return oldPath.errorCode();
+    }
+
+    UserString newPath(newpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!newPath.isValid())) {
+        return newPath.errorCode();
+    }
+
     VNode *node;
     char *name;
     
-    int result = pathToParentAndName(newpath, &node, &name);
+    int result = pathToParentAndName(newPath.data(), &node, &name);
     if (result < 0){
       return result;
     }
     
-    result = FS_CALL(node, symlink)(node, oldpath, name);
+    result = FS_CALL(node, symlink)(node, oldPath.data(), name);
     
     VNodeManager::PutVnode(node);
     free(name);
@@ -718,12 +814,17 @@ int symlink(const char *oldpath, const char *newpath)
     return result;  
 }
 
-int mknod(const char *pathname, mode_t mode, dev_t dev)
+int mknod(userptr const char *pathname, mode_t mode, dev_t dev)
 {
+    UserString fPath(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
     VNode *node;
     char *name;
     
-    int result = pathToParentAndName(pathname, &node, &name);
+    int result = pathToParentAndName(fPath.data(), &node, &name);
     if (result < 0){
       return result;
     }
@@ -740,12 +841,17 @@ int mknod(const char *pathname, mode_t mode, dev_t dev)
     return result;
 }
 
-int mkdir(const char *pathname, mode_t mode)
+int mkdir(userptr const char *pathname, mode_t mode)
 {
+    UserString fPath(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
     VNode *node;
     char *name;
 
-    int result = pathToParentAndName(pathname, &node, &name);
+    int result = pathToParentAndName(fPath.data(), &node, &name);
     if (result < 0){
       return result;
     }
@@ -762,12 +868,17 @@ int mkdir(const char *pathname, mode_t mode)
     return result;
 }
 
-int rmdir(const char *pathname)
+int rmdir(userptr const char *pathname)
 {
+    UserString fPath(pathname, MAX_FILENAME_LEN);
+    if (UNLIKELY(!fPath.isValid())) {
+        return fPath.errorCode();
+    }
+
     VNode *node;
     char *name;
     
-    int result = pathToParentAndName(pathname, &node, &name);
+    int result = pathToParentAndName(fPath.data(), &node, &name);
     if (result < 0){
       return result;
     }
@@ -784,11 +895,21 @@ int rmdir(const char *pathname)
     return result;
 }
 
-int rename(const char *oldpath, const char *newpath)
+int rename(userptr const char *oldpath, userptr const char *newpath)
 {
+    UserString oldPath(oldpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!oldPath.isValid())) {
+        return oldPath.errorCode();
+    }
+
+    UserString newPath(newpath, MAX_FILENAME_LEN);
+    if (UNLIKELY(!newPath.isValid())) {
+        return newPath.errorCode();
+    }
+
     VNode *oldNode;
     char *oldName;
-    int result = pathToParentAndName(oldpath, &oldNode, &oldName);
+    int result = pathToParentAndName(oldPath.data(), &oldNode, &oldName);
     if (result < 0){
       return result;
     }
@@ -799,7 +920,7 @@ int rename(const char *oldpath, const char *newpath)
 
     VNode *newNode;
     char *newName;
-    result = pathToParentAndName(newpath, &newNode, &newName);
+    result = pathToParentAndName(newPath.data(), &newNode, &newName);
     if (result < 0){
       VNodeManager::PutVnode(oldNode);
       free(oldName);
