@@ -34,6 +34,8 @@
 #include <filesystem/ioctl.h>
 #include <filesystem/pipe.h>
 #include <filesystem/socket.h>
+#include <filesystem/statfs.h>
+#include <filesystem/utimbuf.h>
 #include <filesystem/vnodemanager.h>
 #include <filesystem/pollfd.h>
 #include <mm/usermemoryops.h>
@@ -148,15 +150,27 @@ int stat(userptr const char *path, struct stat *buf)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    struct stat s;
+    result = FS_CALL(node, stat)(node, &s);
 
-	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
+    VNodeManager::PutVnode(node);
 
-	//TODO: Alla fine la memoria va` liberata?
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	return result;
+    int ret = memcpyToUser(buf, &s, sizeof(struct stat));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    return result;
 }
 
 int lstat(userptr const char *path, struct stat *buf)
@@ -166,24 +180,53 @@ int lstat(userptr const char *path, struct stat *buf)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);	
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);	
+    struct stat s;
+    result = FS_CALL(node, stat)(node, &s);
 
-	if (result >= 0) result = FS_CALL(node, stat)(node, buf);
+    VNodeManager::PutVnode(node);
 
-	return result;
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
+
+    int ret = memcpyToUser(buf, &s, sizeof(struct stat));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    return result;
 }
 
 int fstat(int filedes, struct stat *buf)
 {
-        CHECK_FOR_EBADF(filedes);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
-	if (fdesc == NULL) return -EBADF;
+    CHECK_FOR_EBADF(filedes);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
+    if (fdesc == NULL) {
+        return -EBADF;
+    }
+    VNode *tmpnode = VNodeManager::ReferenceVnode(fdesc->node);
 
-	VNode *tmpnode = fdesc->node;
+    struct stat s;
+    int result = FS_CALL(tmpnode, stat)(tmpnode, &s);
 
-	return FS_CALL(tmpnode, stat)(tmpnode, buf);
+    VNodeManager::PutVnode(tmpnode);
+
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
+
+    int ret = memcpyToUser(buf, &s, sizeof(struct stat));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    return result;
 }
 
 int stat64(userptr const char *path, struct stat64 *buf64)
@@ -193,31 +236,42 @@ int stat64(userptr const char *path, struct stat64 *buf64)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    struct stat buf;
+    result = FS_CALL(node, stat)(node, &buf);
 
-	struct stat buf;
+    VNodeManager::PutVnode(node);
 
-	if (result >= 0) result = FS_CALL(node, stat)(node, &buf);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	buf64->st_dev = buf.st_dev;
-	buf64->st_ino = buf.st_ino;
-	buf64->st_mode = buf.st_mode;
-	buf64->st_nlink = buf.st_nlink;
-	buf64->st_uid = buf.st_uid;
-	buf64->st_gid = buf.st_gid;
-	buf64->st_rdev = buf.st_rdev;
-	buf64->st_size = buf.st_size;
-	buf64->st_blksize = buf.st_blksize;
-	buf64->st_blocks = buf.st_blocks;
-	buf64->st_atime = buf.st_atime;
-	buf64->st_mtime = buf.st_mtime;
-	buf64->st_ctime = buf.st_ctime;
+    struct stat64 s64;
+    s64.st_dev = buf.st_dev;
+    s64.st_ino = buf.st_ino;
+    s64.st_mode = buf.st_mode;
+    s64.st_nlink = buf.st_nlink;
+    s64.st_uid = buf.st_uid;
+    s64.st_gid = buf.st_gid;
+    s64.st_rdev = buf.st_rdev;
+    s64.st_size = buf.st_size;
+    s64.st_blksize = buf.st_blksize;
+    s64.st_blocks = buf.st_blocks;
+    s64.st_atime = buf.st_atime;
+    s64.st_mtime = buf.st_mtime;
+    s64.st_ctime = buf.st_ctime;
 
-	//TODO: Alla fine la memoria va` liberata?
+    int ret = memcpyToUser(buf64, &s64, sizeof(struct stat64));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
 
-	return result;
+    return result;
 }
 
 int lstat64(userptr const char *path, struct stat64 *buf64)
@@ -227,62 +281,85 @@ int lstat64(userptr const char *path, struct stat64 *buf64)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
+    struct stat buf;
+    result = FS_CALL(node, stat)(node, &buf);
 
-	struct stat buf;
+    VNodeManager::PutVnode(node);
 
-	if (result >= 0) result = FS_CALL(node, stat)(node, &buf);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	buf64->st_dev = buf.st_dev;
-	buf64->st_ino = buf.st_ino;
-	buf64->st_mode = buf.st_mode;
-	buf64->st_nlink = buf.st_nlink;
-	buf64->st_uid = buf.st_uid;
-	buf64->st_gid = buf.st_gid;
-	buf64->st_rdev = buf.st_rdev;
-	buf64->st_size = buf.st_size;
-	buf64->st_blksize = buf.st_blksize;
-	buf64->st_blocks = buf.st_blocks;
-	buf64->st_atime = buf.st_atime;
-	buf64->st_mtime = buf.st_mtime;
-	buf64->st_ctime = buf.st_ctime;
+    struct stat64 s64;
+    s64.st_dev = buf.st_dev;
+    s64.st_ino = buf.st_ino;
+    s64.st_mode = buf.st_mode;
+    s64.st_nlink = buf.st_nlink;
+    s64.st_uid = buf.st_uid;
+    s64.st_gid = buf.st_gid;
+    s64.st_rdev = buf.st_rdev;
+    s64.st_size = buf.st_size;
+    s64.st_blksize = buf.st_blksize;
+    s64.st_blocks = buf.st_blocks;
+    s64.st_atime = buf.st_atime;
+    s64.st_mtime = buf.st_mtime;
+    s64.st_ctime = buf.st_ctime;
 
-	//TODO: Alla fine la memoria va` liberata?
+    int ret = memcpyToUser(buf64, &s64, sizeof(struct stat64));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
 
-	return result;
+    return result;
 }
 
 int fstat64(int filedes, struct stat64 *buf64)
 {
-	struct stat buf;
+    CHECK_FOR_EBADF(filedes);
+    FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
+    if (fdesc == NULL) {
+        return -EBADF;
+    }
 
-        CHECK_FOR_EBADF(filedes);
-	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(filedes);
-	if (fdesc == NULL) return -EBADF;
+    VNode *tmpnode = VNodeManager::ReferenceVnode(fdesc->node);
 
-	VNode *tmpnode = fdesc->node;
+    struct stat buf;
+    int result = FS_CALL(tmpnode, stat)(tmpnode, &buf);
 
-	int result =  FS_CALL(tmpnode, stat)(tmpnode, &buf);
+    VNodeManager::PutVnode(tmpnode);
 
-	buf64->st_dev = buf.st_dev;
-	buf64->st_ino = buf.st_ino;
-	buf64->st_mode = buf.st_mode;
-	buf64->st_nlink = buf.st_nlink;
-	buf64->st_uid = buf.st_uid;
-	buf64->st_gid = buf.st_gid;
-	buf64->st_rdev = buf.st_rdev;
-	buf64->st_size = buf.st_size;
-	buf64->st_blksize = buf.st_blksize;
-	buf64->st_blocks = buf.st_blocks;
-	buf64->st_atime = buf.st_atime;
-	buf64->st_mtime = buf.st_mtime;
-	buf64->st_ctime = buf.st_ctime;
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
 
-	//TODO: Alla fine la memoria va` liberata?
+    struct stat64 s64;
+    s64.st_dev = buf.st_dev;
+    s64.st_ino = buf.st_ino;
+    s64.st_mode = buf.st_mode;
+    s64.st_nlink = buf.st_nlink;
+    s64.st_uid = buf.st_uid;
+    s64.st_gid = buf.st_gid;
+    s64.st_rdev = buf.st_rdev;
+    s64.st_size = buf.st_size;
+    s64.st_blksize = buf.st_blksize;
+    s64.st_blocks = buf.st_blocks;
+    s64.st_atime = buf.st_atime;
+    s64.st_mtime = buf.st_mtime;
+    s64.st_ctime = buf.st_ctime;
 
-	return result;
+    int ret = memcpyToUser(buf64, &s64, sizeof(struct stat64));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    return result;
+
 }
 
 int readlink(userptr const char *path, char *buf, size_t bufsiz)
@@ -682,7 +759,7 @@ int creat(const char *pathname, mode_t mode)
 }
 
 
-int utime(userptr const char *filename, const struct utimbuf *buf)
+int utime(userptr const char *filename, userptr const struct utimbuf *buf)
 {
     UserString fPath(filename, MAX_FILENAME_LEN);
     if (UNLIKELY(!fPath.isValid())) {
@@ -690,15 +767,24 @@ int utime(userptr const char *filename, const struct utimbuf *buf)
     }
 
     VNode *tmpnode;
-
     int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &tmpnode, false);
+    if (result < 0) {
+        return result;
+    }
 
-    if (result < 0) return result;
+    struct utimbuf utim;
+    int copyRet = memcpyFromUser(&utim, buf, sizeof(struct utimbuf));
+    if (UNLIKELY(copyRet < 0)) {
+        return copyRet;
+    }
+    result = FS_CALL(tmpnode, utime)(tmpnode, &utim);
 
-    return FS_CALL(tmpnode, utime)(tmpnode, buf);
+    VNodeManager::PutVnode(tmpnode);
+
+    return result;
 }
 
-int statfs(userptr const char *path, struct statfs *buf)
+int statfs(userptr const char *path, userptr struct statfs *buf)
 {
     UserString fsPath(path, MAX_FILENAME_LEN);
     if (UNLIKELY(!fsPath.isValid())) {
@@ -709,19 +795,37 @@ int statfs(userptr const char *path, struct statfs *buf)
     int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fsPath.data(), &tmpnode, false);
     if (result < 0) return result;
 
-    result = FS_CALL(tmpnode, statfs)(tmpnode, buf);
+    struct statfs s;
+    result = FS_CALL(tmpnode, statfs)(tmpnode, &s);
     VNodeManager::PutVnode(tmpnode);
+    if (UNLIKELY(result < 0)) {
+        return result;
+    }
+    int ret = memcpyToUser(buf, &s, sizeof(struct statfs));
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
 
     return result;
 }
 
-int fstatfs(int fd, struct statfs *buf)
+int fstatfs(int fd, userptr struct statfs *buf)
 {
     CHECK_FOR_EBADF(fd);
     FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
     if (fdesc == NULL) return -EBADF;
 
-    return FS_CALL(fdesc->node, statfs)(fdesc->node, buf);
+    struct statfs s;
+    int statFSRet = FS_CALL(fdesc->node, statfs)(fdesc->node, &s);
+    if (UNLIKELY(statFSRet < 0)) {
+        return statFSRet;
+    }
+    int ret = memcpyToUser(buf, &s, sizeof(struct statfs));
+    if (UNLIKELY(ret < 0)) {
+        return  ret;
+    }
+
+    return statFSRet;
 }
 
 int unlink(userptr const char *pathname)
