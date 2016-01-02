@@ -40,4 +40,6 @@ extern unsigned long kernel_heap_free_pos;
 
 #define USERSPACE_LOWER_ADDR USERSPACE_LOW_ADDR
 
+#define UTSNAME_MACHINENAME "mipsel"
+
 #endif

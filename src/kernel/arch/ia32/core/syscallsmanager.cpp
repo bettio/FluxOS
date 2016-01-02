@@ -34,11 +34,11 @@
 #include <filesystem/vfs.h>
 #include <cstdlib.h>
 #include <drivers/chardevicemanager.h>
-#include <core/system.h>
 #include <task/task.h>
 #include <filesystem/pollfd.h>
 
 #include <uapi/fsuapi.h>
+#include <uapi/hostuapi.h>
 #include <uapi/memoryuapi.h>
 #include <uapi/netuapi.h>
 #include <uapi/processuapi.h>
@@ -207,7 +207,7 @@ void SyscallsManager::registerDefaultSyscalls()
     //71 setregid
     //72 sigsuspend
     //73 sigpending
-    registerSyscall(74, (void *) SetHostName);
+    registerSyscall(74, (void *) HostUAPI::sethostname);
     //gettimeofday 78
     //settimeofday 79
     //getgroups 80
@@ -237,8 +237,8 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(118, (void *) FSUAPI::fsync);
     //119 sigreturn
     //120 clone
-    registerSyscall(121, (void *) SetDomainName);
-    registerSyscall(122, (void *) Uname);
+    registerSyscall(121, (void *) HostUAPI::setdomainname);
+    registerSyscall(122, (void *) HostUAPI::uname);
     registerSyscall(125, (void *) MemoryUAPI::mprotect);
     //126 sigprocmask
     //132 getpgid

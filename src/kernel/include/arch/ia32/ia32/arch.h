@@ -48,4 +48,6 @@ extern unsigned long kernel_heap_free_pos;
 #define USERSPACE_LOW_ADDR USERSPACE_LOWER_ADDR
 #define USERSPACE_HI_ADDR 0xFFFFEFFF
 
+#define UTSNAME_MACHINENAME "i386"
+
 #endif

@@ -49,8 +49,6 @@
 #include <uapi/memoryuapi.h>
 #include <uapi/processuapi.h>
 
-#include <core/system.h>
-
 int main()
 {
 	ArchManager::Init();

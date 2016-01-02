@@ -35,4 +35,6 @@ extern unsigned long kernel_heap_free_pos;
 
 #define LITTLE_ENDIAN 1234
 
+#define UTSNAME_MACHINENAME "arm"
+
 #endif

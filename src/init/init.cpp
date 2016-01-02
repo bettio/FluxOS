@@ -337,9 +337,8 @@ void setHostName()
 
     char hname[256];
     int readBytes = read(hostnameFd, hname, 256);
-    hname[readBytes] = 0;
 
-    sethostname(hname, 0);
+    sethostname(hname, readBytes);
     struct utsname unm;
     uname(&unm);
 
@@ -359,9 +358,8 @@ void setDomainName()
 
     char dname[256];
     int readBytes = read(domainnameFd, dname, 256);
-    dname[readBytes] = 0;
 
-    setdomainname(dname, 0);
+    setdomainname(dname, readBytes);
     struct utsname unm;
     uname(&unm);
 

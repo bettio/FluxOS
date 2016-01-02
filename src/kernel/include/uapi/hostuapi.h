@@ -16,13 +16,14 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: system.h                                                        *
+ *   Name: hostuapi.h                                                      *
  ***************************************************************************/
 
-#ifndef _CORE_SYSTEM_H
-#define _CORE_SYSTEM_H
+#ifndef _UAPI_HOSTUAPI_H
+#define _UAPI_HOSTUAPI_H
 
 #include <cstring.h>
+#include <mm/usermemoryops.h>
 
 struct utsname
 {
@@ -34,8 +35,12 @@ struct utsname
 	char domainname[65];
 };
 
-int SetHostName(const char *name, size_t len);
-int SetDomainName(const char *name, size_t len);
-int Uname(utsname *buf);
+class HostUAPI
+{
+    public:
+        static int sethostname(userptr const char *name, size_t len);
+        static int setdomainname(userptr const char *name, size_t len);
+        static int uname(userptr utsname *buf);
+};
 
 #endif
