@@ -38,12 +38,12 @@ void SystemTimer::init(int frequency)
 void SystemTimer::sleep(int millis, ThreadControlBlock *thread)
 {
     thread->status = IWaiting;
-    
+
     ThreadTimer timer;
     timer.parentThread = thread;
     timer.expiralSystemTime = (millis * tickFrequency) / 1000;
     timers->append(timer);
-    
+
     //TODO: schedule the thread, please
 }
 
@@ -60,21 +60,3 @@ void SystemTimer::timerTickISR()
         }
     }
 }
-
-long SystemTimer::time(long *t)
-{
-    long tSeconds = startupTimestamp + (systemTicks / tickFrequency); 
-    if (t != 0){
-        *t = tSeconds; //CHECK
-    }
-    return tSeconds;
-}
-
-//CHECK PERM
-int SystemTimer::stime(long *t)
-{
-    startupTimestamp = *t - systemTicks / tickFrequency;
-
-    return 0;
-}
-
