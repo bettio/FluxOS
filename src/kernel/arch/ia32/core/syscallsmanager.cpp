@@ -43,6 +43,7 @@
 #include <uapi/netuapi.h>
 #include <uapi/processuapi.h>
 #include <uapi/socketsyscalls.h>
+#include <uapi/timeuapi.h>
 
 #include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
@@ -157,7 +158,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(10, (void *) FSUAPI::unlink);
     registerSyscall(11, (void *) UserProcessImage::execve);
     registerSyscall(12, (void *) FSUAPI::chdir);
-    registerSyscall(13, (void *) SystemTimer::time);
+    registerSyscall(13, (void *) TimeUAPI::time);
     registerSyscall(14, (void *) FSUAPI::mknod);
     registerSyscall(15, (void *) FSUAPI::chmod);
     registerSyscall(16, (void *) FSUAPI::lchown);
@@ -168,7 +169,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(22, (void *) FileSystem::VFS::Umount);
     registerSyscall(23, (void *) ProcessUAPI::setuid);
     registerSyscall(24, (void *) ProcessUAPI::getuid);
-    registerSyscall(25, (void *) SystemTimer::stime);
+    registerSyscall(25, (void *) TimeUAPI::stime);
     //26 ptrace
     //27 alarm
     registerSyscall(28, (void *) FSUAPI::fstat);
@@ -258,7 +259,7 @@ void SyscallsManager::registerDefaultSyscalls()
     registerSyscall(151, (void *) MemoryUAPI::munlock);
     registerSyscall(152, (void *) MemoryUAPI::mlockall);
     registerSyscall(153, (void *) MemoryUAPI::munlockall);
-    //162 nanosleep
+    registerSyscall(162, (void *) ProcessUAPI::nanosleep);
     registerSyscall(163, (void *) MemoryUAPI::mremap);
     //165 getresuid
     registerSyscall(168, (void *) FSUAPI::poll);

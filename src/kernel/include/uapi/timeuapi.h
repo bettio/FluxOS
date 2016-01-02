@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright 2011 by Davide Bettio <davide.bettio@kdemail.net>           *
+ *   Copyright 2016 by Davide Bettio <davide@uninstall.it>                 *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,46 +16,18 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: systemtimer.h                                                   *
- *   Date: 19/11/2011                                                      *
+ *   Name: timeuapi.h                                                      *
+ *   Date: 2/01/2016                                                       *
  ***************************************************************************/
 
-#ifndef _SYSTEMTIMER_H_
-#define _SYSTEMTIMER_H_
+#ifndef _UAPI_TIMEUAPI_H_
+#define _UAPI_TIMEUAPI_H_
 
-#include <stdint.h>
-#include <QList>
-#include <task/threadcontrolblock.h>
-
-struct ThreadTimer
-{
-    ThreadControlBlock *parentThread;
-    unsigned long expiralSystemTime; //should I use ticks_t
-};
-
-
-class SystemTimer
+class TimeUAPI
 {
     public:
-        static void init(int frequency);
-        static void timerTickISR();
-        static void sleep(int millis, ThreadControlBlock *thread);
-
-        /*
-         * @return unix time in milliseconds
-         */
-        static uint64_t time();
-
-        /*
-         * set unix time in milliseconds
-         */
-        static void setTime(uint64_t time);
-
-    private:
-        static uint64_t systemTicks;
-        static QList<ThreadTimer> *timers;
-        static int tickFrequency;
-	static long startupTimestamp;
+        static long time(long *t);
+        static int stime(long *t);
 };
 
 #endif

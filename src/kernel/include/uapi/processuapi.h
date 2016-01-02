@@ -29,6 +29,12 @@
 #define uid_t unsigned long
 #define gid_t unsigned long
 
+struct timespec
+{
+    long tv_sec;
+    long tv_nsec;
+};
+
 class ProcessUAPI
 {
     public:
@@ -52,6 +58,7 @@ class ProcessUAPI
         static int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
         static void exit(int exitStatus);
+        static int nanosleep(const struct timespec *req, struct timespec *rem);
         static int waitpid(pid_t pid, int *status, int options);
         static int kill(pid_t pid, int signal);
 };

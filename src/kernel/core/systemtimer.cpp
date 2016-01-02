@@ -41,7 +41,7 @@ void SystemTimer::sleep(int millis, ThreadControlBlock *thread)
 
     ThreadTimer timer;
     timer.parentThread = thread;
-    timer.expiralSystemTime = (millis * tickFrequency) / 1000;
+    timer.expiralSystemTime = systemTicks + (millis * tickFrequency) / 1000;
     timers->append(timer);
 
     //TODO: schedule the thread, please
@@ -59,4 +59,14 @@ void SystemTimer::timerTickISR()
             //TODO: schedule the thread, please
         }
     }
+}
+
+uint64_t SystemTimer::time()
+{
+    return (startupTimestamp + (systemTicks / tickFrequency)) * 1000; 
+}
+
+void SystemTimer::setTime(uint64_t time)
+{
+    startupTimestamp = (time / 1000) - systemTicks / tickFrequency;
 }

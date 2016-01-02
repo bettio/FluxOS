@@ -27,6 +27,7 @@
 #include <uapi/syscallsnr.h>
 #endif
 #include <core/syscallsmanager.h>
+#include <core/systemtimer.h>
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
 #include <task/task.h>
@@ -138,6 +139,19 @@ int ProcessUAPI::setgid(gid_t gid)
 int ProcessUAPI::setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 {
     return -EFAULT;
+}
+
+int ProcessUAPI::nanosleep(const struct timespec *req, struct timespec *rem)
+{
+    struct timespec requestedInterval;
+    struct timespec remainingInterval;
+    memcpyFromUser(&requestedInterval, req, sizeof(struct timespec));
+
+    SystemTimer::sleep(requestedInterval.tv_sec * 1000 + requestedInterval.tv_nsec / 1000000, Scheduler::currentThread());
+    schedule();
+
+    memset(&remainingInterval, 0, sizeof(struct timespec));
+    memcpyFromUser(&remainingInterval, rem, sizeof(struct timespec));
 }
 
 int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
