@@ -160,6 +160,7 @@ SYSCALL_2(umount2, 52, int, const char *, int)
 SYSCALL_2(creat, 8, int, const char *, mode_t)
 SYSCALL_2(munmap, 91, int, void *, size_t)
 SYSCALL_3(mprotect, 125, int, void *, size_t, int)
+SYSCALL_2(nanosleep, 162, int, const struct timespec *, struct timespec *)
 
 void _exit(int status)
 {
