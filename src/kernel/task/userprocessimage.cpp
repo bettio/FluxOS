@@ -281,11 +281,19 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     thread->addressSpaceTable = newAddressSpace;
     thread->parentProcess->memoryContext = newMemoryContext;
 
+    // switch to the new address space because we are going to write there
+    #ifndef NO_MMU
+        PagingManager::changeAddressSpace((volatile uint32_t *) thread->addressSpaceTable);
+    #endif
+
     void *entryPoint;
     ret = loadExecutable(executablePath, &entryPoint);
     if (UNLIKELY(ret < 0)) {
         thread->addressSpaceTable = previousAddressSpace;
         thread->parentProcess->memoryContext = previousMemoryContext;
+        #ifndef NO_MMU
+            PagingManager::changeAddressSpace((volatile uint32_t *) thread->addressSpaceTable);
+        #endif
         return ret;
     }
 
@@ -315,6 +323,11 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
             MemoryContext::FixedHint) < 0)
     {
         printk("Error: cannot allocate data segment for brk\n");
+        thread->addressSpaceTable = previousAddressSpace;
+        thread->parentProcess->memoryContext = previousMemoryContext;
+        #ifndef NO_MMU
+            PagingManager::changeAddressSpace((volatile uint32_t *) thread->addressSpaceTable);
+        #endif
         return -ENOMEM;
     }
     thread->parentProcess->dataSegmentEnd = (void *) (((unsigned long ) thread->parentProcess->dataSegmentStart) + 4096);
