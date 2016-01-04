@@ -39,7 +39,17 @@ class SystemTimer
     public:
         static void init(int frequency);
         static void timerTickISR();
+
+        /*
+         * Put on sleep for a certain ammount of time any thread
+         */
         static void sleep(int millis, ThreadControlBlock *thread);
+
+        /*
+         * Put on sleep for a certain ammount current thread, return remaining time when interrupted
+         * @return 0 on success, otherwise error (i.e. -EINTR)
+         */
+        static int sleep(struct timespec *duration, struct timespec *remaining);
 
         /*
          * @return unix time in milliseconds

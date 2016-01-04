@@ -21,6 +21,8 @@
  ***************************************************************************/
 
 #include <core/systemtimer.h>
+#include <task/scheduler.h>
+#include <uapi/time.h>
 
 long SystemTimer::startupTimestamp;
 uint64_t SystemTimer::systemTicks;
@@ -45,6 +47,35 @@ void SystemTimer::sleep(int millis, ThreadControlBlock *thread)
     timers->append(timer);
 
     //TODO: schedule the thread, please
+}
+
+int SystemTimer::sleep(struct timespec *duration, struct timespec *remaining)
+{
+    ThreadControlBlock *thread = Scheduler::currentThread();
+    thread->status = IWaiting;
+
+    ThreadTimer timer;
+    timer.parentThread = thread;
+    timer.expiralSystemTime = systemTicks + duration->tv_sec * tickFrequency + duration->tv_nsec * tickFrequency / 1000000000;
+    timers->append(timer);
+
+    //schedule will run some other thread and this will sleep until timer expires
+    schedule();
+
+    //thread is running again, probably timer has expired but it might have been interrupted
+    //it might have been also scheduled for any other reason and the timer might be still alive
+    for (int i = 0; i < timers->count(); i++) {
+        if (timers->at(i).parentThread == thread) {
+            int64_t remainingTicks = timers->at(i).expiralSystemTime - systemTicks;
+            remaining->tv_sec = remainingTicks / tickFrequency;
+            remaining->tv_nsec = 0;
+            return (remainingTicks > 0) ? -EINTR : 0;
+        }
+    }
+    remaining->tv_sec = 0;
+    remaining->tv_nsec = 0;
+
+    return 0;
 }
 
 void SystemTimer::timerTickISR()

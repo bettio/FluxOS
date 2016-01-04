@@ -145,13 +145,19 @@ int ProcessUAPI::nanosleep(const struct timespec *req, struct timespec *rem)
 {
     struct timespec requestedInterval;
     struct timespec remainingInterval;
-    memcpyFromUser(&requestedInterval, req, sizeof(struct timespec));
+    int memcpyRet = memcpyFromUser(&requestedInterval, req, sizeof(struct timespec));
+    if (UNLIKELY(memcpyRet < 0)) {
+        return memcpyRet;
+    }
 
-    SystemTimer::sleep(requestedInterval.tv_sec * 1000 + requestedInterval.tv_nsec / 1000000, Scheduler::currentThread());
-    schedule();
+    int ret = SystemTimer::sleep(&requestedInterval, &remainingInterval);
 
-    memset(&remainingInterval, 0, sizeof(struct timespec));
-    memcpyFromUser(&remainingInterval, rem, sizeof(struct timespec));
+    memcpyRet = memcpyFromUser(&remainingInterval, rem, sizeof(struct timespec));
+    if (UNLIKELY(memcpyRet < 0)) {
+        return memcpyRet;
+    }
+
+    return ret;
 }
 
 int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
