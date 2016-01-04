@@ -23,17 +23,11 @@
 #ifndef _UAPI_PROCESSUAPI_H_
 #define _UAPI_PROCESSUPAI_H_
 
-#include <kdef.h>
+#include <uapi/time.h>
 
 #define pid_t unsigned long
 #define uid_t unsigned long
 #define gid_t unsigned long
-
-struct timespec
-{
-    long tv_sec;
-    long tv_nsec;
-};
 
 class ProcessUAPI
 {
