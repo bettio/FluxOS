@@ -58,7 +58,7 @@ int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoi
 {
     ElfLoader loader;
     int res = loader.loadExecutableFile(executablePath);
-    if (res < 0) {
+    if (UNLIKELY(res < 0)) {
         printk("Cannot load executable file: %s error: %i\n", executablePath, res);
         return res;
     }
@@ -318,9 +318,9 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 
     buildAuxVector(auxList, auxBlock);
 
-    if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
+    if (UNLIKELY(thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
-            MemoryContext::FixedHint) < 0)
+            MemoryContext::FixedHint) < 0))
     {
         printk("Error: cannot allocate data segment for brk\n");
         thread->addressSpaceTable = previousAddressSpace;

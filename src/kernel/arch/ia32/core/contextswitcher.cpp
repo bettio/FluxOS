@@ -48,6 +48,7 @@ void ContextSwitcher::schedule(long *esp)
 {
     if (Scheduler::isPreemptionInhibited()) return;
 
+    Scheduler::inhibitPreemption();
     Scheduler::currentThread()->currentStackPtr = (void *) *esp;
     ThreadControlBlock *nThread = Scheduler::nextThread(); //Now currentThread points to nextThread.
     #ifndef NO_MMU
@@ -55,6 +56,7 @@ void ContextSwitcher::schedule(long *esp)
     #endif
     TSS::setKernelStack(nThread->kernelStack);
     *esp = (long) nThread->currentStackPtr;
+    Scheduler::restorePreemption();
 }
 
 extern "C" {
