@@ -191,6 +191,7 @@ ext2_inode *Ext2::ReadInode(VNode *node)
 	#endif
 
 	//TODO: Warning: unchecked malloc
+        //FIXME: after some calls it's going to crash here
 	char *inodeTableTmpBlkBuf = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
 	privdata->blkdev->ReadBlock(privdata->blkdev, group[inodeGroup].bg_inode_table * privdata->DiskBlocksPerFSBlock,
 					(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) inodeTableTmpBlkBuf);
