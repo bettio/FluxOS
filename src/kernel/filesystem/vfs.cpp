@@ -188,6 +188,8 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
         return -ENOMEM;    
     }
     
+    DEBUG_MSG("VFS::RelativePathToVnode(%p, %s, %p, %i, %i)\n", start, _path, *node, traverse_leaf_link, count);
+
     //In case of absolute (which begin with /) path use RootNode as start
     if (path[0] == '/'){
         start = RootNode;
