@@ -38,20 +38,4 @@ void printk(const char *str, ...) NON_NULL_ARG(1) FORMAT_STRING(printf, 1, 2);
 }
 #endif
 
-#if __cplusplus
-void printk(bool value);
-
-void printk(char c);
-void printk(signed char c);
-void printk(char c, int base);
-
-void printk(int value);
-void printk(unsigned int value);
-void printk(unsigned int value, int base);
-
-void printk(long long value);
-void printk(unsigned long long value);
-void printk(unsigned long long value, int base);
-#endif
-
 #endif
