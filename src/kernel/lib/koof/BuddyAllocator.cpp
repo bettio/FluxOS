@@ -23,7 +23,9 @@
 #include <BuddyAllocator.h>
 
 #include <core/printk.h>
+
 #include <cstdlib.h>
+#include <new>
 
 #define ENABLE_DEBUG_MSG 0
 #include <debugmacros.h>
