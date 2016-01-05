@@ -68,7 +68,9 @@ int UserProcsManager::fork(void *stack)
     thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
 
     process->mainThread = thread;
+    Scheduler::inhibitPreemption();
     Scheduler::threads->append(thread);
+    Scheduler::restorePreemption();
 
     return process->pid;
 }
