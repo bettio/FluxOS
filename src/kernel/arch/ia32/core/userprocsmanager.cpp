@@ -84,7 +84,7 @@ void UserProcsManager::setupStackAndRegisters(RegistersFrame *frame, void *entry
 
     unsigned long *vars = (unsigned long *) sp;
     /*
-     MIPS ABI, user process stack:
+     i386 ABI, user process stack:
      - Lower address
      - argc <- SP
      - pointers array to args
