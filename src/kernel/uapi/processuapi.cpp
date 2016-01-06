@@ -58,6 +58,11 @@ void ProcessUAPI::init()
     SyscallsManager::registerSyscall(__NR_SETRESUID,(void *) setresuid);
     SyscallsManager::registerSyscall(__NR_SETGID,(void *) setgid);
     SyscallsManager::registerSyscall(__NR_SETRESGID,(void *) setresgid);
+
+    SyscallsManager::registerSyscall(__NR_NANOSLEEP,(void *) nanosleep);
+    SyscallsManager::registerSyscall(__NR_WAITPID,(void *) waitpid);
+    SyscallsManager::registerSyscall(__NR_KILL,(void *) kill);
+    SyscallsManager::registerSyscall(__NR_EXIT,(void *) exit);
 #endif
 }
 

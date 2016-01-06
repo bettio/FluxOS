@@ -24,9 +24,13 @@
 
 #include <uapi/fsuapi.h>
 
+#ifndef ARCH_IA32
+#include <uapi/syscallsnr.h>
+#endif
 #include <debugmacros.h>
 #include <cstdlib.h>
 #include <core/printk.h>
+#include <core/syscallsmanager.h>
 #include <filesystem/filedescriptor.h>
 #include <filesystem/pollfd.h>
 #include <task/eventsmanager.h>
@@ -53,6 +57,40 @@ using namespace FileSystem;
 
 #define CHECK_FOR_EBADF(fd) \
 if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
+
+void FSUAPI::init()
+{
+#ifndef ARCH_IA32
+    SyscallsManager::registerSyscall(__NR_READ, (void *)  read);
+    SyscallsManager::registerSyscall(__NR_WRITE, (void *)  write);
+    SyscallsManager::registerSyscall(__NR_OPEN, (void *)  open);
+    SyscallsManager::registerSyscall(__NR_CLOSE, (void *)  close);
+    SyscallsManager::registerSyscall(__NR_CHDIR, (void *)  chdir);
+    SyscallsManager::registerSyscall(__NR_CHMOD, (void *)  chmod);
+    SyscallsManager::registerSyscall(__NR_LCHOWN, (void *)  lchown);
+    SyscallsManager::registerSyscall(__NR_STAT, (void *)  stat);
+    SyscallsManager::registerSyscall(__NR_LSEEK, (void *)  lseek);
+    SyscallsManager::registerSyscall(__NR_MOUNT, (void *)  FileSystem::VFS::Mount); //FIXME
+    SyscallsManager::registerSyscall(__NR_UMOUNT, (void *)  FileSystem::VFS::Umount); //FIXME
+    SyscallsManager::registerSyscall(__NR_FSTAT, (void *)  fstat);
+    SyscallsManager::registerSyscall(__NR_IOCTL, (void *)  ioctl);
+    SyscallsManager::registerSyscall(__NR_FCNTL, (void *)  fcntl);
+    SyscallsManager::registerSyscall(__NR_TRUNCATE, (void *)  truncate);
+    SyscallsManager::registerSyscall(__NR_FTRUNCATE, (void *)  ftruncate);
+    SyscallsManager::registerSyscall(__NR_FCHMOD, (void *)  fchmod);
+    SyscallsManager::registerSyscall(__NR_FCHOWN, (void *)  fchown);
+    SyscallsManager::registerSyscall(__NR_LSTAT, (void *)  lstat);
+    SyscallsManager::registerSyscall(__NR_READLINK, (void *)  readlink);
+    SyscallsManager::registerSyscall(__NR_FSYNC, (void *)  fsync);
+    SyscallsManager::registerSyscall(__NR_GETDENTS, (void *)  getdents);
+    SyscallsManager::registerSyscall(__NR_FDATASYNC, (void *)  fdatasync);
+//    SyscallsManager::registerSyscall(__NR_PREAD, (void *)  pread);
+//    SyscallsManager::registerSyscall(__NR_PWRITE, (void *)  pwrite);
+    SyscallsManager::registerSyscall(__NR_SOCKET, (void *)  socket);
+    SyscallsManager::registerSyscall(__NR_CHOWN, (void *)  chown);
+    SyscallsManager::registerSyscall(__NR_GETCWD, (void *)  getcwd);
+#endif
+}
 
 int FSUAPI::isValidFileName(const char *name)
 {

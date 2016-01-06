@@ -22,9 +22,22 @@
 
 #include <uapi/timeuapi.h>
 
+#include <arch.h>
+#ifndef ARCH_IA32
+#include <uapi/syscallsnr.h>
+#endif
+#include <core/syscallsmanager.h>
 #include <core/systemtimer.h>
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
+
+void TimeUAPI::init()
+{
+#ifndef ARCH_IA32
+    SyscallsManager::registerSyscall(__NR_TIME, (void *) time);
+    SyscallsManager::registerSyscall(__NR_STIME, (void *) stime);
+#endif
+}
 
 long TimeUAPI::time(long *t)
 {

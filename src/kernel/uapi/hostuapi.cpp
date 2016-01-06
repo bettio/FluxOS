@@ -21,6 +21,11 @@
 
 #include <uapi/hostuapi.h>
 
+#include <arch.h>
+#ifndef ARCH_IA32
+#include <uapi/syscallsnr.h>
+#endif
+#include <core/syscallsmanager.h>
 #include <task/task.h>
 #include <task/scheduler.h>
 #include <errors.h>
@@ -29,6 +34,15 @@
 
 char *hostName;
 char *domainName;
+
+void HostUAPI::init()
+{
+#ifndef ARCH_IA32
+    SyscallsManager::registerSyscall(__NR_SETHOSTNAME, (void *) sethostname);
+    SyscallsManager::registerSyscall(__NR_SETDOMAINNAME, (void *) setdomainname);
+    SyscallsManager::registerSyscall(__NR_UNAME, (void *) uname);
+#endif
+}
 
 int HostUAPI::sethostname(userptr const char *name, size_t len)
 {

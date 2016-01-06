@@ -26,6 +26,8 @@
 class TimeUAPI
 {
     public:
+        static void init();
+
         static long time(long *t);
         static int stime(long *t);
 };

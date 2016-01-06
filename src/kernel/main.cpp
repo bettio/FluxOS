@@ -46,8 +46,11 @@
 
 #include <net/net.h>
 
+#include <uapi/fsuapi.h>
+#include <uapi/hostuapi.h>
 #include <uapi/memoryuapi.h>
 #include <uapi/processuapi.h>
+#include <uapi/timeuapi.h>
 
 int main()
 {
@@ -92,6 +95,9 @@ int main()
 
         ProcessUAPI::init();
         MemoryUAPI::init();
+        FSUAPI::init();
+        TimeUAPI::init();
+        HostUAPI::init();
 
 	printk("Starting Init...\n");
 

@@ -48,6 +48,8 @@
 #define __NR_UMOUNT     4022
 #define __NR_SETUID     4023
 #define __NR_GETUID	4024
+#define __NR_STIME      4025
+#define __NR_KILL       4037
 #define __NR_RENAME	2038
 #define __NR_MKDIR	4039
 #define __NR_RMDIR	4040
@@ -71,6 +73,7 @@
 #define __NR_FTRUNCATE  4093
 #define __NR_FCHMOD	4094
 #define __NR_FCHOWN     4095
+#define __NR_STAT       4106
 #define __NR_LSTAT	4107
 #define __NR_FSTAT	4108
 #define __NR_FSYNC      4118
@@ -85,6 +88,7 @@
 #define __NR_MUNLOCK    4155
 #define __NR_MLOCKALL   4156
 #define __NR_MUNLOCKALL 4157
+#define __NR_NANOSLEEP  4166
 #define __NR_MREMAP     4167
 #define __NR_SOCKET     4183
 #define __NR_SETRESUID  4185

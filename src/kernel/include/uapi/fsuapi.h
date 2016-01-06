@@ -33,6 +33,9 @@ struct statfs;
 
 class FSUAPI
 {
+    public:
+        static void init();
+
     private:
         static int isValidUserFileName(const char *name);
         static int isValidFileName(const char *name);

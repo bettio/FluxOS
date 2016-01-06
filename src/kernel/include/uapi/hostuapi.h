@@ -38,6 +38,8 @@ struct utsname
 class HostUAPI
 {
     public:
+        static void init();
+
         static int sethostname(userptr const char *name, size_t len);
         static int setdomainname(userptr const char *name, size_t len);
         static int uname(userptr utsname *buf);
