@@ -186,6 +186,10 @@ void Task::closeAllFiles(ProcessControlBlock *process)
 
 int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
 {
+    if (thread->parentProcess && thread->parentProcess->pid == 1) {
+        kernelPanic("Killed init.");
+    }
+
     ProcessControlBlock *process = thread->parentProcess;
     closeAllFiles(process);
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
