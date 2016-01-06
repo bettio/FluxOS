@@ -56,18 +56,6 @@ inline int qHash(long int l)
     }
 }
 
-inline int qHash(void *v)
-{
-    if (sizeof(void *) == sizeof(int) * 2){
-        return ((int *) &v)[0] + ((int *) &v)[1];
-
-    }else{
-        return *((int *) &v);
-    }
-}
-
-
-
 /**
  * NOTE: don't use a pointer as Key because keys are compared using == operator.
  */
