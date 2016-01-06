@@ -45,12 +45,12 @@
 #include <uapi/socketsyscalls.h>
 #include <uapi/timeuapi.h>
 
-#include <arch/ia32/core/userprocsmanager.h>
 #include <task/scheduler.h>
 #include <task/processcontrolblock.h>
 #include <task/task.h>
 #include <task/archthreadsmanager.h>
 #include <task/userprocessimage.h>
+#include <task/userprocsmanager.h>
 
 #define SYSCALLTABLE_SIZE 256
 #define IA32_SYSCALL_TYPE uint32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
@@ -76,9 +76,8 @@ void SyscallsManager::unregisterSyscall(int num)
     
 extern "C" unsigned long doSyscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi, uint32_t esp)
 {
-    //TODO: remove this workaround: add esp parameter to all the syscalls
     if (eax == 2){
-        return UserProcsManager::fork((void *) esp);
+        return ProcessUAPI::fork((void *) esp);
 
     } else if ((eax < SYSCALLTABLE_SIZE) && syscallsTable[eax]) {
             return syscallsTable[eax](ebx, ecx, edx, esi, edi);

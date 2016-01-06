@@ -51,6 +51,8 @@ class ProcessUAPI
         static int setegid(gid_t egid);
         static int setresgid(gid_t rgid, gid_t egid, gid_t sgid);
 
+
+        static int fork(void *stack);
         static void exit(int exitStatus);
         static int nanosleep(const struct timespec *req, struct timespec *rem);
         static int waitpid(pid_t pid, int *status, int options);

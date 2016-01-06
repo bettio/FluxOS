@@ -31,6 +31,13 @@
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
 #include <task/task.h>
+#include <task/userprocsmanager.h>
+#ifdef ARCH_IA32_NATIVE
+#include <arch/ia32/mm/pagingmanager.h>
+#endif
+#ifdef ARCH_MIPS
+ #include <arch/mips/mm/pagingmanager.h>
+#endif
 
 #define pid_t unsigned long
 #define uid_t unsigned long
@@ -139,6 +146,34 @@ int ProcessUAPI::setgid(gid_t gid)
 int ProcessUAPI::setresgid(gid_t rgid, gid_t egid, gid_t sgid)
 {
     return -EFAULT;
+}
+
+int ProcessUAPI::fork(void *stack)
+{
+    ThreadControlBlock *thread = NULL;
+    int ret = UserProcsManager::forkThread(stack, &thread);
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    ProcessControlBlock *process = Task::NewProcess();
+    if (IS_NULL_PTR(process)) {
+        delete thread;
+        return -ENOMEM;
+    }
+    thread->parentProcess = process;
+    process->mainThread = thread;
+
+#ifdef ARCH_IA32
+    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2, 1);
+    thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
+#endif
+
+    Scheduler::inhibitPreemption();
+    Scheduler::threads->append(thread);
+    Scheduler::restorePreemption();
+
+    return process->pid;
 }
 
 int ProcessUAPI::nanosleep(const struct timespec *req, struct timespec *rem)

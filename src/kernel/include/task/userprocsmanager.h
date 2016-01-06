@@ -34,7 +34,7 @@ class UserProcsManager
                                            char **argsList[], char **argsBlock,
                                            char **envList[], char **envBlock,
                                            char **auxList[], char **auxBlock);
-        static int fork(void *stack);
+        static int forkThread(void *stack, ThreadControlBlock **thread);
         static void *createUserProcessStack(unsigned int size);
         static void startRegsFrame(RegistersFrame *frame);
         static void makeUserThread(ThreadControlBlock *thread);

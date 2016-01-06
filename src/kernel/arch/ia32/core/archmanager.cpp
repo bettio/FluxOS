@@ -26,6 +26,7 @@
 #include <core/syscallsmanager.h>
 #include <drivers/vt.h>
 #include <task/userprocessimage.h>
+#include <task/userprocsmanager.h>
 #include <mm/usermemoryops.h>
 #include <arch/ia32/core/idt.h>
 #include <arch/ia32/drivers/ata.h>
@@ -37,7 +38,6 @@
 #include <arch/ia32/core/irq.h>
 #include <arch/ia32/core/gdt.h>
 #include <arch/ia32/core/pci.h>
-#include <arch/ia32/core/userprocsmanager.h>
 #include <arch/ia32/boot/multiboot.h>
 #include <arch/ia32/boot/multibootinfo.h>
 #include <boot/bootloaderinfo.h>

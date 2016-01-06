@@ -33,6 +33,7 @@
 #include <task/scheduler.h>
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
+#include <task/userprocessimage.h>
 
 extern "C" void setupChild();
 
@@ -49,23 +50,16 @@ asm(
       "iret\n"
 );
 
-int UserProcsManager::fork(void *stack)
+int UserProcsManager::forkThread(void *stack, ThreadControlBlock **thread)
 {
-    ProcessControlBlock *process = Task::NewProcess();
-    ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
-    ArchThreadsManager::makeExecutable(thread, setupChild, 0, stack, 32+20);
-    thread->parentProcess = process;
-    thread->status = Running;
+    *thread = ArchThreadsManager::createUserThread();
+    if (UNLIKELY(*thread) == NULL) {
+        return -ENOMEM;
+    }
+    ArchThreadsManager::makeExecutable(*thread, setupChild, 0, stack, 32+20);
+    (*thread)->status = Running;
 
-    PagingManager::changeRegionFlags(USERSPACE_LOWER_ADDR, USERSPACE_LEN, 0, 2, 1);
-    thread->addressSpaceTable = (void *) PagingManager::clonePageDir(); 
-
-    process->mainThread = thread;
-    Scheduler::inhibitPreemption();
-    Scheduler::threads->append(thread);
-    Scheduler::restorePreemption();
-
-    return process->pid;
+    return 0;
 }
 
 void UserProcsManager::setupStackAndRegisters(RegistersFrame *frame, void *entryPoint, void *userSpaceStack, unsigned long userStackSize,
