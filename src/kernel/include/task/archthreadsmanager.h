@@ -33,7 +33,7 @@ class ArchThreadsManager
         static void *allocateKernelStack(void **stackAddr, int size = DEFAULT_KERNEL_STACK_SIZE);
         static ThreadControlBlock *createKernelThread(void (*fn)(), int flags = 0, void *args = 0);
         static ThreadControlBlock *createUserThread(int flags = 0);
-        static void makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags = 0, void *args = 0);
+        static void makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags = 0, void *args = 0, int size = 0);
 };
 
 #endif

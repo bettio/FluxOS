@@ -34,33 +34,26 @@
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
 
-void *regs;
+extern "C" void setupChild();
 
 static inline int padToWord(int addr)
 {
     return (addr & 0xFFFFFFFC) + 4;
 }
 
-void setupChild()
-{
-    asm("movl %0, %%esp\n"
-        "addl $32, %0\n" 
-        "movl %0, 12(%%esp)\n"
-        "popa\n"
-        "movl $0, %%eax\n"
-        "iret\n" : : "r" (regs));
-
-}
+asm(
+    ".globl setupChild\n"
+    "setupChild:\n"
+      "popa\n"
+      "movl $0, %eax\n"
+      "iret\n"
+);
 
 int UserProcsManager::fork(void *stack)
 {
-    posix_memalign(&regs, 4096, 32+20 + 500);
-    memcpy(regs, stack, 32+20);
-    regs = (void *) (((char *) regs));
-
     ProcessControlBlock *process = Task::NewProcess();
     ThreadControlBlock *thread = ArchThreadsManager::createUserThread();
-    ArchThreadsManager::makeExecutable(thread, setupChild, 0, 0);
+    ArchThreadsManager::makeExecutable(thread, setupChild, 0, stack, 32+20);
     thread->parentProcess = process;
     thread->status = Running;
 
