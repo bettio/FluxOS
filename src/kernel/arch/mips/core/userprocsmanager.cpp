@@ -115,8 +115,11 @@ void UserProcsManager::startRegsFrame(RegistersFrame *frame)
        );
 }
 
-//TODO: implement fork here
-int UserProcsManager::fork(void *stack)
+extern "C" void setupChild()
+{
+}
+
+int UserProcsManager::forkThread(void *stack, ThreadControlBlock **thread)
 {
     return 0;
 }

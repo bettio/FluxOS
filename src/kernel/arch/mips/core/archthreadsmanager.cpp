@@ -56,7 +56,7 @@ ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
 }
 
 //TODO: implement this
-void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args)
+void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args, int size)
 {
 }
 
