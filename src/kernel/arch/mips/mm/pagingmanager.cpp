@@ -192,6 +192,16 @@ void PagingManager::newPage(uint32_t addr, unsigned long flags)
     updateTLB(pageTable, di, ti, currentASID());
 }
 
+volatile uint32_t *PagingManager::createPageDir()
+{
+
+}
+
+void PagingManager::changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate)
+{
+
+}
+
 extern "C" void tlbModificationExceptionISR(unsigned long address, unsigned long epc, unsigned long regX)
 {
     printk("tlbModificationException: 0x%x (EPC: 0x%x), %x\n", address, epc, regX);

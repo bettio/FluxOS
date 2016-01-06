@@ -56,6 +56,8 @@ class PagingManager
         static AddressSpaceDescriptor switchAddressSpace(AddressSpaceDescriptor asDescriptor);
         static void removePages(void *addr, unsigned long len);
         static void newPage(uint32_t addr, unsigned long flags = 0);
+        static volatile uint32_t *createPageDir();
+        static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
 };
 
 #endif
