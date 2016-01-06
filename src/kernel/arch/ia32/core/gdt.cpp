@@ -40,7 +40,7 @@ void GDT::init()
     //Update GDTR
     setGDTR(gdt, GDT_SIZE);
     
-    asm("pushl $2; popf" : : : "cc");
+    asm volatile("pushl $2; popf" : : : "cc");
 
     asm volatile ("movw $0x10, %%ax\n"
               "movw %%ax, %%ds\n"
@@ -61,10 +61,10 @@ void GDT::init()
 
 void GDT::setGDTR(volatile uint64_t *base, int numDesc)
 {
-    uint32_t gdtReg[2];
+    volatile uint32_t gdtReg[2];
 
     gdtReg[0] = (numDesc * 8) << 16;
     gdtReg[1] = (uint32_t) base;
 
-    asm volatile("lgdt (%0)" : : "g"((char *) gdtReg + 2));
+    asm volatile("lgdt (%0)" : : "g"((volatile char *) gdtReg + 2));
 }
