@@ -22,6 +22,7 @@
 
 #include <uapi/memoryuapi.h>
 
+#include <arch/mips/core/cpuregistersframe.h>
 #include <mm/memorycontext.h>
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
@@ -68,6 +69,17 @@ uint32_t mmap_i386(uint32_t ebx, uint32_t, uint32_t, uint32_t, uint32_t)
 
 #endif
 
+#ifdef ARCH_MIPS
+extern "C" void *kernelStackPointer;
+
+unsigned long mmap_mips(void *addr, unsigned long length, unsigned long prot)
+{
+    RegistersFrame *savedRegisters = (RegistersFrame *) kernelStackPointer;
+    unsigned long *sp = (unsigned  long *) savedRegisters->registers[REGISTERS_FRAME_SP_REGISTER];
+    return MemoryUAPI::mmap(addr, length, prot, sp[0], sp[1], sp[2]);
+}
+#endif
+
 inline MemoryDescriptor::Permissions protFlagsToPermissions(int prot)
 {
     MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
@@ -87,6 +99,9 @@ void MemoryUAPI::init()
 {
 #ifndef ARCH_IA32
     SyscallsManager::registerSyscall(__NR_BRK, (void *)  brk);
+#ifdef ARCH_MIPS
+    SyscallsManager::registerSyscall(__NR_MMAP, (void *)  mmap_mips);
+#endif
 #endif
 }
 
@@ -158,6 +173,7 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
     if (flags & MAP_ANONYMOUS) {
         void *newAddr = addr;
         process->memoryContext->allocateAnonymousMemory(&newAddr, length, permissions, hints);
+        DEBUG_MSG("MemoryUAPI::mmap: mapped 0x%p, length: %i\n", addr, length);
         return (unsigned long) newAddr;
        
     } else {
