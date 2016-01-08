@@ -476,6 +476,8 @@ int FSUAPI::openAtVNode(VNode *dirNode, userptr const char *pathname, int flags)
         return path.errorCode();
     }
 
+    DEBUG_MSG("open(\"%s\", %i) [cwd: 0x%p]\n", path.constData(), flags, dirNode);
+
     int result;
     VNode *node;
     result = FileSystem::VFS::RelativePathToVnode(dirNode, path.constData(), &node, true);
