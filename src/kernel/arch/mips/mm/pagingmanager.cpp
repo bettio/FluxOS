@@ -202,6 +202,37 @@ void PagingManager::changeAddressSpace(volatile uint32_t *pageDir, bool forceUpd
 
 }
 
+void PagingManager::lockPage(const void *addr)
+{
+    if (probeTLB(addr) & TLB_MISSING_PAGE_MASK) {
+        int di = addrToPageDirIndex((uint32_t) addr);
+        int ti = addrToPageTableIndex((uint32_t) addr);
+        unsigned long *pageTable = physicalAddressToKSeg0Ptr<unsigned long *>(entryPhysicalAddress(userPageDir[di]));
+        updateTLB(pageTable, di, ti, currentASID());
+    } else {
+        MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
+        memoryContext->handlePageFault((void *) addr, (void *) NULL /* epc */,
+           UserspaceMemoryManager::ReadOperation, UserspaceMemoryManager::MissingPageFault);
+    }
+}
+
+//TODO
+void PagingManager::unlockPage(const void *addr)
+{
+}
+
+//TODO
+void PagingManager::addressPageMask(const void *addr)
+{
+
+}
+
+//TODO
+void PagingManager::addressPageSize(const void *addr)
+{
+
+}
+
 extern "C" void tlbModificationExceptionISR(unsigned long address, unsigned long epc, unsigned long regX)
 {
     printk("tlbModificationException: 0x%x (EPC: 0x%x), %x\n", address, epc, regX);

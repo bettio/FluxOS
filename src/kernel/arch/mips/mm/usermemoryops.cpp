@@ -22,6 +22,8 @@
 
 #include <mm/usermemoryops.h>
 
+#include <arch/mips/mm/pagingmanager.h>
+#include <arch/mips/mm/tlbregisters.h>
 #include <arch.h>
 #include <errors.h>
 #include <cstdlib.h>
@@ -37,6 +39,7 @@ bool canWriteUserMemory(void *ptr, unsigned long size)
 {
     if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && (((unsigned long) ptr) + size <= USERSPACE_HI_ADDR))) {
        //TODO: need to check page table here
+       PagingManager::lockPage(ptr);
        return true;
     } else {
        return false;
@@ -47,6 +50,7 @@ bool canReadUserMemory(const void *ptr, unsigned long size)
 {
     if (LIKELY(((unsigned long) ptr >= USERSPACE_LOW_ADDR) && (((unsigned long) ptr + size) <= USERSPACE_HI_ADDR))) {
        //TODO: need to check page table here
+       PagingManager::lockPage(ptr);
        return true;
     } else {
        return false;
@@ -58,7 +62,7 @@ int strnlenUser(userptr const char *s, int maxsize)
     if (LIKELY(canReadUserMemory(s, maxsize))) {
         return strlen(s);
     } else {
-        DEBUG_MSG("strlenUser: Warning: cannot write to 0x%p, size: %i\n", s, maxsize);
+        DEBUG_MSG("strlenUser: Warning: cannot read 0x%p, size: %i\n", s, maxsize);
         return -EFAULT;
     }
 }
@@ -103,7 +107,7 @@ int memcpyFromUser(void *dest, userptr const void *src, unsigned long size)
         memcpy(dest, src, size);
         return 0;
     } else {
-        DEBUG_MSG("memcpyFromUser: Warning: cannot write to 0x%p, size: %lu\n", src, size);
+        DEBUG_MSG("memcpyFromUser: Warning: cannot read 0x%p, size: %lu\n", src, size);
         return -EFAULT;
     }
 }
