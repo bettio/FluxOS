@@ -114,7 +114,7 @@ extern int errno;
             return result; \
         }else{ \
             errno = -result; \
-            return -1; \
+            return (retT) -1; \
         } \
     }
 
@@ -134,7 +134,7 @@ extern int errno;
             return (retT) result; \
         }else{ \
             errno = -result; \
-            return -1; \
+            return (retT) -1; \
         } \
     }
 
@@ -155,7 +155,7 @@ extern int errno;
             return (retT) result; \
         }else{ \
             errno = -result; \
-            return -1; \
+            return (retT) -1; \
         } \
     }
 
@@ -177,11 +177,88 @@ extern int errno;
             return (retT) result; \
         }else{ \
             errno = -result; \
-            return -1; \
+            return (retT) -1; \
         } \
     }
 
-/* TODO: Implement SYSCALL_4 and SYSCALL_5 */
+#define SYSCALL_4(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3) \
+{ \
+    register long syscall asm("$2") = num; \
+    register long _arg0 asm("$4") = (long) arg0; \
+    register long _arg1 asm("$5") = (long) arg1; \
+    register long _arg2 asm("$6") = (long) arg2; \
+    \
+    register long result asm("$2"); \
+    \
+    asm volatile( \
+                 "addi $29, $29, -4\n" \
+                 "sw %5, 0($29)\n" \
+                 "sw %6, 4($29)\n" \
+                 "syscall\n" \
+                 "addi $29, $29, 4\n" \
+                  : "=r" (result) \
+                  : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (arg3)); \
+    if (((int) result) >= 0) { \
+        return (retT) result; \
+    } else { \
+        errno = -result; \
+        return (retT) -1; \
+    } \
+}
+
+#define SYSCALL_5(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3, arg4_t arg4) \
+{ \
+    register long syscall asm("$2") = num; \
+    register long _arg0 asm("$4") = (long) arg0; \
+    register long _arg1 asm("$5") = (long) arg1; \
+    register long _arg2 asm("$6") = (long) arg2; \
+    \
+    register long result asm("$2"); \
+    \
+    asm volatile( \
+                 "addi $29, $29, -8\n" \
+                 "sw %5, 0($29)\n" \
+                 "sw %6, 4($29)\n" \
+                 "syscall\n" \
+                 "addi $29, $29, 8\n" \
+                  : "=r" (result) \
+\                  : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (arg3), "r" (arg4)); \
+    if (((int) result) >= 0) { \
+        return (retT) result; \
+    } else { \
+        errno = -result; \
+        return (retT) -1; \
+    } \
+}
+
+#define SYSCALL_6(name, num, retT, arg0_t, arg1_t, arg2_t, arg3_t, arg4_t, arg5_t) \
+    retT name(arg0_t arg0, arg1_t arg1, arg2_t arg2, arg3_t arg3, arg4_t arg4, arg5_t arg5) \
+{ \
+    register long syscall asm("$2") = num; \
+    register long _arg0 asm("$4") = (long) arg0; \
+    register long _arg1 asm("$5") = (long) arg1; \
+    register long _arg2 asm("$6") = (long) arg2; \
+    \
+    register long result asm("$2"); \
+    \
+    asm volatile( \
+                 "addi $29, $29, -12\n" \
+                 "sw %5, 0($29)\n" \
+                 "sw %6, 4($29)\n" \
+                 "sw %7, 8($29)\n" \
+                 "syscall\n" \
+                 "addi $29, $29, 12\n" \
+                  : "=r" (result) \
+                  : "r" (syscall), "r" (_arg0), "r" (_arg1), "r" (_arg2), "r" (arg3), "r" (arg4), "r" (arg5)); \
+    if (((int) result) >= 0) { \
+        return (retT) result; \
+    } else { \
+        errno = -result; \
+        return (retT) -1; \
+    } \
+}
 
 void _exit(int status)
 {
@@ -239,21 +316,18 @@ SYSCALL_2(umount2, __NR_UMOUNT2, int, const char *, int)
 SYSCALL_3(socket, __NR_SOCKET, int, int, int, int);
 SYSCALL_3(ioctl, __NR_IOCTL, int, int, int, int);
 SYSCALL_2(getcwd, __NR_GETCWD, char *, char *, size_t); //TODO: custom impl?
+SYSCALL_6(mmap, __NR_MMAP, void *, void *, size_t, int, int, int, off_t)
 
 /* TODO IMPLEMENT ME */
 int mount(const char *source, const char *target, const char *filesystemtype, unsigned long mountflags, const void *data)
 {
+    while(1);
     return 0;
 }
 
 /* TODO IMPLEMENT ME */
 int reboot(int magic, int magic2, int cmd, void *arg)
 {
+    while(1);
     return 0;
-}
-
-//NEED A CUSTOM MMAP IMPLEMENTATION
-void *mmap(void *addr, size_t length, int prot, int flags, int fd, off_t offset)
-{
-
 }
