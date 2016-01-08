@@ -3,6 +3,15 @@
 
 .text
 
+.globl probeTLB
+probeTLB:
+    mtc0 $a0, CP0_EntryHi_Register
+    tlbp
+    nop
+    nop
+    mfc0 $v0, CP0_Index_Register
+    jr $ra
+
 /*
   $a0 -> new ASID
   $v0 -> return old ASID
