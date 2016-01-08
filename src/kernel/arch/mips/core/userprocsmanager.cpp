@@ -25,6 +25,7 @@
 
 #include <arch/mips/mm/pagingmanager.h>
 #include <core/elfloader.h>
+#include <mm/memorycontext.h>
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>
@@ -98,7 +99,12 @@ RegistersFrame *UserProcsManager::createNewRegistersFrame()
 
 void *UserProcsManager::createUserProcessStack(unsigned int size)
 {
-    return malloc(size);
+    void *stackAddr = NULL;
+    Scheduler::currentThread()->parentProcess->memoryContext->allocateAnonymousMemory(&stackAddr, size,
+                                                    (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission |
+                                                                                     MemoryDescriptor::WritePermission),
+                                                     MemoryContext::NoHints);
+    return stackAddr;
 }
 
 void UserProcsManager::makeUserThread(ThreadControlBlock *thread)
