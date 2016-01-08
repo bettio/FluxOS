@@ -221,16 +221,14 @@ void PagingManager::unlockPage(const void *addr)
 {
 }
 
-//TODO
-void PagingManager::addressPageMask(const void *addr)
+int PagingManager::addressPageMask(const void *addr)
 {
-
+    return 4096 - 1;
 }
 
-//TODO
-void PagingManager::addressPageSize(const void *addr)
+int PagingManager::addressPageSize(const void *addr)
 {
-
+    return 4096;
 }
 
 extern "C" void tlbModificationExceptionISR(unsigned long address, unsigned long epc, unsigned long regX)

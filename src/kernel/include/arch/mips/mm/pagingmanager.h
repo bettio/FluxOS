@@ -60,8 +60,8 @@ class PagingManager
         static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
         static void lockPage(const void *addr);
         static void unlockPage(const void *addr);
-        static void addressPageMask(const void *addr);
-        static void addressPageSize(const void *addr);
+        static int addressPageMask(const void *addr);
+        static int addressPageSize(const void *addr);
 };
 
 #endif
