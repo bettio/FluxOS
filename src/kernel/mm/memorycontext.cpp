@@ -71,7 +71,7 @@ void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager
 
     printk("[Process %i] Segmentation Fault: instruction at 0x%p tried to %s %s memory address 0x%p.\n", pid, faultPC, memoryOperationToString(op), memoryDescriptorTypeString, faultAddress);
     ProcessUAPI::kill(pid, SIGSEGV); //TODO: do not use UAPI to send signals to processes from kernel space
-    //TODO: do not execute anything else
+    schedule();
 }
 
 MemoryContext::MemoryContext()
