@@ -274,6 +274,9 @@ void SyscallsManager::registerDefaultSyscalls()
     //186 sigaltstack
     //187 sendfile
     //190 vfork
+    registerSyscall(195, (void *) FSUAPI::stat64);
+    registerSyscall(196, (void *) FSUAPI::lstat64);
+    registerSyscall(197, (void *) FSUAPI::fstat64);
     //295 openat
 }
 
