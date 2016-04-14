@@ -120,20 +120,28 @@ int FSUAPI::isValidUserFileName(const char *name)
 
 //TODO: testare se un file descriptor e` valido
 
-int FSUAPI::getcwd(char *buf, size_t size)
+int FSUAPI::getcwd(userptr char *buf, size_t size)
 {
     char *path;
     int retVal = VFS::GetDirPathFromVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, &path);
     if (retVal < 0){
         return retVal;
     }
-    if (size < strlen(path)){
+    int pathLen = strlen(path);
+    if (size < pathLen + 1){
         if (size >= 1){
-            buf[0] = '\0';
+            if (putToUser8(0, (uint8_t *) buf)) {
+                return -EINVAL;
+            }
         }
         return -ERANGE;
     }else{
-        strncpy(buf, path, size);
+        int ret = memcpyToUser(buf, path, pathLen + 1);
+        if (UNLIKELY(ret < 0)) {
+            free(path);
+            return ret;
+        }
+
         free(path);
         return 0;
     }
