@@ -59,7 +59,6 @@ int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoi
     ElfLoader loader;
     int res = loader.loadExecutableFile(executablePath);
     if (UNLIKELY(res < 0)) {
-        printk("Cannot load executable file: %s error: %i\n", executablePath, res);
         return res;
     }
     *entryPoint = loader.entryPoint();
