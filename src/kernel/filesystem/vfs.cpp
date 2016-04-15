@@ -194,6 +194,9 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
     if (path[0] == '/'){
         start = RootNode;
         while (*++path == '/'); //TODO: it might be removed
+    } else if (IS_NULL_PTR(start)) {
+        printk("Error: VFS::RelativePathToVnode: null pointer detected\n");
+        return -EINVAL;
     }
 
     char *nextPath;
