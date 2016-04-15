@@ -94,7 +94,7 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
     interpEntryPoint = NULL;
 
     VNode *node;
-    int res = FileSystem::VFS::RelativePathToVnode(0, path, &node);
+    int res = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, path, &node);
     if (res < 0){
         return -ENOENT;
     }
