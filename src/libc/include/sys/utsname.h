@@ -32,9 +32,7 @@ struct utsname {
 	char release[65];
 	char version[65];
 	char machine[65];
-	#ifdef _GNU_SOURCE
-		char domainname[65];
-	#endif
+	char domainname[65];
 };
 
 extern int uname(struct utsname *buf);
