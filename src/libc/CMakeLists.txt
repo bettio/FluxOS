@@ -29,6 +29,7 @@ SET(LIBC_SOURCES
     libgen.c
     getopt-susv3.c
     syserrmsgs.c
+    unistd.c
 )
 
 add_library(c-static STATIC ${LIBC_SOURCES})
