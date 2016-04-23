@@ -40,7 +40,9 @@
 #define EINVAL 22
 #define ENOSPC 28
 #define EROFS 30
+#define ERANGE 34
 #define ELOOP 40
+#define ENAMETOOLONG 91
 
 extern int errno;
 
