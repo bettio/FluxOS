@@ -43,8 +43,10 @@
 #define ENOSPC 28
 #define ESPIPE 29
 #define EROFS 30
+#define ERANGE 34
 #define ELOOP 40
 #define ENOTSOCK 88
+#define ENAMETOOLONG 91
 #define EOPNOTSUPP 95
 #define ENOTCONN 107
 

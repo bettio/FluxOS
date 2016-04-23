@@ -52,9 +52,6 @@ using namespace FileSystem;
 
 #define MAX_FILENAME_LEN 8192
 
-#define ENAMETOOLONG 99; //HACK FIXME
-#define ERANGE 100;
-
 #define CHECK_FOR_EBADF(fd) \
 if (!((fd >= 0) && (fd < Scheduler::currentThread()->parentProcess->openFiles->size()))) return -EBADF;
 
