@@ -34,6 +34,8 @@
 
 extern "C" void pageFaultHandler();
 
+#define PREALLOCATED_SAFE_REGION_UPPER_LIMIT 0x800000
+
 void invalidateTLB()
 {
     asm volatile("movl %%cr3, %%eax\n"
@@ -392,6 +394,17 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
     }
     } else {
         printk("Kernel page fault: Address 0x%x, EIP 0x%x\n", faultAddress, GET_FAULT_EIP());
+        printk("just not implemented, it might be a page miss or anything else\n");
+        while(1);
+    }
+}
+
+extern "C" int requestKernelPhysicalMemory(void *startVirtualAddress, unsigned long len)
+{
+    if (((unsigned long) startVirtualAddress) + len < PREALLOCATED_SAFE_REGION_UPPER_LIMIT) {
+        return 0;
+    } else {
+        printk("Unimplemented requestKernelPhysicalMemory fail\n");
         while(1);
     }
 }

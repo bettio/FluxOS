@@ -536,6 +536,8 @@ MAX_RELEASE_CHECK_RATE   default: 4095 unless not HAVE_MMAP
 #define HAVE_MMAP 0
 #else
 
+int requestKernelPhysicalMemory(void *startVirtualAddress, unsigned long len);
+
 #ifdef KERNEL_HEAP_START
 #define HAVE_MMAP 0
 #define MORECORE moreheap
@@ -548,6 +550,12 @@ void *moreheap(long increment)
         printk("WARNING: sbrk can't increase the heap size\n");
         return (void *) -1;
     }
+
+    if (requestKernelPhysicalMemory(KERNEL_HEAP_FREE_POS, increment) < 0) {
+        printk("WARNING: Cannot allocate more kernel physical memory\n");
+        return (void *) -1;
+    }
+
 
     void *previousPos = (void *) KERNEL_HEAP_FREE_POS;
     KERNEL_HEAP_FREE_POS += increment;
