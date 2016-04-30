@@ -632,13 +632,16 @@ int FSUAPI::truncate(userptr const char *path, uint64_t length)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
-	if (result >= 0) result = FS_CALL(node, truncate)(node, length);
+    if (LIKELY(result >= 0)) {
+        result = FS_CALL(node, truncate)(node, length);
+        VNodeManager::PutVnode(node);
+    }
 
-	return result;
+    return result;
 }
 
 //NOTE: 64 bit implementation
@@ -658,13 +661,16 @@ int FSUAPI::chmod(userptr const char *path, mode_t mode)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
-	if (result >= 0) result = FS_CALL(node, chmod)(node, mode);
+    if (LIKELY(result >= 0)) {
+        result = FS_CALL(node, chmod)(node, mode);
+        VNodeManager::PutVnode(node);
+    }
 
-	return result;
+    return result;
 }
 
 int FSUAPI::fchmod(int fildes, mode_t mode)
@@ -683,13 +689,16 @@ int FSUAPI::chown(userptr const char *path, uid_t owner, gid_t group)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node);
 
-	if (result >= 0) result = FS_CALL(node, chown)(node, owner, group);
+    if (LIKELY(result >= 0)) {
+        result = FS_CALL(node, chown)(node, owner, group);
+        VNodeManager::PutVnode(node);
+    }
 
-	return result;
+    return result;
 }
 
 int FSUAPI::fchown(int fd, uid_t owner, gid_t group)
