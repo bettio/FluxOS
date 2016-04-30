@@ -26,6 +26,8 @@
 #include <filesystem/vfs.h>
 #include "ext2_structs.h"
 
+struct ext2_privdata;
+
 namespace FileSystem
 {
 	class Ext2
@@ -38,7 +40,8 @@ namespace FileSystem
             static int DupFD(VNode *node, FileDescriptor *fdesc);
 			static int ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
-			static ext2_inode *ReadInode(VNode *node);
+            static ext2_inode *readInode(unsigned long id, ext2_privdata *privdata);
+            static ext2_inode *getInode(VNode *node);
 			static int Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Readlink(VNode *node, char *buffer, size_t bufsize);
 			static int GetDEnts(VNode *node, dirent *dirp, unsigned int count);

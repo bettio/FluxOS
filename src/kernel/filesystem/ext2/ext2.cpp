@@ -148,9 +148,19 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
 
 	fsmount->privdata = (void *) privdata;
 
+
+    ext2_inode *rootInode = readInode(2, privdata);
+    if (IS_NULL_PTR(rootInode)) {
+        free(sblock);
+        free(info);
+
+        return -ENOMEM;
+    }
+
 	VNode *root;
 	VNodeManager::GetVnode(fsmount->mountId, 2, &root);
 	root->mount = fsmount;
+    root->privdata = rootInode;
 	fsmount->fsRootVNode = root;
 
 	return 0;
@@ -172,12 +182,10 @@ int Ext2::DupFD(VNode *node, FileDescriptor *fdesc)
 }
 
 //If I return a pointer I can't do easily distinctions between different errors
-ext2_inode *Ext2::ReadInode(VNode *node)
+ext2_inode *Ext2::readInode(unsigned long id, ext2_privdata *privdata)
 {
-	ext2_privdata *privdata = (ext2_privdata *) node->mount->privdata;
-
-	int inodeIndex = ((uint32_t) (node->vnid.id - 1)) % privdata->sblock->s_inodes_per_group;
-	int inodeGroup = ((uint32_t) (node->vnid.id - 1)) / privdata->sblock->s_inodes_per_group;
+	int inodeIndex = ((uint32_t) (id - 1)) % privdata->sblock->s_inodes_per_group;
+	int inodeGroup = ((uint32_t) (id - 1)) / privdata->sblock->s_inodes_per_group;
 
 	char *groupTmpBlkBuff = (char *) malloc(512);
         if (groupTmpBlkBuff == 0){
@@ -203,6 +211,12 @@ ext2_inode *Ext2::ReadInode(VNode *node)
         free(first_table);
 
         return inode;
+}
+
+//If I return a pointer I can't do easily distinctions between different errors
+ext2_inode *Ext2::getInode(VNode *node)
+{
+    return (ext2_inode *) node->privdata;
 }
 
 int Ext2::ReadBlocksData(ext2_inode *inode, uint32_t *indirectBlocks, VNode *node, uint32_t pos, char *buffer, unsigned int bufsize)
@@ -471,14 +485,13 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 		printk("Lookup %s\n", name);
 	#endif
 
-	ext2_inode *inode = /*(ext2_inode *)*/ ReadInode(node);
+	ext2_inode *inode = getInode(node);
         if (inode == NULL){
 	    return -ENOMEM;
 	}
 
 	if (!S_ISDIR(inode->i_mode)){
 		printk("I can only do lookups on a directory\n");
-                delete inode;
 		return -ENOTDIR;
 	}
 
@@ -498,15 +511,20 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 		//we want to reconize the name as different
 		//dir->name *isn't a null terminated* string
 		if (!strncmp(name, dirEntry->name, dirEntry->name_len) && (name[dirEntry->name_len] == 0)){
+            ext2_inode *fileInode = readInode(dirEntry->inode, (ext2_privdata *) node->mount->privdata);
+            if (IS_NULL_PTR(fileInode)) {
+                return -ENOMEM;
+            }
+
 			VNodeManager::GetVnode(node->mount->mountId, dirEntry->inode, vnd);
+            if ((*vnd)->privdata == NULL) {
 
 			(*vnd)->mount = node->mount;
-			ext2_inode *fileInode = ReadInode(*vnd); //CHECK ME
+                (*vnd)->privdata = fileInode;
 			*ntype = fileInode->i_mode;
+            }
 
-                        delete inode;
                         free(dir);
-			delete fileInode;
 			return 0;
 		}
 
@@ -520,14 +538,13 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
 	    printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
         #endif
 
-        delete inode;
         free(dir);
 	return -ENOENT;
 }
 
 int Ext2::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	if (S_ISDIR(inode->i_mode)) return -EISDIR;
 
@@ -536,7 +553,7 @@ int Ext2::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int Ext2::Readlink(VNode *node, char *buffer, size_t bufsize)
 {
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	if (!S_ISLNK(inode->i_mode)) return -EINVAL;
 
@@ -545,7 +562,7 @@ int Ext2::Readlink(VNode *node, char *buffer, size_t bufsize)
 
 int Ext2::GetDEnts(VNode *node, dirent *dirp, unsigned int count)
 {
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	if (!S_ISDIR(inode->i_mode)) return -ENOTDIR;
 
@@ -579,7 +596,7 @@ int Ext2::Stat(VNode *node, struct stat *buf)
 	//Filesystem private data
 	ext2_privdata *privdata = (ext2_privdata *) node->mount->privdata;
 
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	buf->st_dev = 0;
 	buf->st_ino = node->vnid.id;
@@ -600,7 +617,7 @@ int Ext2::Stat(VNode *node, struct stat *buf)
 
 int Ext2::Access(VNode *node, int aMode, int uid, int gid)
 {
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	//Write only
 	//No execute
@@ -627,7 +644,7 @@ int Ext2::Chmod(VNode *node, mode_t mode)
 {
 	printk("Chmod: Not Implemented\n");
 	while(1);
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	inode->i_mode = mode;
 
@@ -639,7 +656,7 @@ int Ext2::Chown(VNode *node, uid_t uid, gid_t gid)
 {
 	printk("Chown: Not Implemented\n");
 	while(1);
-	ext2_inode *inode = ReadInode(node);
+	ext2_inode *inode = getInode(node);
 
 	inode->i_uid = uid;
 	inode->i_gid = gid;
@@ -653,7 +670,7 @@ int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
 		printk("Lookup %s\n", name);
 	#endif
 
-	ext2_inode *inode = ReadInode(directory);
+	ext2_inode *inode = getInode(directory);
 
 	if (!S_ISDIR(inode->i_mode)){
 		printk("I can only do lookups on a directory\n");
@@ -768,7 +785,7 @@ int Ext2::StatFS(VNode *directory, struct statfs *buf)
 
 int Ext2::Size(VNode *node, int64_t *size)
 {
-    ext2_inode *inode = ReadInode(node);
+    ext2_inode *inode = getInode(node);
     *size = inode->i_size;
 
     return 0;
@@ -776,7 +793,7 @@ int Ext2::Size(VNode *node, int64_t *size)
 
 int Ext2::Type(VNode *node, int *type)
 {
-    ext2_inode *inode = ReadInode(node);
+    ext2_inode *inode = getInode(node);
     *type = inode->i_mode & S_IFMT;
 
     return 0;
