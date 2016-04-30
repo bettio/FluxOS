@@ -213,6 +213,36 @@ ext2_inode *Ext2::readInode(unsigned long id, ext2_privdata *privdata)
         return inode;
 }
 
+int Ext2::writeINode(VNode *node)
+{
+    ext2_inode *inode = getInode(node);
+    ext2_privdata *privdata = (ext2_privdata *) node->mount->privdata;
+
+    int inodeIndex = ((uint32_t) (node->vnid.id - 1)) % privdata->sblock->s_inodes_per_group;
+    int inodeGroup = ((uint32_t) (node->vnid.id - 1)) / privdata->sblock->s_inodes_per_group;
+
+    char *groupTmpBlkBuff = (char *) malloc(512);
+    if (groupTmpBlkBuff == 0){
+        return 0;
+    }
+    privdata->blkdev->ReadBlock(privdata->blkdev, 4, 1, (uint8_t *) groupTmpBlkBuff);
+    ext2_group_desc *group = (ext2_group_desc *) groupTmpBlkBuff;
+
+    char *inodeTableTmpBlkBuf = (char *) malloc(privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size);
+    privdata->blkdev->ReadBlock(privdata->blkdev, group[inodeGroup].bg_inode_table * privdata->DiskBlocksPerFSBlock,
+                                (privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) inodeTableTmpBlkBuf);
+    ext2_inode *first_table = (ext2_inode *) inodeTableTmpBlkBuf;
+
+    memcpy(&first_table[inodeIndex], inode, sizeof(ext2_inode));
+
+    privdata->blkdev->WriteBlock(privdata->blkdev, group[inodeGroup].bg_inode_table * privdata->DiskBlocksPerFSBlock,
+                                (privdata->sblock->s_inodes_per_group * privdata->sblock->s_inode_size) / 512, (uint8_t *) inodeTableTmpBlkBuf);
+    free(group);
+    free(first_table);
+
+    return 0;
+}
+
 //If I return a pointer I can't do easily distinctions between different errors
 ext2_inode *Ext2::getInode(VNode *node)
 {

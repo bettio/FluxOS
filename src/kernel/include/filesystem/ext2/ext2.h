@@ -41,6 +41,7 @@ namespace FileSystem
 			static int ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
             static ext2_inode *readInode(unsigned long id, ext2_privdata *privdata);
+            static int writeINode(VNode *node);
             static ext2_inode *getInode(VNode *node);
 			static int Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Readlink(VNode *node, char *buffer, size_t bufsize);
