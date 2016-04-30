@@ -412,13 +412,32 @@ int FSUAPI::readlink(userptr const char *path, char *buf, size_t bufsiz)
         return linkPath.errorCode();
     }
 
-	VNode *tmpnode;
+    VNode *tmpnode;
 
-	int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, linkPath.data(), &tmpnode, false);
+    int result = VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, linkPath.data(), &tmpnode, false);
+    if (result < 0) {
+        return result;
+    }
 
-	if (result < 0) return result;
+    char *tmpBuf = (char *) malloc(bufsiz);
+    if (IS_NULL_PTR(tmpBuf)) {
+        return -ENOMEM;
+    }
 
-	return FS_CALL(tmpnode, readlink)(tmpnode, buf, bufsiz);
+    result = FS_CALL(tmpnode, readlink)(tmpnode, tmpBuf, bufsiz);
+    VNodeManager::PutVnode(tmpnode);
+
+    if (UNLIKELY(result < 0)) {
+        free(tmpBuf);
+        return result;
+    }
+
+    int ret = memcpyToUser(buf, tmpBuf, result);
+    if (UNLIKELY(ret < 0)) {
+        return ret;
+    }
+
+    return result;
 }
 
 int FSUAPI::getdents(int fd, dirent *dirp, unsigned int count)
