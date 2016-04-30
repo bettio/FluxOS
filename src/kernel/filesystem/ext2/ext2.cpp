@@ -26,6 +26,7 @@
 #include <filesystem/vfs.h>
 #include <filesystem/ext2/ext2.h>
 #include <filesystem/vnodemanager.h>
+#include <filesystem/utimbuf.h>
 #include <drivers/blockdevicemanager.h>
 #include <core/printk.h>
 
@@ -669,29 +670,25 @@ int Ext2::Access(VNode *node, int aMode, int uid, int gid)
 	return 0;
 }
 
-//TODO
 int Ext2::Chmod(VNode *node, mode_t mode)
 {
-	printk("Chmod: Not Implemented\n");
-	while(1);
-	ext2_inode *inode = getInode(node);
+    ext2_inode *inode = getInode(node);
 
-	inode->i_mode = mode;
+    node->dirty = true;
+    inode->i_mode = mode;
 
-	return 0;
+    return 0;
 }
 
-//TODO
 int Ext2::Chown(VNode *node, uid_t uid, gid_t gid)
 {
-	printk("Chown: Not Implemented\n");
-	while(1);
-	ext2_inode *inode = getInode(node);
+    ext2_inode *inode = getInode(node);
 
-	inode->i_uid = uid;
-	inode->i_gid = gid;
+    node->dirty = true;
+    inode->i_uid = uid;
+    inode->i_gid = gid;
 
-	return 0;
+    return 0;
 }
 
 int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
@@ -837,6 +834,11 @@ int Ext2::Type(VNode *node, int *type)
 
 int Ext2::Utime(VNode *node, const struct utimbuf *buf)
 {
+    ext2_inode *inode = getInode(node);
+
+    node->dirty = true;
+    inode->i_atime = buf->actime;
+    inode->i_mtime = buf->modtime;
 
     return 0;
 }
