@@ -132,6 +132,7 @@ VNode *VNodeManager::NewVnode(unsigned int mountId, unsigned long long id)
     newnode->mount = 0;
     newnode->coveredBy = 0;
     newnode->privdata = 0;
+    newnode->dirty = false;
 
     VNodes.insert(newnode->vnid, newnode);
     

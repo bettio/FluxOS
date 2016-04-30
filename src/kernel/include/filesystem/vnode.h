@@ -74,6 +74,7 @@ class VNode
         FSMount *mount;
         VNode *coveredBy;
         void *privdata;
+        bool dirty : 1;
 };
 
 #endif

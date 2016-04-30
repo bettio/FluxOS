@@ -744,7 +744,13 @@ int Ext2::Umount(VNode *root)
 
 int Ext2::CloseVNode(VNode *node)
 {
-    return 0;
+    int ret = 0;
+    if (node->dirty) {
+        ret = writeINode(node);
+    }
+    free(node->privdata);
+
+    return ret;
 }
 
 int Ext2::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
