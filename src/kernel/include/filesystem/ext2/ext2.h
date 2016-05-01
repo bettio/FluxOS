@@ -39,6 +39,9 @@ namespace FileSystem
             static int CloseFD(VNode *node, FileDescriptor *fdesc);
             static int DupFD(VNode *node, FileDescriptor *fdesc);
 			static int ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
+            static int findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *inodeNumber,
+                       unsigned long *recordOffset, unsigned long *prevRecordOffset, unsigned long *nextRecordOffset);
+
 			static int Lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype);
             static ext2_inode *readInode(unsigned long id, ext2_privdata *privdata);
             static int writeINode(VNode *node);

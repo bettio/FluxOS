@@ -30,6 +30,10 @@
 #include <drivers/blockdevicemanager.h>
 #include <core/printk.h>
 
+#define ENABLE_DEBUG_MSG 0
+
+#include <debugmacros.h>
+
 //#define EXT2_DEBUG
 
 struct ext2_privdata
@@ -510,67 +514,99 @@ int Ext2::ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, u
 	return result;
 }
 
+int Ext2::findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *inodeNumber,
+                       unsigned long *recordOffset, unsigned long *prevRecordOffset, unsigned long *nextRecordOffset)
+{
+    DEBUG_MSG("Reading directory, looking for %s...\n", name);
+    DEBUG_MSG("Block size is: %i\n", privdata->BlockSize);
+
+    ext2_inode *inode = getInode(dirNode);
+    ext2_privdata *privdata = (ext2_privdata *) dirNode->mount->privdata;
+
+    if (!S_ISDIR(inode->i_mode)){
+        return -ENOTDIR;
+    }
+
+    void *block = malloc(privdata->BlockSize);
+    if (IS_NULL_PTR(block)) {
+        return -ENOMEM;
+    }
+    ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) block;
+
+    unsigned long dirSize = inode->i_size;
+    int blockIndex = -1;
+    unsigned long prevRecordOff = 0;
+    unsigned long currRecordOff = 0;
+    unsigned long nextRecordOff = 0;
+    unsigned long scannedBlockBytes;
+
+    do {
+        scannedBlockBytes = 0;
+        blockIndex++;
+        unsigned long availBytes = ReadData(inode, dirNode, blockIndex * privdata->DiskBlocksPerFSBlock, (char *) block, privdata->BlockSize);
+        do {
+            nextRecordOff = currRecordOff + dirEntry->rec_len;
+
+            if (UNLIKELY((dirEntry->rec_len < dirEntry->name_len + 8) || dirEntry->rec_len > privdata->BlockSize)) { //8 = other fileds
+                printk("Ext2::findDirectoryEntry: corrupted record entry.\n");
+                return -EIO;
+            }
+
+            //If the first part of the name is the same but is longer than dir->name_len
+            //we want to reconize the name as different
+	    //dir->name *isn't a null terminated* string
+            if (!strncmp(name, dirEntry->name, dirEntry->name_len) && (name[dirEntry->name_len] == 0)){
+                *inodeNumber = dirEntry->inode;
+                if (recordOffset != NULL) {
+                    *recordOffset = currRecordOff;
+                }
+                if (prevRecordOffset != NULL) {
+                    *prevRecordOffset = prevRecordOff;
+                }
+                if (nextRecordOffset != NULL) {
+                    *nextRecordOffset = nextRecordOff;
+                }
+                free(block);
+                DEBUG_MSG("Found entry: %s. Returning.\n", name);
+                return 0;
+            }
+
+            scannedBlockBytes += dirEntry->rec_len;
+            dirEntry = (ext2_dir_entry_2 *) ((unsigned long) dirEntry + dirEntry->rec_len);
+            prevRecordOff = currRecordOff;
+            currRecordOff = nextRecordOff;
+
+        } while (scannedBlockBytes < availBytes);
+    } while (blockIndex * privdata->BlockSize + scannedBlockBytes < dirSize);
+
+    free(block);
+    DEBUG_MSG("Entry %s not found.\n");
+    return -ENOENT;
+}
+
 int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
 {
-	#ifdef EXT2_DEBUG
-		printk("Lookup %s\n", name);
-	#endif
+    DEBUG_MSG("Ext2::lookup: %s\n", name);
 
-	ext2_inode *inode = getInode(node);
-        if (inode == NULL){
-	    return -ENOMEM;
-	}
+    unsigned long inodeNumber = 0;
+    int res = findDirectoryEntry(node, name, &inodeNumber, NULL, NULL, NULL);
+    if (UNLIKELY(res < 0)) {
+        return res;
+    }
 
-	if (!S_ISDIR(inode->i_mode)){
-		printk("I can only do lookups on a directory\n");
-		return -ENOTDIR;
-	}
+    ext2_inode *fileInode = readInode(inodeNumber, (ext2_privdata *) node->mount->privdata);
+    if (IS_NULL_PTR(fileInode)) {
+        return -ENOMEM;
+    }
 
-	ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) malloc(inode->i_size);
-	void *dir = dirEntry;
-	if (dir == NULL) return -ENOMEM;
-	ReadData(inode, node, 0, (char *) dir, inode->i_size); 
+    VNodeManager::GetVnode(node->mount->mountId, inodeNumber, vnd);
+    if ((*vnd)->privdata == NULL) {
+        (*vnd)->mount = node->mount;
+        (*vnd)->privdata = fileInode;
+	*ntype = fileInode->i_mode;
+    }
 
-	unsigned int readBytes = 0;
-
-	do{
-		#ifdef EXT2_DEBUG
-			printk("%s\n", dir->name);
-		#endif
-
-		//If the first part of the name is the same but is longer than dir->name_len
-		//we want to reconize the name as different
-		//dir->name *isn't a null terminated* string
-		if (!strncmp(name, dirEntry->name, dirEntry->name_len) && (name[dirEntry->name_len] == 0)){
-            ext2_inode *fileInode = readInode(dirEntry->inode, (ext2_privdata *) node->mount->privdata);
-            if (IS_NULL_PTR(fileInode)) {
-                return -ENOMEM;
-            }
-
-			VNodeManager::GetVnode(node->mount->mountId, dirEntry->inode, vnd);
-            if ((*vnd)->privdata == NULL) {
-
-			(*vnd)->mount = node->mount;
-                (*vnd)->privdata = fileInode;
-			*ntype = fileInode->i_mode;
-            }
-
-                        free(dir);
-			return 0;
-		}
-
-		readBytes += dirEntry->rec_len;
-		dirEntry = (ext2_dir_entry_2 *) ((unsigned long) dirEntry + dirEntry->rec_len);
-	}while(readBytes < inode->i_size);
-
-	vnd = NULL;
-
-        #ifdef EXT2_DEBUG
-	    printk("ENOENT: %s (node addr: %lx)\n", name, (unsigned long) node);
-        #endif
-
-        free(dir);
-	return -ENOENT;
+    return 0;
 }
 
 int Ext2::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
