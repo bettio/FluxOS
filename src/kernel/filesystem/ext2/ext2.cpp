@@ -584,6 +584,22 @@ int Ext2::findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *in
     return -ENOENT;
 }
 
+int Ext2::iNodeNumberToVNode(unsigned long id, FSMount *mount, VNode **vnd)
+{
+    ext2_inode *fileInode = readInode(id, (ext2_privdata *) mount->privdata);
+    if (IS_NULL_PTR(fileInode)) {
+        return -ENOMEM;
+    }
+
+    VNodeManager::GetVnode(mount->mountId, id, vnd);
+    if ((*vnd)->privdata == NULL) {
+        (*vnd)->mount = mount;
+        (*vnd)->privdata = fileInode;
+    }
+
+    return 0;
+}
+
 int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype)
 {
     DEBUG_MSG("Ext2::lookup: %s\n", name);
@@ -594,19 +610,11 @@ int Ext2::Lookup(VNode *node, const char *name, VNode **vnd, unsigned int *ntype
         return res;
     }
 
-    ext2_inode *fileInode = readInode(inodeNumber, (ext2_privdata *) node->mount->privdata);
-    if (IS_NULL_PTR(fileInode)) {
-        return -ENOMEM;
+    res = iNodeNumberToVNode(inodeNumber, node->mount, vnd);
+    if (LIKELY(res >= 0)) {
+        *ntype = getInode(node)->i_mode;
     }
-
-    VNodeManager::GetVnode(node->mount->mountId, inodeNumber, vnd);
-    if ((*vnd)->privdata == NULL) {
-        (*vnd)->mount = node->mount;
-        (*vnd)->privdata = fileInode;
-	*ntype = fileInode->i_mode;
-    }
-
-    return 0;
+    return res;
 }
 
 int Ext2::Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)

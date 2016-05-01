@@ -27,6 +27,7 @@
 #include "ext2_structs.h"
 
 struct ext2_privdata;
+struct FSMount;
 
 namespace FileSystem
 {
@@ -46,6 +47,7 @@ namespace FileSystem
             static ext2_inode *readInode(unsigned long id, ext2_privdata *privdata);
             static int writeINode(VNode *node);
             static ext2_inode *getInode(VNode *node);
+            static int iNodeNumberToVNode(unsigned long id, FSMount *mount, VNode **vnd);
 			static int Read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
 			static int Readlink(VNode *node, char *buffer, size_t bufsize);
 			static int GetDEnts(VNode *node, dirent *dirp, unsigned int count);
