@@ -26,7 +26,16 @@
 
 int main(int argc, char **argv)
 {
-    unlink(*++argv);
+    char *fileName;
+    int returnValue;
+
+    while ((fileName = *++argv)) {
+        returnValue = unlink(fileName);
+        if (returnValue < 0) {
+            perror(fileName);
+            return EXIT_FAILURE;
+        }
+    }
 
     return EXIT_SUCCESS;
 }
