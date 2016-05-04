@@ -815,7 +815,37 @@ int Ext2::Symlink(VNode *directory, const char *oldName, const char *newName)
 
 int Ext2::Rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory, const char *newName)
 {
-    return -EROFS;
+    ext2_privdata *privdata = (ext2_privdata *) oldDirectory->mount->privdata;
+
+    unsigned long inodeNumber = 0;
+    unsigned long recordOff = 0;
+    unsigned long prevRecordOff = 0;
+    unsigned long nextRecordOff = 0;
+    int res = findDirectoryEntry(oldDirectory, oldName, &inodeNumber, &recordOff, &prevRecordOff, &nextRecordOff);
+    if (UNLIKELY(res < 0)) {
+        return res;
+    }
+
+    void *block = malloc(privdata->BlockSize);
+    unsigned long availBytes = ReadData(getInode(oldDirectory), oldDirectory, 0/*blockIndex * privdata->DiskBlocksPerFSBlock*/, (char *) block, privdata->BlockSize);
+
+    ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) ((unsigned long) block + recordOff);
+
+    int newNameLen = strlen(newName);
+    if ((newNameLen + 8 <= dirEntry->rec_len) && (oldDirectory == newDirectory)) {
+        memcpy(dirEntry->name, newName, newNameLen);
+        dirEntry->name_len = newNameLen;
+
+    } else {
+        return -EROFS;
+        ext2_dir_entry_2 *prevDirEntry = (ext2_dir_entry_2 *) ((unsigned long) block + prevRecordOff);
+        prevDirEntry->rec_len += (nextRecordOff - recordOff);
+    }
+
+    // small hack: getInode(directory)->i_block[0]
+    privdata->blkdev->WriteBlock(privdata->blkdev, getInode(oldDirectory)->i_block[0] << privdata->DiskBlockLog, privdata->DiskBlocksPerFSBlock, (uint8_t *) block);
+
+    return 0;
 }
 
 int Ext2::Mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
