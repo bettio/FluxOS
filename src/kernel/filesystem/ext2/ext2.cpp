@@ -788,6 +788,10 @@ int Ext2::CloseVNode(VNode *node)
     int ret = 0;
     if (node->dirty) {
         ret = writeINode(node);
+
+        if (getInode(node)->i_links_count == 0) {
+             printk("need to cleanup inode: %i\n", node->vnid.id);
+        }
     }
     free(node->privdata);
 
@@ -841,7 +845,43 @@ int Ext2::FDataSync(VNode *node)
 
 int Ext2::Unlink(VNode *directory, const char *name)
 {
-    return -EROFS;
+    ext2_privdata *privdata = (ext2_privdata *) directory->mount->privdata;
+
+    unsigned long inodeNumber = 0;
+    unsigned long recordOff = 0;
+    unsigned long prevRecordOff = 0;
+    unsigned long nextRecordOff = 0;
+    int res = findDirectoryEntry(directory, name, &inodeNumber, &recordOff, &prevRecordOff, &nextRecordOff);
+    if (UNLIKELY(res < 0)) {
+        return res;
+    }
+
+    void *block = malloc(privdata->BlockSize);
+    unsigned long availBytes = ReadData(getInode(directory), directory, 0/*blockIndex * privdata->DiskBlocksPerFSBlock*/, (char *) block, privdata->BlockSize); 
+
+    ext2_dir_entry_2 *dirEntry = (ext2_dir_entry_2 *) ((unsigned long) block + prevRecordOff);
+    if (dirEntry->file_type == EXT2_FT_DIR) {
+        return -EISDIR;
+    }
+
+    dirEntry->rec_len += (nextRecordOff - recordOff);
+    // small hack: getInode(directory)->i_block[0]
+    privdata->blkdev->WriteBlock(privdata->blkdev, getInode(directory)->i_block[0] << privdata->DiskBlockLog, privdata->DiskBlocksPerFSBlock, (uint8_t *) block);
+    free(block);
+
+    VNode *vnd;
+    res = iNodeNumberToVNode(inodeNumber, directory->mount, &vnd);
+    if (LIKELY(res < 0)) {
+        return res;
+    }
+    vnd->dirty = true;
+    ext2_inode *inode = getInode(vnd);
+    unsigned int ntype = inode->i_mode;
+    inode->i_links_count--;
+
+    VNodeManager::PutVnode(vnd);
+
+    return 0;
 }
 
 int Ext2::Rmdir(VNode *directory, const char *name)
