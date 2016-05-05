@@ -338,6 +338,9 @@ void *MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, u
     }
 
     MemoryMappedFileDescriptor *mappedFileDesc = new MemoryMappedFileDescriptor();
+    if (IS_NULL_PTR(mappedFileDesc)) {
+        return (void *) -ENOMEM;
+    }
     mappedFileDesc->baseAddress = foundBaseAddr;
     mappedFileDesc->length = length;
     mappedFileDesc->permissions = permissions;
