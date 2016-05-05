@@ -191,6 +191,7 @@ int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
     }
 
     ProcessControlBlock *process = thread->parentProcess;
+    delete process->memoryContext;
     closeAllFiles(process);
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
     process->exitStatus = exitStatus;

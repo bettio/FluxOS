@@ -81,6 +81,7 @@ class MemoryContext
         };
 
         MemoryContext();
+        ~MemoryContext();
         MemoryDescriptor *findMemoryDescriptor(void *address) const;
         QList<MemoryDescriptor *> *findMemoryDescriptorsByRange(void *low, void *hi) const;
         int countDescriptorsByRange(void *low, void *hi) const;

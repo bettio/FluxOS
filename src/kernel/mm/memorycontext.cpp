@@ -86,6 +86,14 @@ MemoryContext::MemoryContext()
     m_vmemAlloc.init(userVirtualMemSize >> 12);
 }
 
+MemoryContext::~MemoryContext()
+{
+    for (int i = 0; i < m_descriptors->count(); i++) {
+        releaseDescriptor(m_descriptors->at(i));
+    }
+    delete m_descriptors;
+}
+
 inline unsigned long roundToPageMultiples(unsigned long l)
 {
     return ((l & 0xFFFFF000) + ((l & 0xFFF) ? 0x1000 : 0));
@@ -351,6 +359,12 @@ int MemoryContext::releaseDescriptor(MemoryDescriptor *descriptor)
     }
 
     PagingManager::removePages(descriptor->baseAddress, roundToPageMultiples(descriptor->length));
+
+    if (descriptor->flags == MemoryDescriptor::MemoryMappedFile) {
+        MemoryMappedFileDescriptor *mappedFileDescriptor = (MemoryMappedFileDescriptor *) descriptor;
+        FileSystem::VNodeManager::PutVnode(mappedFileDescriptor->node);
+    }
+
     delete descriptor;
 
     return 0;
