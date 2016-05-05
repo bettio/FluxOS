@@ -24,7 +24,7 @@ elseif (BUILD_TARGET MATCHES "NATIVE_IA32")
     SET(CMAKE_ASM_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=pentium2 -O2 -fno-builtin -fno-exceptions -fno-rtti -c")
 
     SET(CMAKE_C_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=pentium2 -fno-builtin" )
-    SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=pentium2 -fno-builtin -fno-exceptions -fno-rtti" )
+    SET(CMAKE_CXX_FLAGS "-m32 -nostdlib -nostdinc -fomit-frame-pointer -Wall -Wno-long-long -march=pentium2 -fno-builtin -fno-exceptions -fcheck-new -fno-rtti" )
 
 elseif (BUILD_TARGET MATCHES "MIPS_24K")
     SET(NATIVE_MIPS ON)
