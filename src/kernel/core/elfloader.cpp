@@ -107,6 +107,7 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
     }
 
     if (!isValid()) {
+        FileSystem::VNodeManager::PutVnode(node);
         return -ENOEXEC;
     }
 
