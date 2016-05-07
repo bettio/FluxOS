@@ -514,6 +514,11 @@ int Ext2::ReadData(ext2_inode *inode, VNode *node, uint64_t pos, char *buffer, u
 	return result;
 }
 
+inline bool isAligned(void *ptr, int align)
+{
+    return (((unsigned long) ptr) & (align - 1)) == 0;
+}
+
 int Ext2::findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *inodeNumber,
                        unsigned long *recordOffset, unsigned long *prevRecordOffset, unsigned long *nextRecordOffset)
 {
@@ -545,12 +550,14 @@ int Ext2::findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *in
         blockIndex++;
         unsigned long availBytes = ReadData(inode, dirNode, blockIndex * privdata->DiskBlocksPerFSBlock, (char *) block, privdata->BlockSize);
         do {
-            nextRecordOff = currRecordOff + dirEntry->rec_len;
-
-            if (UNLIKELY((dirEntry->rec_len < dirEntry->name_len + 8) || dirEntry->rec_len > privdata->BlockSize)) { //8 = other fileds
+            if (UNLIKELY(!isAligned(dirEntry, 4) || (dirEntry->rec_len < dirEntry->name_len + 8) || //8 = other fileds
+                         (((unsigned long) dirEntry) - ((unsigned long) block) + dirEntry->rec_len > privdata->BlockSize) ||
+                         (dirEntry->name_len == 0) || (dirEntry->file_type > EXT2_FT_SYMLINK))) {
                 printk("Ext2::findDirectoryEntry: corrupted record entry.\n");
                 return -EIO;
             }
+
+            nextRecordOff = currRecordOff + dirEntry->rec_len;
 
             //If the first part of the name is the same but is longer than dir->name_len
             //we want to reconize the name as different
