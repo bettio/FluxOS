@@ -343,7 +343,7 @@ int VFS::GetDirPathFromVnode(VNode *node, char **pathFromVnode)
             return retVal;
         }
         pathStack.append(dirName);
-        pathLen += nameLen;
+        pathLen += nameLen + 1;
 
         VNodeManager::PutVnode(node);
         node = tmpnode;
@@ -359,11 +359,11 @@ int VFS::GetDirPathFromVnode(VNode *node, char **pathFromVnode)
     while (pathStack.size()){
         char *name = pathStack.takeLast();
         strcpy(path + i, name);
-        free(name);
         if (pathStack.size()){
             i += strlen(name) + 1;
             path[i - 1] = '/';
-	} 
+        }
+        free(name);
     }
 
     *pathFromVnode = path;
