@@ -586,13 +586,13 @@ int Ext2::findDirectoryEntry(VNode *dirNode, const char *name, unsigned long *in
 
 int Ext2::iNodeNumberToVNode(unsigned long id, FSMount *mount, VNode **vnd)
 {
-    ext2_inode *fileInode = readInode(id, (ext2_privdata *) mount->privdata);
-    if (IS_NULL_PTR(fileInode)) {
-        return -ENOMEM;
-    }
-
     VNodeManager::GetVnode(mount->mountId, id, vnd);
     if ((*vnd)->privdata == NULL) {
+        ext2_inode *fileInode = readInode(id, (ext2_privdata *) mount->privdata);
+        if (IS_NULL_PTR(fileInode)) {
+            return -ENOMEM;
+        }
+
         (*vnd)->mount = mount;
         (*vnd)->privdata = fileInode;
     }
