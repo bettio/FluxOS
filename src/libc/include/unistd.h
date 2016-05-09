@@ -13,6 +13,9 @@ extern "C"
 {
 #endif
 
+extern int access(const char *pathname, int mode);
+#define X_OK 1
+
 extern int write(int fd, const char *buf, size_t count);
 extern ssize_t read(int fd, void *buf, unsigned int count);
 extern int close(int fd);
