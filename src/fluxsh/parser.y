@@ -1,5 +1,6 @@
 %{
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -25,6 +26,55 @@ void printPrompt()
     getcwd(cd, 256);
 
     fprintf(stderr, "[@%s %s] %c ", hostname, cd, (getuid() ? '$' : '#'));
+}
+
+int cdCommandHandler(const char *command, char *const args[])
+{
+    if (chdir(args[1]) < 0) {
+        fprintf(stderr, "FluxSH: cd: ");
+        perror(args[1]);
+    }
+}
+
+int executableCommandHandler(const char *command, char *const args[])
+{
+    const char *path[] = { "/bin", "/sbin", "/usr/bin", "/usr/sbin", NULL };
+
+    int status;
+    int pid = fork();
+    if (!pid){
+        char pathToExecutable[256];
+
+        int i = 0;
+        while (path[i] != NULL) {
+            strcpy(pathToExecutable, path[i]);
+            strcat(pathToExecutable, "/");
+            strcat(pathToExecutable, command);
+            if (access(pathToExecutable, X_OK) == 0) {
+                break;
+            }
+            i++;
+        }
+
+        if ((path[i] == NULL) || execve(pathToExecutable, args, env) < 0) {
+            fprintf(stderr, "FluxSH: cannot execute %s\n", command);
+        }
+        return EXIT_FAILURE;
+
+    } else {
+        waitpid(pid, &status, 0);
+        return status;
+    }
+}
+
+
+int commandHandler(const char *command, char *const args[])
+{
+    if (!strcmp(command, "cd")) {
+        cdCommandHandler(command, args);
+    } else {
+        executableCommandHandler(command, args);
+    }
 }
 
 %}
@@ -75,37 +125,15 @@ command
    : CMDTOKEN args
    {
        args[argsIndex] = $1;
-
-       int status;
-       int pid = fork();
-       if (!pid){
-           char pathToExecutable[256];
-           strcpy(pathToExecutable, "/bin/");
-           strcat(pathToExecutable, $1);
-           if (execve(pathToExecutable, args + argsIndex, env) < 0) {
-               fprintf(stderr, "FluxSH: cannot execute %s\n", $1);
-           }
-       } else {
-           waitpid(pid, &status, 0);
-       }
+       args[argsIndex - 1] = NULL;
+       commandHandler($1, args + argsIndex);
        argsIndex = 254;
    }
    | CMDTOKEN
    {
        args[argsIndex] = $1;
-
-       int status;
-       int pid = fork();
-       if (!pid){
-           char pathToExecutable[256];
-           strcpy(pathToExecutable, "/bin/");
-           strcat(pathToExecutable, $1);
-           if (execve(pathToExecutable, args + argsIndex, env) < 0) {
-               fprintf(stderr, "FluxSH: cannot execute %s\n", $1);
-           }
-       } else {
-           waitpid(pid, &status, 0);
-       }
+       args[argsIndex - 1] = NULL;
+       commandHandler($1, args + argsIndex);
        argsIndex = 254;
    }
 
@@ -115,7 +143,7 @@ command
 
 void yyerror(const char * message)
 {
-   printf("%s\n", message);
+   fprintf(stderr, "%s\n", message);
 }
 
 int main(int argc, char *argv[], char *envp[])
@@ -135,6 +163,7 @@ int main(int argc, char *argv[], char *envp[])
 
    printPrompt();
    yyparse();
+   fprintf(stderr, " exit\n");
 
    return 0;
 }
