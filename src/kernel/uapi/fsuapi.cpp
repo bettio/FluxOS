@@ -456,13 +456,16 @@ int FSUAPI::access(userptr const char *pathname, int mode)
         return fPath.errorCode();
     }
 
-	VNode *node;
+    VNode *node;
 
-	int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
+    int result = FileSystem::VFS::RelativePathToVnode(Scheduler::currentThread()->parentProcess->currentWorkingDirNode, fPath.data(), &node, false);
 
-	if (result >= 0) result = FS_CALL(node, access)(node, mode, Scheduler::currentThread()->parentProcess->uid, Scheduler::currentThread()->parentProcess->gid);
+    if (LIKELY(result >= 0)) {
+        result = FS_CALL(node, access)(node, mode, Scheduler::currentThread()->parentProcess->uid, Scheduler::currentThread()->parentProcess->gid);
+        VNodeManager::PutVnode(node);
+    }
 
-	return result;
+    return result;
 }
 
 int FSUAPI::createNewFile(const char *pathname, mode_t mode, VNode **node)
