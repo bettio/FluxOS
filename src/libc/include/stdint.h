@@ -35,4 +35,11 @@ typedef signed short int int16_t;
 typedef signed int int32_t;
 typedef signed long long int64_t;
 
+#ifndef _SIZE_T_TYPE
+#define _SIZE_T_TYPE
+	typedef unsigned int size_t;
+#endif
+
+
+
 #endif
