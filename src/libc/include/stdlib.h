@@ -49,6 +49,8 @@ extern int atoi(const char *s);
 extern void itoaz(const int n, char *s, const unsigned int b);
 extern void uitoaz(const unsigned int n, char s[], const unsigned int b);
 
+extern unsigned long int strtoul(const char *nptr, char **endptr, int base);
+
 extern void *calloc(size_t nmemb, size_t size);
 extern void *malloc(size_t size);
 extern void free(void *ptr);

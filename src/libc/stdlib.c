@@ -206,3 +206,9 @@ int isatty(int fd)
 {
     return 1;
 }
+
+extern unsigned long int strtoul(const char *nptr, char **endptr, int base)
+{
+    //TODO STUB
+#warning strtoul not implemented
+}
