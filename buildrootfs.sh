@@ -18,6 +18,8 @@ mkdir -p "${DESTDIR}/proc"
 mkdir -p "${DESTDIR}/sbin"
 mkdir -p "${DESTDIR}/tmp"
 
+cp -a rootfs/* "${DESTDIR}/"
+
 echo -n "fluxhost" > "${DESTDIR}/etc/hostname"
 echo -n "fluxdomain" > "${DESTDIR}/etc/domainname"
 #
