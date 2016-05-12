@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#include <pwd.h>
 
 int argsIndex;
 char **args;
@@ -25,7 +25,13 @@ void printPrompt()
     char cd[64];
     getcwd(cd, 256);
 
-    fprintf(stderr, "[@%s %s] %c ", hostname, cd, (getuid() ? '$' : '#'));
+    int uid = getuid();
+    struct passwd pw;
+    struct passwd *result;
+    char buf[512];
+    getpwuid_r(uid, &pw, buf, 512, &result);
+
+    fprintf(stderr, "[%s@%s %s] %c ", result->pw_name, hostname, cd, (uid ? '$' : '#'));
 }
 
 int cdCommandHandler(const char *command, char *const args[])
