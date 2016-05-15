@@ -16,17 +16,17 @@
  *   Free Software Foundation, Inc.,                                       *
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA .        *
  ***************************************************************************
- *   Name: pwd.c                                                           *
+ *   Name: grp.c                                                           *
  ***************************************************************************/
 
-#include <pwd.h>
+#include <grp.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
-static int parsePasswdLine(char *line, struct passwd *pw_buf)
+static int parseGroupLine(char *line, struct group *gr_buf)
 {
     char *fPtr = line;
     char *prevPtr = line;
@@ -34,27 +34,18 @@ static int parsePasswdLine(char *line, struct passwd *pw_buf)
     while ((*fPtr != '\n') && (*fPtr != 0)) {
         switch (fieldN) {
             case 0:
-                pw_buf->pw_name = prevPtr;
+                gr_buf->gr_name = prevPtr;
                 break;
             case 1:
-                pw_buf->pw_passwd = prevPtr;
+                gr_buf->gr_passwd = prevPtr;
                 break;
             case 2:
-                pw_buf->pw_uid = atoi(prevPtr);
+                gr_buf->gr_gid = atoi(prevPtr);
                 break;
             case 3:
-                pw_buf->pw_gid = atoi(prevPtr);
+                gr_buf->gr_mem = 0;
                 break;
-            case 4:
-                pw_buf->pw_gecos = prevPtr;
-                break;
-            case 5:
-                pw_buf->pw_dir = prevPtr;
-                break;
-            case 6:
-                pw_buf->pw_shell = prevPtr;
-                break;
-            case 7:
+            default:
                 return -1;
                 break;
         }
@@ -69,48 +60,56 @@ static int parsePasswdLine(char *line, struct passwd *pw_buf)
     return 0;
 }
 
-int getpwnam_r(const char *name, struct passwd *pwd, char *buf, size_t buflen, struct passwd **result)
+int getgrnam_r(const char *name, struct group *grp, char *buf, size_t buflen, struct group **result)
 {
-    FILE *passwdFile = fopen("/etc/passwd", "r");
+    FILE *groupFile = fopen("/etc/group", "r");
+    if (!groupFile) {
+        *result = NULL;
+        return -1;
+    }
 
     char *line = buf;
 
     while (1) {
-        if (!fgets(line, buflen, passwdFile)) {
+        if (!fgets(line, buflen, groupFile)) {
             break;
         }
-        parsePasswdLine(line, pwd);
-        if (!strcmp(pwd->pw_name, name)) {
-            *result = pwd;
-            fclose(passwdFile);
+        parseGroupLine(line, grp);
+        if (!strcmp(grp->gr_name, name)) {
+            *result = grp;
+            fclose(groupFile);
             return 0;
         }
     }
 
     *result = NULL;
-    fclose(passwdFile);
+    fclose(groupFile);
     return -1;
 }
 
-int getpwuid_r(uid_t uid, struct passwd *pwd, char *buf, size_t buflen, struct passwd **result)
+int getgrgid_r(gid_t gid, struct group *grp, char *buf, size_t buflen, struct group **result)
 {
-    FILE *passwdFile = fopen("/etc/passwd", "r");
+    FILE *groupFile = fopen("/etc/group", "r");
+    if (!groupFile) {
+        *result = NULL;
+        return -1;
+    }
 
     char *line = buf;
 
     while (1) {
-        if (!fgets(line, buflen, passwdFile)) {
+        if (!fgets(line, buflen, groupFile)) {
             break;
         }
-        parsePasswdLine(line, pwd);
-        if (pwd->pw_uid == uid) {
-            *result = pwd;
-            fclose(passwdFile);
+        parseGroupLine(line, grp);
+        if (grp->gr_gid == gid) {
+            *result = grp;
+            fclose(groupFile);
             return 0;
         }
     }
 
     *result = NULL;
-    fclose(passwdFile);
+    fclose(groupFile);
     return -1;
 }

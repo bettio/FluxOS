@@ -23,6 +23,8 @@
 #ifndef _STDLIB_H
 #define _STDLIB_H
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,8 +34,6 @@ extern "C" {
 
 #define TRUE 1
 #define FALSE 0
-
-#define NULL 0
 
 #ifndef _SIZE_T_TYPE
 #define _SIZE_T_TYPE

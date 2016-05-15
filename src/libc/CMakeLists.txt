@@ -23,7 +23,8 @@ SET(LIBC_SOURCES
     malloc.c
     stdlib.c
     ctype.c
-    pwd.c
+    posix/grp/grp.c
+    posix/pwd/pwd.c
     string.c
     stdio.c
     math.c

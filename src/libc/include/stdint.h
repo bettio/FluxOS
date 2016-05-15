@@ -22,7 +22,7 @@
 #ifndef _STDINT_H_
 #define _STDINT_H_
 
-#define NULL 0
+#include <stddef.h>
 
 typedef unsigned char uint8_t;
 typedef unsigned short int uint16_t;
