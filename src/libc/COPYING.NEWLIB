@@ -6,6 +6,7 @@ that are not used here have been removed from it.
 
 Imported sources:
 * string/*.c
+* time/*.c
 
 Each file may have its own copyright/license that is embedded in the source 
 file.  Unless otherwise noted in the body of the source file(s), the following copyright
