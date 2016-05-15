@@ -76,4 +76,7 @@ done << EOF
 mmap
 EOF
 
+# default to root:root owner
+chown -R root:root "${DESTDIR}/"
+
 umount ${DESTDIR}
