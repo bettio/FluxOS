@@ -121,6 +121,9 @@ int fgetc(FILE *stream)
 	return c;
 }
 
+/*
+ FIXME: UGLY IMPLEMENTATION
+*/
 char *fgets(char *s, int size, FILE *stream)
 {
 	/*int res = */read(FD(stream), s, size - 1);
