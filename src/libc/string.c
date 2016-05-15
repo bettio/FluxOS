@@ -76,22 +76,6 @@ extern "C"
         return dest;
     }
 
-    void *memmove(void *dest, const void *src, size_t n)
-    {
-        size_t i;
-        if (dest > src){
-            for (i = n - 1; i >= 0; i--){
-                ((char *) dest)[i] = ((const char *) src)[i];
-            }
-        }else if (dest < src){
-            for (i = 0; i < n; i++){
-                ((char *) dest)[i] = ((const char *) src)[i];
-            }
-        }
-
-        return dest;
-    }
-
     void *memset(void *s, int c, size_t n)
     {
         size_t i;

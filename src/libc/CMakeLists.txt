@@ -25,6 +25,7 @@ SET(LIBC_SOURCES
     ctype.c
     posix/grp/grp.c
     posix/pwd/pwd.c
+    string/memmove.c
     string.c
     stdio.c
     math.c
