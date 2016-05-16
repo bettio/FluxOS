@@ -46,7 +46,7 @@ int ProcFS::Init()
 {
 	FileSystemInfo *info = new FileSystemInfo;
 	//TODO: Warning: unchecked malloc
-	info->name = "procfs";
+	info->name = "proc";
 
 	info->mount = Mount;
 
