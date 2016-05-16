@@ -132,7 +132,7 @@ int startServices(int argc, char *argv[], char *envp[])
 
             int pid = fork();
             if (!pid){
-                char *a[] = {(char *) serviceExecutable, "", 0};
+                char *a[] = {(char *) serviceExecutable, NULL};
                 if (execve(serviceExecutable, a, envp)) {
                     perror("init: cannot execute: ");
                 }
