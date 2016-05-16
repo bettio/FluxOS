@@ -25,6 +25,7 @@
 #include <sys/dirent.h>
 #include <sys/utsname.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include "../../utils.h"
 
@@ -526,7 +527,7 @@ int getdents(unsigned int fd, struct dirent *dirp, unsigned int count)
 int stat(const char *path, struct stat *buf)
 {
 	/* Parameters */
-	register unsigned int syscall asm("%eax") = 18;
+	register unsigned int syscall asm("%eax") = 195;
 	register unsigned int pt asm("%ebx") = (unsigned int) path;
 	register unsigned int bf asm("%ecx") = (unsigned int) buf;
 
@@ -541,7 +542,7 @@ int stat(const char *path, struct stat *buf)
 int fstat(int filedes, struct stat *buf)
 {
 	/* Parameters */
-	register unsigned int syscall asm("%eax") = 28;
+	register unsigned int syscall asm("%eax") = 197;
 	register unsigned int fd asm("%ebx") = (unsigned int) filedes;
 	register unsigned int bf asm("%ecx") = (unsigned int) buf;
 
@@ -556,7 +557,7 @@ int fstat(int filedes, struct stat *buf)
 int lstat(const char *path, struct stat *buf)
 {
 	/* Parameters */
-	register unsigned int syscall asm("%eax") = 107;
+	register unsigned int syscall asm("%eax") = 196;
 	register unsigned int pt asm("%ebx") = (unsigned int) path;
 	register unsigned int bf asm("%ecx") = (unsigned int) buf;
 
