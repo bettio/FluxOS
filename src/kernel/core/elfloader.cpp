@@ -124,10 +124,12 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
         switch (pHeader[i].type) {
           case ELF_PT_LOAD: {
             char *segment = (char *) pHeader[i].virtualAddr;
+
             if (((unsigned long) segment < USERSPACE_LOW_ADDR) || ((unsigned long) segment > USERSPACE_HI_ADDR)) {
                 printk("ElfLoader: warning: skipping bad address: %p\n", segment);
                 continue;
             }
+
             MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
             if (pHeader[i].flags & ELF_PF_X) {
                 permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ExecutePermission);
@@ -138,15 +140,19 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
             if (pHeader[i].flags & ELF_PF_R) {
                 permissions = (MemoryDescriptor::Permissions) (permissions | MemoryDescriptor::ReadPermission);
             }
-            if (pHeader[i].segmentFileSize > 0) {
+
+            if ((pHeader[i].segmentFileSize > 0) && (pHeader[i].segmentMemSize == pHeader[i].segmentFileSize)) {
                 mContext->mapFileSegmentToMemory(node, segment, pHeader[i].segmentFileSize, pHeader[i].offset, permissions);
             }
             //TODO: we need to round up to page size everything here
-            if (pHeader[i].segmentMemSize > pHeader[i].segmentFileSize){
+            if (pHeader[i].segmentMemSize > pHeader[i].segmentFileSize) {
                 if (pHeader[i].segmentFileSize) {
-                    printk("WARNING: not yet properly supported here\n");
+                   /* FILE BIG WARNING HERE */
+                   mContext->allocateDelayedLoadedFile(((char *) segment), pHeader[i].segmentMemSize,
+                                                       node, pHeader[i].offset, 0, pHeader[i].segmentFileSize, permissions, MemoryContext::FixedHint);
+                } else {
+                    mContext->allocateAnonymousMemory(((char *) segment), pHeader[i].segmentMemSize, permissions, MemoryContext::FixedHint);
                 }
-                mContext->allocateAnonymousMemory(((char *) segment) + pHeader[i].segmentFileSize, pHeader[i].segmentMemSize, permissions, MemoryContext::FixedHint);
             }
           }
           break;
