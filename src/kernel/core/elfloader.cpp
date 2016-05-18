@@ -147,9 +147,23 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
             //TODO: we need to round up to page size everything here
             if (pHeader[i].segmentMemSize > pHeader[i].segmentFileSize) {
                 if (pHeader[i].segmentFileSize) {
-                   /* FILE BIG WARNING HERE */
-                   mContext->allocateDelayedLoadedFile(((char *) segment), pHeader[i].segmentMemSize,
-                                                       node, pHeader[i].offset, 0, pHeader[i].segmentFileSize, permissions, MemoryContext::FixedHint);
+                   //TODO: replace 4096 with page size
+                   if (pHeader[i].segmentFileSize > 4096) {
+                       printk("ElfLoader::loadExecutableFile: not yet full tested 1\n");
+                       mContext->mapFileSegmentToMemory(node, segment, pHeader[i].segmentFileSize & ~0xFFF, pHeader[i].offset, permissions);
+                   }
+
+                   mContext->allocateDelayedLoadedFile(((char *) segment) + (pHeader[i].segmentFileSize & ~0xFFF), pHeader[i].segmentMemSize,
+                                                       node, pHeader[i].offset + (pHeader[i].segmentFileSize & ~0xFFF), 0,
+                                                       pHeader[i].segmentFileSize % 4096, permissions, MemoryContext::FixedHint);
+
+                   if (pHeader[i].segmentMemSize - pHeader[i].segmentFileSize > 4096) {
+                       printk("ElfLoader::loadExecutableFile: not yet fully tested 2\n");
+                       mContext->allocateAnonymousMemory(((char *) segment) + (pHeader[i].segmentFileSize & ~0xFFF) + 0x1000,
+                                                         pHeader[i].segmentMemSize - (pHeader[i].segmentFileSize & ~0xFFF) + 0x1000,
+                                                         permissions, MemoryContext::FixedHint);
+                   }
+
                 } else {
                     mContext->allocateAnonymousMemory(((char *) segment), pHeader[i].segmentMemSize, permissions, MemoryContext::FixedHint);
                 }
