@@ -48,7 +48,8 @@ class MemoryDescriptor
         enum Flags
         {
             AnonymousMemory = 1,
-            MemoryMappedFile = 2
+            MemoryMappedFile = 2,
+            DelayedLoadFile = 3
         };
 
         void *baseAddress;
@@ -63,6 +64,15 @@ class MemoryMappedFileDescriptor : public MemoryDescriptor
     public:
         VNode *node;
         unsigned long offset;
+};
+
+class DelayedLoadFileMemory : public MemoryDescriptor
+{
+    public:
+        VNode *node;
+        unsigned long fileOffset;
+        unsigned int pageOffset;
+        unsigned int fileLen;
 };
 
 class CopyOnWriteAnonMemory : public MemoryResource
@@ -90,6 +100,9 @@ class MemoryContext
         void *findEmptyMemoryExtent(void *baseAddress, unsigned long length, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void *baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
         int allocateAnonymousMemory(void **baseAddress, unsigned long length, MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
+        int allocateDelayedLoadedFile(void *baseAddress, unsigned long length,
+                                      VNode *node, unsigned long fOffset, int pageOffset, int fLen,
+                                      MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints);
 
         /**
          * Resize the memory region pointed by descriptor

@@ -232,6 +232,20 @@ void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, Userspace
            printk("I/O error while loading page (read bytes: %i)\n", res);
            segmentationFault(faultAddress, faultPC, op, flags, "missing page");
        }
+   } else if (flags & UserspaceMemoryManager::MissingPageFault && (mDesc->flags == MemoryDescriptor::DelayedLoadFile)) {
+       DelayedLoadFileMemory *mfDesc = (DelayedLoadFileMemory *) mDesc;
+
+       unsigned long npFlags = (mfDesc->permissions & MemoryDescriptor::WritePermission) ? PagingManager::Write : 0;
+       PagingManager::newPage((uint32_t) faultAddress, npFlags);
+
+       unsigned long virtualPageAddress = (((unsigned long) faultAddress) & 0xFFFFF000);
+       int res = FS_CALL(mfDesc->node, read)(mfDesc->node, mfDesc->fileOffset, ((char *) virtualPageAddress) + mfDesc->pageOffset, mfDesc->fileLen);
+       if (res < 0) {
+           printk("I/O error while loading page (read bytes: %i)\n", res);
+           segmentationFault(faultAddress, faultPC, op, flags, "missing page");
+       }
+
+
    } else {
        printk("error: unexpected memory mapping type\n");
        segmentationFault(faultAddress, faultPC, op, flags, "unmanaged");
@@ -309,6 +323,37 @@ int MemoryContext::allocateAnonymousMemory(void *baseAddress, unsigned long leng
 
     return 0;
 }
+
+
+int MemoryContext::allocateDelayedLoadedFile(void *baseAddress, unsigned long length,
+                              VNode *node, unsigned long fOffset, int pageOffset, int fLen,
+                              MemoryDescriptor::Permissions permissions, MemoryContext::MemoryAllocationHints hints)
+{
+    void *foundBaseAddr = findEmptyMemoryExtent(baseAddress, length, hints);
+    if (UNLIKELY(!foundBaseAddr)) {
+        return -ENOMEM;
+    }
+
+    DelayedLoadFileMemory *desc = new DelayedLoadFileMemory;
+    if (UNLIKELY(!desc)) {
+        printk("Not enough kernel memory to allocate MemoryDescriptor\n");
+        return -ENOMEM;
+    }
+    desc->baseAddress = baseAddress;
+    desc->length = length;
+    desc->permissions = permissions;
+    desc->flags = MemoryDescriptor::DelayedLoadFile;
+
+    desc->node = node;
+    desc->fileOffset = fOffset;
+    desc->pageOffset = pageOffset;
+    desc->fileLen = fLen;
+
+    insertMemoryDescriptor(desc);
+
+    return 0;
+}
+
 
 long MemoryContext::resizeExtent(MemoryDescriptor *desc, long increment)
 {
