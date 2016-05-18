@@ -38,6 +38,7 @@
 #define ENOTDIR 20
 #define EISDIR 21
 #define EINVAL 22
+#define ENOTTY 25
 #define ENOSPC 28
 #define EROFS 30
 #define ERANGE 34

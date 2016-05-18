@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
+#include <errno.h>
 
 #define MAX_DIGIT 9
 
@@ -201,10 +202,21 @@ void *_Znwj(unsigned int s)
 	return malloc(s);
 }
 
-//TODO
 int isatty(int fd)
 {
-    return 1;
+    struct stat s;
+    int ret = fstat(fd, &s);
+    if (ret < 0) {
+       return 0;
+    }
+
+    if (S_ISCHR(s.st_mode)) {
+        return 1;
+
+    } else {
+        errno = -ENOTTY;
+        return 0;
+    }
 }
 
 extern unsigned long int strtoul(const char *nptr, char **endptr, int base)
