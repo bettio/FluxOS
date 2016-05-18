@@ -44,51 +44,6 @@
 #define TARGET_MACHINE_TYPE EM_MIPS
 #endif
 
-#if 0
-void ElfLoader::load(void *elfBinary)
-{
-    elfHeader = (Elf *) elfBinary;
-
-    if (!isValid()){
-        printk("Trying to run an invalid ELF binary: addr: %lx\n", (unsigned long) elfBinary);
-        return;
-    }
-
-    for (int i = 0; i < elfHeader->shnum; i++){
-        ElfShdr *section = sectionHeader(i);
-
-        //BSS
-        if (section->shType == NoBits){
-            printk("Warning: ElfLoader: Unimplemented BSS support\n");
-
-        //REL
-        }else if (section->shType == Rel){
-            ElfSymbol *syms = symbols();
-            long text = textOffset();
-            ElfRel *relocations = (ElfRel *) offsetToPtr(section->offset);
-
-            for (unsigned int j = 0; j < section->size / sizeof(ElfRel); j++){
-                int val = syms[relocations[j].info >> 8].sectionIndex;
-                switch (relocations[j].info & 0xFF){
-                    case R_386_32:
-                        *((uint32_t *) offsetToPtr(text + relocations[j].offset)) += offsetToAddr(sectionHeader(val)->offset + syms[relocations[j].info >> 8].value);
-                        break;
-                        
-                    case R_386_PC32:
-                        *((int32_t *) offsetToPtr(text + relocations[j].offset)) += (sectionHeader(val)->offset + syms[relocations[j].info >> 8].value) - (text + relocations[j].offset);
-                        break;
-                       
-                    default:
-                        printk("Warning: ElfLoader: Unimplemented relocation type %i\n", relocations->info & 0xFF);
-                    }
-            }
-        }else{
-            continue;
-        }
-    }
-}
-#endif
-
 int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
 {
     interpEntryPoint = NULL;
@@ -231,21 +186,6 @@ long ElfLoader::textOffset()
     
     return 0;
 }
-
-#if 0
-ElfSymbol *ElfLoader::symbols()
-{
-    for (int i = 0; i < elfHeader->shnum; i++){
-        ElfShdr *section = sectionHeader(i);
-
-        if (section->shType == SymTab){
-            return (ElfSymbol *) offsetToPtr(section->offset);
-        }
-    }
-    
-    return 0;
-}
-#endif
 
 void *ElfLoader::entryPoint()
 {
