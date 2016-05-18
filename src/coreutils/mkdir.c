@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 {
     char *fname = *++argv;
     
-    if (mkdir(fname) < 0){
+    if (mkdir(fname, 0777) < 0){
         printError(fname);
     }
 
