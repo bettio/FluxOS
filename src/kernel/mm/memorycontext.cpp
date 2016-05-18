@@ -94,6 +94,13 @@ MemoryContext::~MemoryContext()
     delete m_descriptors;
 }
 
+void MemoryContext::printAllDescriptors()
+{
+    for (int i = 0; i < m_descriptors->count(); i++) {
+        printk("baseAddress: 0x%x, length: %i\n", m_descriptors->at(i)->baseAddress, m_descriptors->at(i)->length);
+    }
+}
+
 inline unsigned long roundToPageMultiples(unsigned long l)
 {
     return ((l & 0xFFFFF000) + ((l & 0xFFF) ? 0x1000 : 0));
