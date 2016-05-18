@@ -27,6 +27,7 @@
 #endif
 #include <string.h>
 
+#include <core/systemtimer.h>
 #include <core/printk.h>
 
 #include <filesystem/vfs.h>
@@ -72,10 +73,16 @@ int TmpFS::Mount(FSMount *fsmount, BlockDevice *)
     }
     fsmount->privdata = (void *) privdata;
     privdata->Inodes = QList<TmpInode *>();
-    
+
     TmpInode *tmpInode = new TmpInode;
     tmpInode->FileData = 0;
     tmpInode->Mode = S_IFDIR;
+    tmpInode->Uid = 0;
+    tmpInode->Gid = 0;
+    tmpInode->ATime = SystemTimer::time() * 1000;
+    tmpInode->MTime = SystemTimer::time() * 1000;
+    tmpInode->CTime = SystemTimer::time() * 1000;
+    tmpInode->LinksCount = 2;
     tmpInode->Directory = QHash<QString, int>();
     tmpInode->Directory.insert(".", 1);
     tmpInode->Directory.insert("..", 1);
@@ -422,6 +429,13 @@ int TmpFS::creat(VNode *directory, const char *name, mode_t mode, TmpInode **tmp
     *tmpInode = new TmpInode;
     (*tmpInode)->Mode = mode;
     (*tmpInode)->Size = 0;
+    (*tmpInode)->Uid = 0;
+    (*tmpInode)->Gid = 0;
+    (*tmpInode)->ATime = SystemTimer::time() * 1000;
+    (*tmpInode)->MTime = SystemTimer::time() * 1000;
+    (*tmpInode)->CTime = SystemTimer::time() * 1000;
+    (*tmpInode)->LinksCount = 1;
+
     privdata->Inodes.append(*tmpInode);
     (*tmpInode)->Id = privdata->Inodes.count() - 1;
 
