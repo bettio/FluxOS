@@ -14,7 +14,7 @@ char **env;
 
 int    yylex(void);
 void   yyerror(const char *);
-//FILE * yyin;
+FILE * yyin;
 
 
 void printPrompt()
@@ -144,8 +144,6 @@ command
    }
 
 %%
-
-#include "lex.yy.c"
 
 void yyerror(const char * message)
 {

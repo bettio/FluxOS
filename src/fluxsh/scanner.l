@@ -1,4 +1,6 @@
 %{
+#include "parser.h"
+
    char *strdupNoEscapes(const char *str)
    {
        int i = 0;
