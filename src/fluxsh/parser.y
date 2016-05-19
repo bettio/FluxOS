@@ -19,6 +19,10 @@ FILE * yyin;
 
 void printPrompt()
 {
+    if (!isatty(1)) {
+        return;
+    }
+
     char hostname[16];
     gethostname(hostname, 16);
 
