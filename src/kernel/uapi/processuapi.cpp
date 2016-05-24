@@ -81,10 +81,9 @@ pid_t ProcessUAPI::getppid()
     }
 }
 
-//TODO: implement this
 pid_t ProcessUAPI::getsid(pid_t pid)
 {
-    return 0;
+    return Scheduler::currentThread()->parentProcess->sid;
 }
 
 uid_t ProcessUAPI::getuid()
@@ -92,10 +91,9 @@ uid_t ProcessUAPI::getuid()
     return Scheduler::currentThread()->parentProcess->uid;
 }
 
-//TODO: implement this
 uid_t ProcessUAPI::geteuid()
 {
-    return 0;
+    return Scheduler::currentThread()->parentProcess->euid;
 }
 
 gid_t ProcessUAPI::getgid()
@@ -103,16 +101,15 @@ gid_t ProcessUAPI::getgid()
     return Scheduler::currentThread()->parentProcess->gid;
 }
 
-//TODO: implement this
 gid_t ProcessUAPI::getegid()
 {
-    return 0;
+    return Scheduler::currentThread()->parentProcess->egid;
 }
 
-//TODO: implement this
 pid_t ProcessUAPI::setsid()
 {
-    return 0;
+    Scheduler::currentThread()->parentProcess->sid = Scheduler::currentThread()->parentProcess->pid;
+    return Scheduler::currentThread()->parentProcess->sid;
 }
 
 int ProcessUAPI::setuid(uid_t uid)

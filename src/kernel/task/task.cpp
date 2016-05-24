@@ -91,23 +91,27 @@ ProcessControlBlock *Task::CreateNewTask()
 
     lastUsedPID++;
 
-	ProcessControlBlock *process = new ProcessControlBlock;
-        processes->insert(lastUsedPID, process);
-	process->pid = lastUsedPID;
-        process->uid = 0;
-	process->gid = 0;
-        process->parent = 0;
-        process->memoryContext = new MemoryContext();
-        process->dataSegmentStart = NULL;
-        process->openFiles = new ListWithHoles<FileDescriptor *>();
-	VNode *ttyNode;
-        int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
-        if (res < 0){
-            printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
-            return 0;
-        }
+    ProcessControlBlock *process = new ProcessControlBlock;
+    processes->insert(lastUsedPID, process);
+    process->pid = lastUsedPID;
+    process->uid = 0;
+    process->euid = 0;
+    process->gid = 0;
+    process->egid = 0;
+    process->pgid = 0;
+    process->sid = 0;
+    process->parent = 0;
+    process->memoryContext = new MemoryContext();
+    process->dataSegmentStart = NULL;
+    process->openFiles = new ListWithHoles<FileDescriptor *>();
+    VNode *ttyNode;
+    int res = FileSystem::VFS::RelativePathToVnode(0, "/dev/tty1", &ttyNode, true);
+    if (res < 0){
+        printk("Cannot find any /dev/tty1 for stdin/stdout/stderr: the process will not be created\n");
+        return 0;
+    }
 
-	//stdin
+    //stdin
     FileDescriptor *fdesc = new FileDescriptor(ttyNode);
     fdesc->flags = O_RDONLY;
     process->openFiles->add(fdesc);
@@ -135,7 +139,7 @@ ProcessControlBlock *Task::CreateNewTask()
     process->cmdlineSize = 0;
     process->status = READY;
 
-	return process;
+    return process;
 }
 
 ProcessControlBlock *Task::NewProcess()
@@ -150,7 +154,11 @@ ProcessControlBlock *Task::NewProcess()
     processes->insert(lastUsedPID, process);
     process->pid = lastUsedPID;
     process->uid = parent->uid;
+    process->euid = parent->euid;
     process->gid = parent->gid;
+    process->egid = parent->egid;
+    process->pgid = parent->pgid;
+    process->sid = parent->sid;
     process->parent = parent;
     process->memoryContext = new MemoryContext();
     process->dataSegmentStart = NULL;

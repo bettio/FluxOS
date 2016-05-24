@@ -49,7 +49,12 @@ class ProcessControlBlock
     public:
         unsigned int pid;
         unsigned int uid;
+        unsigned int euid;
         unsigned int gid;
+        unsigned int egid;
+        unsigned int pgid;
+        unsigned int sid;
+
         TaskStatus status;
         int exitStatus;
         ProcessControlBlock *parent;
