@@ -31,6 +31,8 @@
 #define O_RDWR		     02
 #define O_CREAT		   0100
 
+#define O_CLOEXEC          0x40000
+
 class VNode;
 
 class FileDescriptor

@@ -182,10 +182,10 @@ ProcessControlBlock *Task::NewProcess()
     return process;
 }
 
-void Task::closeAllFiles(ProcessControlBlock *process)
+void Task::closeAllFiles(ProcessControlBlock *process, int conditionalFlag)
 {
     for (int i = 0; i < process->openFiles->size(); i++){
-	    if (process->openFiles->at(i) != NULL){
+        if ((process->openFiles->at(i) != NULL) &&  ((process->openFiles->at(i)->flags & conditionalFlag) == conditionalFlag)) {
             //TODO: do not use UAPI close here
             FSUAPI::close(i);
         }

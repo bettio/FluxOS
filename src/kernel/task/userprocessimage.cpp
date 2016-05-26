@@ -420,6 +420,9 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     thread->parentProcess->cmdline = tmpArgsBlock;
     thread->parentProcess->cmdlineSize = argsBlockSize;
 
+    //Close all O_CLOEXEC marked files
+    Task::closeAllFiles(thread->parentProcess, O_CLOEXEC);
+
     fileNameBuf.releaseMemory();
 
     UserProcsManager::startRegsFrame(regsFrame);

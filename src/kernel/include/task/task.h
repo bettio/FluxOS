@@ -52,7 +52,7 @@ class Task{
         static ProcessControlBlock *CreateNewTask();
         static ProcessControlBlock *NewProcess();
         static bool isValidPID(int pid);
-        static void closeAllFiles(ProcessControlBlock *process);
+        static void closeAllFiles(ProcessControlBlock *process, int conditionalFlag = 0);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static void notify(ProcessControlBlock *p);
         static ProcessControlBlock *process(int pid);
