@@ -108,6 +108,14 @@ struct ElfSymbol
     uint16_t sectionIndex;
 };
 
+struct Elf32_auxv_t {
+  uint32_t a_type;
+  union {
+      uint32_t a_val;
+  } a_un;
+};
+
+
 #define ELF_PT_NULL 0
 #define ELF_PT_LOAD 1
 #define ELF_PT_DYNAMIC 2
@@ -130,5 +138,19 @@ struct ElfSymbol
 #define EM_SPARCV9 43
 #define EM_X86_64 62
 #define EM_AARCH64 183
+
+#define AT_NULL   0
+#define AT_PHDR   3
+#define AT_PHENT  4
+#define AT_PHNUM  5
+#define AT_PAGESZ 6
+#define AT_BASE   7
+#define AT_ENTRY  9
+#define AT_UID    11
+#define AT_EUID   12
+#define AT_GID    13
+#define AT_EGID   14
+#define AT_HWCAP  16
+#define AT_EXECFN 31
 
 #endif

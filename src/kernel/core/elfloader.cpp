@@ -25,6 +25,7 @@
 #include <filesystem/vfs.h>
 #include <filesystem/vnodemanager.h>
 #include <mm/memorycontext.h>
+#include <task/auxdata.h>
 #include <task/scheduler.h>
 #include <arch.h>
 #include <core/printk.h>
@@ -44,7 +45,7 @@
 #define TARGET_MACHINE_TYPE EM_MIPS
 #endif
 
-int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
+int ElfLoader::loadExecutableFile(const char *path, AuxData *auxData, LoadELFFlags flags)
 {
     interpEntryPoint = NULL;
 
@@ -75,6 +76,8 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
 
     MemoryContext *mContext = Scheduler::currentThread()->parentProcess->memoryContext;
 
+    bool firstPTLoad = true;
+
     for (int i = 0; i < elfHeader->phnum; i++){
         switch (pHeader[i].type) {
           case ELF_PT_LOAD: {
@@ -83,6 +86,19 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
             if (((unsigned long) segment < USERSPACE_LOW_ADDR) || ((unsigned long) segment > USERSPACE_HI_ADDR)) {
                 printk("ElfLoader: warning: skipping bad address: %p\n", segment);
                 continue;
+            }
+
+            // keep track of interpreter base address so we can export it to the aux vector
+            if ((flags & FailOnInterpreter) && (auxData->interpreterBaseAddress == 0)) {
+                auxData->interpreterBaseAddress = (unsigned long) segment;
+            } else if (firstPTLoad) {
+                firstPTLoad = false;
+                // not an interpreter
+                auxData->interpreterBaseAddress = 0;
+                auxData->entryPointAddress = (unsigned long) entryPoint();
+                auxData->programHeaderAddress = ((unsigned long) segment) + elfHeader->phoff;
+                auxData->programHeaderEntriesCount = elfHeader->phnum;
+                auxData->programHeaderEntrySize = elfHeader->phentsize;
             }
 
             MemoryDescriptor::Permissions permissions = MemoryDescriptor::NoAccess;
@@ -135,7 +151,7 @@ int ElfLoader::loadExecutableFile(const char *path, LoadELFFlags flags)
               DEBUG_MSG("ElfLoader::loadExecutableFile: program interpreter required: %s\n", programInterpreter);
 
               ElfLoader loader;
-              res = loader.loadExecutableFile(programInterpreter, FailOnInterpreter);
+              res = loader.loadExecutableFile(programInterpreter, auxData, FailOnInterpreter);
               if (res < 0) {
                   printk("Cannot load executable interpreter: %s error: %i\n", programInterpreter, res);
                   return res;

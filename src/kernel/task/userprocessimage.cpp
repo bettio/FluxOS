@@ -31,6 +31,7 @@
 #include <task/archthreadsmanager.h>
 #include <task/processcontrolblock.h>
 #include <task/scheduler.h>
+#include <task/auxdata.h>
 #include <task/userprocsmanager.h>
 #include <task/task.h>
 #include <task/threadcontrolblock.h>
@@ -48,16 +49,17 @@
 #define MAX_ENV_VAR_LEN 256
 #define MAX_ARGS_NUMBER 5
 #define MAX_ARG_LEN 256
+#define AUX_TABLE_SIZE 13
 
 static inline int padToWord(int addr)
 {
     return (addr & 0xFFFFFFFC) + 4;
 }
 
-int UserProcessImage::loadExecutable(const char *executablePath, void **entryPoint)
+int UserProcessImage::loadExecutable(const char *executablePath, AuxData *auxData, void **entryPoint)
 {
     ElfLoader loader;
-    int res = loader.loadExecutableFile(executablePath);
+    int res = loader.loadExecutableFile(executablePath, auxData);
     if (UNLIKELY(res < 0)) {
         return res;
     }
@@ -151,10 +153,64 @@ int UserProcessImage::stringsVectorSize(userptr char *const v[], int *num, int m
     return size;
 }
 
-
-void UserProcessImage::buildAuxVector(userptr char *auxTable[], userptr char *auxBlock)
+int UserProcessImage::auxVectorSizeAndCount(AuxData *auxdata, int *count, int *blockSize)
 {
-//TODO: implement this
+    int tmpSize = 0;
+
+    tmpSize += strlen(auxdata->executableFileName) + 1;
+
+    *count = AUX_TABLE_SIZE;
+    *blockSize = tmpSize;
+
+    return 0;
+}
+
+void UserProcessImage::buildAuxVector(AuxData *auxdata, ProcessControlBlock *process, userptr char *auxTable, userptr char *auxBlock)
+{
+    Elf32_auxv_t auxVec[14];
+
+    auxVec[0].a_type = AT_HWCAP;
+    auxVec[0].a_un.a_val = 0;
+
+    auxVec[1].a_type = AT_PAGESZ;
+    auxVec[1].a_un.a_val = PAGE_SIZE;
+
+    auxVec[2].a_type = AT_PHDR;
+    auxVec[2].a_un.a_val = auxdata->programHeaderAddress;
+
+    auxVec[3].a_type = AT_PHENT;
+    auxVec[3].a_un.a_val = auxdata->programHeaderEntrySize;
+
+    auxVec[4].a_type = AT_PHNUM;
+    auxVec[4].a_un.a_val = auxdata->programHeaderEntriesCount;
+
+    auxVec[5].a_type = AT_BASE;
+    auxVec[5].a_un.a_val = auxdata->interpreterBaseAddress;
+
+    auxVec[6].a_type = AT_ENTRY;
+    auxVec[6].a_un.a_val = auxdata->entryPointAddress;
+
+    auxVec[7].a_type = AT_UID;
+    auxVec[7].a_un.a_val = process->uid;
+
+    auxVec[8].a_type = AT_EUID;
+    auxVec[8].a_un.a_val  = process->euid;
+
+    auxVec[9].a_type = AT_GID;
+    auxVec[9].a_un.a_val = process->gid;
+
+    auxVec[10].a_type = AT_EGID;
+    auxVec[10].a_un.a_val = process->egid;
+
+    auxVec[11].a_type = AT_EXECFN;
+    auxVec[11].a_un.a_val = (uint32_t) auxBlock;
+    memcpyToUser(auxBlock, auxdata->executableFileName, strlen(auxdata->executableFileName) + 1);
+    free(auxdata->executableFileName);
+
+    auxVec[12].a_type = AT_NULL;
+    auxVec[12].a_un.a_val = 0;
+
+    memcpyToUser(auxTable, auxVec, sizeof(Elf32_auxv_t) * AUX_TABLE_SIZE);
 }
 
 int UserProcessImage::setupInitProcessImage()
@@ -168,9 +224,17 @@ int UserProcessImage::setupInitProcessImage()
     //TODO: no hardcoded here
     const char *initPath = strdup("/sbin/init");
     const char *initCWD = "CWD=/";
+    AuxData *auxdata = new AuxData;
+    if (IS_NULL_PTR(auxdata)) {
+        return -ENOMEM;
+    }
+    auxdata->executableFileName = strdup(initPath);
+    if (IS_NULL_PTR(auxdata->executableFileName)) {
+        return -ENOMEM;
+    }
 
     void *entryPoint;
-    if (loadExecutable(initPath, &entryPoint) < 0) {
+    if (loadExecutable(initPath, auxdata, &entryPoint) < 0) {
         kernelPanic("cannot start init process");
     }
 
@@ -178,25 +242,26 @@ int UserProcessImage::setupInitProcessImage()
     int argsBlockSize = strlen(initPath) + 1;
     int envc = 1;
     int envBlockSize = strlen(initCWD) + 1;
-    int auxc = 1; /* TODO: Implement here */
-    int auxSize = 16;
+    int auxc;
+    int auxBlockSize;
     thread->parentProcess->cmdline = initPath;
     thread->parentProcess->cmdlineSize = argsBlockSize;
 
+    auxVectorSizeAndCount(auxdata, &auxc, &auxBlockSize);
 
-    int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize);
+    int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize + auxBlockSize);
 
     void *userProcessStack = UserProcsManager::createUserProcessStack(userStackSize);
     char **argsList;
     char *argsBlock;
     char **envList;
     char *envBlock;
-    char **auxList;
+    char *auxList;
     char *auxBlock;
 
     UserProcsManager::setupStackAndRegisters(regsFrame, entryPoint, userProcessStack, userStackSize,
                            argc, argsBlockSize, envc, envBlockSize,
-                           auxc, auxSize,
+                           auxc, auxBlockSize,
                            &argsList, &argsBlock, &envList, &envBlock,
                            &auxList, &auxBlock);
 
@@ -204,7 +269,7 @@ int UserProcessImage::setupInitProcessImage()
     buildNewArgsList(args, argc, argsList, argsBlock);
     const char *const env[2] = { initCWD, NULL };
     buildNewEnvironment(env, envc, envList, envBlock);
-    buildAuxVector(auxList, auxBlock);
+    buildAuxVector(auxdata, thread->parentProcess, auxList, auxBlock);
 
     if (thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
@@ -248,19 +313,34 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     int argsBlockSize = stringsVectorSize(argv, &argc, MAX_ARGS_NUMBER, MAX_ARG_LEN);
     int envc;
     int envBlockSize = stringsVectorSize(envp, &envc, MAX_ENV_VARS_NUMBER, MAX_ENV_VAR_LEN);
-    int auxc = 1; /* TODO: Implement here */
-    int auxSize = 16;
+    int auxc;
+    int auxBlockSize;
 
     char *tmpArgsBlock = (char *) malloc(argsBlockSize);
+    if (IS_NULL_PTR(tmpArgsBlock)) {
+        return -ENOMEM;
+    }
     ret = copyUserspaceStringsVectorToBlock(tmpArgsBlock, argv, argsBlockSize);
     if (UNLIKELY(ret < 0)) {
         return ret;
     }
 
     char *tmpEnvBlock = (char *) malloc(envBlockSize);
+    if (IS_NULL_PTR(tmpEnvBlock)) {
+        return -ENOMEM;
+    }
     ret = copyUserspaceStringsVectorToBlock(tmpEnvBlock, envp, envBlockSize);
     if (UNLIKELY(ret < 0)) {
         return ret;
+    }
+
+    AuxData *auxdata = new AuxData;
+    if (IS_NULL_PTR(auxdata)) {
+        return -ENOMEM;
+    }
+    auxdata->executableFileName = strdup(fileNameBuf.constData());
+    if (IS_NULL_PTR(auxdata->executableFileName)) {
+        return -ENOMEM;
     }
 
     //We don't need previous address space anymore, but we still keep it so in case of failure we just restore it
@@ -286,7 +366,7 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     #endif
 
     void *entryPoint;
-    ret = loadExecutable(executablePath, &entryPoint);
+    ret = loadExecutable(executablePath, auxdata, &entryPoint);
     if (UNLIKELY(ret < 0)) {
         thread->addressSpaceTable = previousAddressSpace;
         thread->parentProcess->memoryContext = previousMemoryContext;
@@ -296,26 +376,28 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
         return ret;
     }
 
-    int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize);
+    auxVectorSizeAndCount(auxdata, &auxc, &auxBlockSize);
+
+    int userStackSize = padToWord(INIT_USER_STACK_SIZE + argsBlockSize + envBlockSize + auxBlockSize);
 
     void *userProcessStack = UserProcsManager::createUserProcessStack(userStackSize);
     char **argsList;
     char *argsBlock;
     char **envList;
     char *envBlock;
-    char **auxList;
+    char *auxList;
     char *auxBlock;
 
     UserProcsManager::setupStackAndRegisters(regsFrame, entryPoint, userProcessStack, userStackSize,
                            argc, argsBlockSize, envc, envBlockSize,
-                           auxc, auxSize,
+                           auxc, auxBlockSize,
                            &argsList, &argsBlock, &envList, &envBlock,
                            &auxList, &auxBlock);
 
     buildStringsPtrVector(argsList, argsBlock, tmpArgsBlock, argc);
     buildStringsPtrVector(envList, envBlock, tmpEnvBlock, envc);
 
-    buildAuxVector(auxList, auxBlock);
+    buildAuxVector(auxdata, thread->parentProcess, auxList, auxBlock);
 
     if (UNLIKELY(thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),

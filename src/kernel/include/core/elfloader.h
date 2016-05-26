@@ -24,6 +24,9 @@
 #define _ELFLOADER_H_
 
 #include <core/elf.h>
+#include <stddef.h>
+
+struct AuxData;
 
 class ElfLoader
 {
@@ -34,7 +37,7 @@ class ElfLoader
 
     public:
         void load(void *elfBin);
-        int loadExecutableFile(const char *path, LoadELFFlags = NoLoadELFFlags);
+        int loadExecutableFile(const char *path, AuxData *auxData, LoadELFFlags = NoLoadELFFlags);
         bool isValid() const;
         void *entryPoint();
 

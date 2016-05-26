@@ -28,6 +28,9 @@
 
 extern "C" void schedule();
 
+struct AuxData;
+struct ProcessControlBlock;
+
 class UserProcessImage
 {
     public:
@@ -40,8 +43,9 @@ class UserProcessImage
         static int copyUserspaceStringsVectorToBlock(char *destStringsBlock, userptr const char *const srcStringsVect[], int destStringsBlockSize);
         static void buildStringsPtrVector(userptr char *destArgsTable[], userptr char *destArgsBlock, const char *srcArgsBlock, int argsCount);
         static int stringsVectorSize(userptr char *const v[], int *num, int maxNum, int maxStrLen);
-        static void buildAuxVector(userptr char *auxTable[], userptr char *auxBlock);
-        static int loadExecutable(const char *executablePath, void **entryPoint);
+        static int auxVectorSizeAndCount(AuxData *data, int *count, int *blockSize);
+        static void buildAuxVector(AuxData *auxdata, ProcessControlBlock *process, userptr char *auxTable, userptr char *auxBlock);
+        static int loadExecutable(const char *executablePath, AuxData *auxdata, void **entryPoint);
 };
 
 #endif

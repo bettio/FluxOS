@@ -66,7 +66,7 @@ void UserProcsManager::setupStackAndRegisters(RegistersFrame *frame, void *entry
                             int argc, int argsSize, int envc, int envSize, int auxc, int auxSize,
                             char **argsList[], char **argsBlock,
                             char **envList[], char **envBlock,
-                            char **auxList[], char **auxBlock)
+                            char **auxList, char **auxBlock)
 {
     unsigned long varsBlockSize = sizeof(unsigned long) +
                                   sizeof(char *) * (argc + 1) + sizeof(char *) * (envc + 1) + sizeof(void *) * 2 * auxc
@@ -102,7 +102,7 @@ void UserProcsManager::setupStackAndRegisters(RegistersFrame *frame, void *entry
     *envList = (char **) &vars[pos];
     pos += envc + 1;
 
-    *auxList = (char **) &vars[pos];
+    *auxList = (char *) &vars[pos];
     pos += (auxc + 1)*2;
 
     *argsBlock = (char *) &vars[pos];
