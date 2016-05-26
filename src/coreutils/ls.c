@@ -115,6 +115,8 @@ int main(int argc, char **argv)
         printf("\n");
     }
 
+    close(dfd);
+
     return EXIT_SUCCESS;
 }
 
