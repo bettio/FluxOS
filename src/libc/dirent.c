@@ -38,7 +38,11 @@ DIR *opendir(const char *name)
     if (dirFD < 0) {
         return NULL;
     }
+    return fdopendir(dirFD);
+}
 
+DIR *fdopendir(int dirFD)
+{
     struct DIR *newDir = (struct DIR *) malloc(sizeof(DIR));
     if (newDir) {
         newDir->dirFD = dirFD;

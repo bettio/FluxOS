@@ -38,6 +38,7 @@ struct DIR
     //
 } typedef DIR;
 
+DIR *fdopendir(int fd);
 DIR *opendir(const char *name);
 int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 int closedir(DIR *dirp);
