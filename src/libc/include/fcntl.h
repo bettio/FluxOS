@@ -30,6 +30,8 @@ extern "C"
 # define O_NOATIME     01000000 /* Do not set atime.  */
 #endif
 
+#define O_CLOEXEC 0x40000
+
 extern int open(const char *pathname, int flags, ...);
 extern int creat(const char *pathname, mode_t mode);
 
