@@ -102,7 +102,9 @@ void processStatusChange(int pid, int status, char *envp[])
 
 int startServices(int argc, char *argv[], char *envp[])
 {
-    DIR *servicesDir = opendir(SERVICES_DIR);
+    int dirFd = open(SERVICES_DIR, O_RDONLY | O_CLOEXEC);
+    DIR *servicesDir = fdopendir(dirFd);
+
     if (!servicesDir) {
         printf("init: failed to open %s directory.\n", SERVICES_DIR);
         return -1;
@@ -143,6 +145,10 @@ int startServices(int argc, char *argv[], char *envp[])
             printf("\n");
         }
     }
+
+    closedir(servicesDir);
+
+    return EXIT_SUCCESS;
 }
 
 int mountFilesystems()
@@ -181,6 +187,7 @@ int mountFilesystems()
             }
         }
     }
+    closedir(mountsDir);
 }
 
 int configureNetworkInterfaces(int sockfd)
@@ -239,6 +246,8 @@ int configureNetworkInterfaces(int sockfd)
             printf(" [ %s ] ", networkInterface);
        }
     }
+
+    closedir(networkInterfacesDir);
     printf("\n");
 }
 
@@ -314,6 +323,7 @@ int configureNetworkRoutes(int sockfd)
             ioctl(sockfd, SIOCADDRT, &route);
         }
     }
+    closedir(networkRoutesDir);
     printf("\t[ OK ]\n");
 }
 
@@ -323,13 +333,15 @@ int configureNetwork()
 
     configureNetworkInterfaces(sockfd);
     configureNetworkRoutes(sockfd);
+
+    close(sockfd);
 }
 
 void setHostName()
 {
     printf("Setting host name...");
 
-    int hostnameFd = open("/etc/hostname", O_RDONLY, 0);
+    int hostnameFd = open("/etc/hostname", O_RDONLY | O_CLOEXEC, 0);
     if (hostnameFd < 0) {
         perror("init: cannot read /etc/hostname");
         return;
@@ -337,6 +349,8 @@ void setHostName()
 
     char hname[256];
     int readBytes = read(hostnameFd, hname, 256);
+
+    close(hostnameFd);
 
     sethostname(hname, readBytes);
     struct utsname unm;
@@ -349,7 +363,7 @@ void setDomainName()
 {
     printf("Setting domain name...");
 
-    int domainnameFd = open("/etc/domainname", O_RDONLY, 0);
+    int domainnameFd = open("/etc/domainname", O_RDONLY | O_CLOEXEC, 0);
 
     if (domainnameFd < 0) {
         perror("init: cannot read /etc/domainname");
@@ -358,6 +372,8 @@ void setDomainName()
 
     char dname[256];
     int readBytes = read(domainnameFd, dname, 256);
+
+    close(domainnameFd);
 
     setdomainname(dname, readBytes);
     struct utsname unm;
