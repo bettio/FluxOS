@@ -155,7 +155,7 @@ QList<MemoryDescriptor *> *MemoryContext::findMemoryDescriptorsByRange(void *low
         MemoryDescriptor *d = m_descriptors->at(i);
 //        printk("checking: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
         if (
-            ( ((unsigned long) low) <= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) ) &&
+            ( ((unsigned long) low) < (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) ) &&
             ( ((unsigned long) hi) >= (((unsigned long) d->baseAddress) + roundToPageMultiples(d->length)) )
            ) {
 //        printk("found: 0x%x - 0x%x\n", d->baseAddress, ((unsigned long) d->baseAddress) + roundToPageMultiples(d->length));
