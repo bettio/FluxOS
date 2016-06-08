@@ -4,6 +4,8 @@
 class StoredObject
 {
     public:
+        ~StoredObject();
+
         bool isValid() const;
 
         bool contains(const char *key) const;

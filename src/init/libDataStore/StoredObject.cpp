@@ -9,8 +9,19 @@
 class StoredObject::Private
 {
     public:
-        const void *bsonObject;
+        void *bsonObject;
+        unsigned long bsonObjectSize;
+        int bsonObjectFd;
 };
+
+
+StoredObject::~StoredObject()
+{
+    if (isValid()) {
+       munmap(d->bsonObject, d->bsonObjectSize);
+       close(d->bsonObjectFd);
+    }
+}
 
 bool StoredObject::isValid() const
 {
@@ -51,7 +62,8 @@ StoredObject StoredObject::loadObject(const char *fileName)
     StoredObject storedObj;
 
     unsigned int fileSize;
-    const char *bsonData = (const char *) mapFile(fileName, O_RDONLY, NULL, &fileSize);
+    int fd;
+    char *bsonData = (char *) mapFile(fileName, O_RDONLY | O_CLOEXEC, &fd, &fileSize);
     if (!bsonData) {
         storedObj.d = NULL;
         return storedObj;
@@ -61,6 +73,8 @@ StoredObject StoredObject::loadObject(const char *fileName)
     if (storedObj.d) {
         if (bsonCheckValidity(bsonData, fileSize)) {
             storedObj.d->bsonObject = bsonData;
+            storedObj.d->bsonObjectSize = fileSize;
+            storedObj.d->bsonObjectFd = fd;
         } else {
             //delete storedObj.d;
             free(storedObj.d);
