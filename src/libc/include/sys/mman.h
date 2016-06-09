@@ -101,6 +101,8 @@ extern "C"
 # define POSIX_MADV_DONTNEED	4 /* Don't need these pages.  */
 #endif
 
+#define MAP_FAILED ((void *) -1)
+
 extern void *mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
 extern int munmap(void *start, size_t length);
 extern int mprotect(void *addr, size_t len, int prot);
