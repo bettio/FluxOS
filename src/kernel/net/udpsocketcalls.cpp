@@ -258,7 +258,7 @@ int UDPSocketCalls::read(VNode *node, uint64_t pos, char *buffer, unsigned int b
      return recv(node, buffer, bufsize, 0);
 }
 
-int UDPSocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int UDPSocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
      return send(node, buffer, bufsize, 0);
 }

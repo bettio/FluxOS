@@ -151,7 +151,7 @@ int IPSocketCalls::read(VNode *node, uint64_t pos, char *buffer, unsigned int bu
      return 0;
 }
 
-int IPSocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int IPSocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
      return 0;
 }

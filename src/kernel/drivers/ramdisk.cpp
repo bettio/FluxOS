@@ -90,7 +90,7 @@ int RamDisk::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
     return bufsize;
 }
 
-int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int RamDisk::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
 #ifndef BOOTINFO
     if (pos >= BootLoaderInfo::moduleSize(0)){

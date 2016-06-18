@@ -150,7 +150,7 @@ int IP6SocketCalls::read(VNode *node, uint64_t pos, char *buffer, unsigned int b
      return 0;
 }
 
-int IP6SocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int IP6SocketCalls::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
      return 0;
 }

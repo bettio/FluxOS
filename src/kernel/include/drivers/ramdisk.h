@@ -33,7 +33,7 @@ class RamDisk
         static void readBlock(BlockDevice *bd, int block, int blockn, uint8_t *blockbuffer);
         static bool writeBlock(BlockDevice *bd, int block, int blocksN, uint8_t *blockbuffer);
         static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
-        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags);
         static int ioctl(VNode *node, int request, long arg);
         static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);
 };

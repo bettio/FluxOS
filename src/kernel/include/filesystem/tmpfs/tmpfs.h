@@ -69,7 +69,7 @@ namespace FileSystem
             static int closevnode(VNode *node);
             static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
             static int readlink(VNode *node, char *buffer, size_t bufsize);
-            static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+            static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flag);
             static int getdents(VNode *node, dirent *dirp, unsigned int count);
             static int stat(VNode *node, struct stat *buf);
             static int access(VNode *node, int aMode, int uid, int gid);

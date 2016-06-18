@@ -54,7 +54,7 @@ int NullDev::Read(CharDevice *cd, char *buffer, int count)
     return 0;
 }
 
-int NullDev::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int NullDev::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
     return Write(NULL, buffer, bufsize);
 }

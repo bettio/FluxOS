@@ -24,6 +24,7 @@
 #define _NET_UDPSOCKETCALLS_H_
 
 #include <net/nettypes.h>
+#include <filesystem/writeopflags.h>
 
 class FileDescriptor;
 class FSMount;
@@ -55,7 +56,7 @@ class UDPSocketCalls {
         static int dupfd(VNode *node, FileDescriptor *fdesc);
         static int closevnode(VNode *node);
         static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
-        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags);
         static int type(VNode *node, int *type); 
         static int fcntl(VNode *node, int cmd, long arg);
         static int ioctl(VNode *node, int request, long arg);

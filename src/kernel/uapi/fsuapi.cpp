@@ -569,7 +569,7 @@ int FSUAPI::write(int fd, const void *buf, size_t count)
     if (fdesc == NULL) return -EBADF;
     if ((fdesc->flags & O_ACCMODE) == O_RDONLY) return -EBADF;
 
-    int ret = FS_CALL(fdesc->node, write)(fdesc->node, fdesc->fpos, (char *) buf, count);
+    int ret = FS_CALL(fdesc->node, write)(fdesc->node, fdesc->fpos, (char *) buf, count, NoWriteOpFlags);
 
     if (ret > 0) fdesc->fpos += ret;
 
@@ -763,7 +763,7 @@ int FSUAPI::pwrite(int fd, const void *buf, size_t count, uint64_t offset)
 	FileDescriptor *fdesc = Scheduler::currentThread()->parentProcess->openFiles->at(fd);
 	if (fdesc == NULL) return -EBADF;
 
-	return FS_CALL(fdesc->node, write)(fdesc->node, offset, (char *) buf, count);
+	return FS_CALL(fdesc->node, write)(fdesc->node, offset, (char *) buf, count, NoWriteOpFlags);
 }
 
 //TODO

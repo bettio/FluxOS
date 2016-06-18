@@ -153,7 +153,7 @@ bool VesaFB::registerDevice()
     return true;
 }
 
-int VesaFB::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int VesaFB::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
     return 0;
 }

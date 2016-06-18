@@ -210,7 +210,7 @@ int ProcFS::readlink(VNode *node, char *buffer, size_t bufsize)
      return -EINVAL;
 }
 
-int ProcFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int ProcFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
      return -EINVAL;
 }

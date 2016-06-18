@@ -102,7 +102,7 @@ int Ext2::Mount(FSMount *fsmount, BlockDevice *blkdev)
     info->closevnode = CloseVNode;
     info->read = Read;
     info->readlink = Readlink;
-    info->write = Write;
+    info->write = write;
     info->getdents = GetDEnts;
     info->stat = Stat;
     info->name = Name;
@@ -805,7 +805,7 @@ int Ext2::CloseVNode(VNode *node)
     return ret;
 }
 
-int Ext2::Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int Ext2::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags write)
 {   
     return -EBADF;
 }

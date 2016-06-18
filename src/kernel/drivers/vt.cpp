@@ -141,7 +141,7 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
     }
 }
 
-int Vt::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int Vt::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
     return Write((CharDevice *) 0, buffer, bufsize);
 }

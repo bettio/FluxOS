@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <drivers/fbdevice.h>
 #include <filesystem/fstypes.h>
+#include <filesystem/writeopflags.h>
 
 struct VNode;
 struct VBEModeInfoBlock;
@@ -36,7 +37,7 @@ class VesaFB
         static bool init(unsigned long modeInfoBlockAddr);
         static bool mapPhysicalMem();
         static bool registerDevice();
-        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+        static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags);
         static int read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
         static int ioctl(VNode *node, int request, long arg);
         static void *mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset);

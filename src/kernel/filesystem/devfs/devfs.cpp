@@ -209,7 +209,7 @@ int DevFS::readlink(VNode *node, char *buffer, size_t bufsize)
 	return bufsize;
 }
 
-int DevFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize)
+int DevFS::write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags)
 {
 	return 0;
 }

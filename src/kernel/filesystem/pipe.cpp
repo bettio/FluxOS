@@ -85,7 +85,7 @@ FSModuleInfo *Pipe::NewFSModuleInfo()
     info->closevnode = CloseVNode;
     info->read = Read;
     info->readlink = Readlink;
-    info->write = Write;
+    info->write = write;
     info->getdents = GetDEnts;
     info->stat = Stat;
     info->size = Size;
@@ -185,7 +185,7 @@ int Pipe::Readlink(VNode *node, char *buffer, size_t bufsize)
 }
 
 //TODO: if we don't have space we should block (except when O_NONBLOCK is used)
-int Pipe::Write(VNode *node, uint64_t pos, const char *buf, unsigned int size)
+int Pipe::write(VNode *node, uint64_t pos, const char *buf, unsigned int size, WriteOpFlags flags)
 {
     PipeDesc *pd = (PipeDesc *) node->privdata;
 

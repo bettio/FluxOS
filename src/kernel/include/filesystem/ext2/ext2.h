@@ -63,7 +63,7 @@ namespace FileSystem
 			static int Chown(VNode *node, uid_t uid, gid_t gid);
             static int Umount(VNode *root);
             static int CloseVNode(VNode *node);
-            static int Write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+            static int write(VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags);
 			static int Link(VNode *directory, VNode *oldNode, const char *newName);
 			static int Symlink(VNode *directory, const char *oldName, const char *newName);
 			static int Rename(VNode *oldDirectory, const char *oldName, VNode *newDirectory, const char *newName);

@@ -25,6 +25,7 @@
 
 #include <filesystem/fstypes.h>
 #include <filesystem/vnode.h>
+#include <filesystem/writeopflags.h>
 
 struct BlockDevice
 {
@@ -37,7 +38,7 @@ struct BlockDevice
     bool (*WriteBlock) (BlockDevice *bd, int block, int blocksN, uint8_t *blockbuffer); //Why I removed it?
 
     int (*read) (VNode *node, uint64_t pos, char *buffer, unsigned int bufsize);
-    int (*write) (VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize);
+    int (*write) (VNode *node, uint64_t pos, const char *buffer, unsigned int bufsize, WriteOpFlags flags);
     int (*ioctl)(VNode *node, int request, long arg);
     void *(*mmap)(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset); //TODO -Eerror?
 
