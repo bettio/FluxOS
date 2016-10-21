@@ -43,7 +43,7 @@
 #include <boot/bootloaderinfo.h>
 #include <arch/ia32/mm/pagingmanager.h>
 
-#define ENABLE_VESAFB 1
+#define ENABLE_VESAFB 0
 #define ENABLE_EXPERIMENTAL_DRIVERS 0
 
 void ArchManager::Init()
