@@ -29,6 +29,7 @@
 
 #define ENABLE_PRINTK_MSGS 1
 #define MAX_DIGIT 21
+#define ENABLE_PRINK_MUTEX 0
 
 CharDevice *Out;
 QMutex printkMutex;
@@ -42,7 +43,9 @@ void printk(const char *s, ...)
 	char num[MAX_DIGIT+1];
 	int len;
 
+#if ENABLE_PRINTK_MUTEXT
     printkMutex.lock();
+#endif
 
 	while (*s){
 		switch (*s){
@@ -173,7 +176,9 @@ void printk(const char *s, ...)
 		++s;
 	}
 
+#if ENABLE_PRINTK_MUTEX
     printkMutex.unlock();
+#endif
 
 	va_end(l);
 #endif

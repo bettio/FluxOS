@@ -36,6 +36,9 @@ void ContextSwitcher::init()
     ThreadControlBlock *currentThread = new ThreadControlBlock;
     currentThread->stack = 0;
     currentThread->currentStackPtr = 0;
+    currentThread->parentProcess = NULL;
+    currentThread->status = Running;
+    currentThread->tid = 0;
     #ifndef NO_MMU
         //Here we assume that Physical == Virtual address. this works only for the first task
         currentThread->addressSpaceTable = (void *) PagingManager::physicalAddressOf((void *) 0xFFFFF000);
