@@ -56,17 +56,15 @@ void VFS::Init()
 
 int VFS::RegisterFileSystem(FileSystemInfo *fsinfo)
 {
+    if (fsinfo == NULL) {
+	printk("FileSystemInfo parameter is NULL. FS registration failed.\n");
+        return -1;
+    }
+
+    FileSystems.insert(fsinfo->name, fsinfo);
     printk("Registered %s filesystem\n", fsinfo->name);
-    
-	if (fsinfo == NULL){
-		printk("FileSystemInfo parameter is NULL. FS registration failed.\n");
 
-		return -1;
-	}
-
-	FileSystems.insert(fsinfo->name, fsinfo);
-
-	return 0;
+    return 0;
 }
 
 int VFS::UnregisterFileSystem(const char *name)
