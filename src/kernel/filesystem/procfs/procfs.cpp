@@ -416,6 +416,7 @@ int ProcFS::size(VNode *node, int64_t *size)
 
 int ProcFS::type(VNode *node, int *type)
 {
+     //TODO: this makes impossible to cd into /proc
      return -EINVAL;
 }
 
