@@ -22,6 +22,7 @@
 
 #include <kdef.h>
 #include <core/printk.h>
+#include <core/systemtimer.h>
 #include <cstdlib.h>
 #include <cstring.h>
 #include <arch.h>
@@ -62,16 +63,23 @@ QList<TmpInode *> *Inodes;
 
 int DevFS::Init()
 {
-	Inodes = new QList<TmpInode *>();
-	TmpInode *tmpInode = new TmpInode;
-	tmpInode->Mode = S_IFDIR;
-	tmpInode->Directory = new QHash<QString, int>();
-	tmpInode->Directory->insert(".", 1);
-	tmpInode->Directory->insert("..", 1);
+    Inodes = new QList<TmpInode *>();
+    TmpInode *tmpInode = new TmpInode;
+    tmpInode->FileData = 0;
+    tmpInode->Mode = S_IFDIR;
+    tmpInode->Uid = 0;
+    tmpInode->Gid = 0;
+    tmpInode->ATime = SystemTimer::time() * 1000;
+    tmpInode->MTime = SystemTimer::time() * 1000;
+    tmpInode->CTime = SystemTimer::time() * 1000;
+    tmpInode->LinksCount = 2;
+    tmpInode->Directory = new QHash<QString, int>();
+    tmpInode->Directory->insert(".", 1);
+    tmpInode->Directory->insert("..", 1);
     Inodes->append(NULL); //The first inode is the inode 1
     Inodes->append(tmpInode);
 
-	return 0;
+    return 0;
 }
 
 int DevFS::RegisterAsFileSystem()
