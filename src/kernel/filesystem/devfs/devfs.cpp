@@ -286,19 +286,26 @@ int DevFS::link(VNode *directory, VNode *oldNode, const char *newName)
 
 int DevFS::mknod(VNode *directory, const char *newName, mode_t mode, dev_t dev)
 {
-	TmpInode *tmpInode = new TmpInode;
-	tmpInode->Mode = mode;
-	tmpInode->Major = dev >> 16; //TODO: Need to be changed to 64 bit
-	tmpInode->Minor = dev & 0xFFFF; //TODO: Need to be changed to 64 bit
-	tmpInode->Size = 0;
+    TmpInode *tmpInode = new TmpInode;
+    tmpInode->FileData = 0;
+    tmpInode->Mode = mode;
+    tmpInode->Uid = 0;
+    tmpInode->Gid = 0;
+    tmpInode->Major = dev >> 16; //TODO: Need to be changed to 64 bit
+    tmpInode->Minor = dev & 0xFFFF; //TODO: Need to be changed to 64 bit
+    tmpInode->Size = 0;
+    tmpInode->ATime = SystemTimer::time() * 1000;
+    tmpInode->MTime = SystemTimer::time() * 1000;
+    tmpInode->CTime = SystemTimer::time() * 1000;
+    tmpInode->LinksCount = 1;
+    tmpInode->Directory = NULL;
 
-        int id = Inodes->append(tmpInode);
+    int id = Inodes->append(tmpInode);
 
-	TmpInode *inode = Inodes->at(1);
+    TmpInode *inode = Inodes->at(1);
+    inode->Directory->insert(newName, id);
 
-	inode->Directory->insert(newName, id);
-
-	return 0;
+    return 0;
 }
 
 //TODO
