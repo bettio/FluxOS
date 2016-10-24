@@ -379,7 +379,14 @@ int DevFS::size(VNode *node, int64_t *size)
 
 int DevFS::type(VNode *node, int *type)
 {
-     return -EINVAL;
+    TmpInode *inode = Inodes->at(node->vnid.id);
+    if (inode) {
+        *type = inode->Mode & S_IFMT;
+        return 0;
+
+    } else {
+        return -EINVAL;
+    }
 }
 
 int DevFS::fcntl(VNode *node, int cmd, long arg)
