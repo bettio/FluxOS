@@ -230,8 +230,9 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
 
         if (!strcmp(path, "..") && (tmpnode->mount->fsRootVNode == tmpnode) && tmpnode->mount->coversVNode){
             DEBUG_MSG("Going back to the point where the filesystem has been mounted\n");
-            VNodeManager::PutVnode(tmpnode);
+            VNode *toUnref = tmpnode;
             tmpnode = VNodeManager::ReferenceVnode(tmpnode->mount->coversVNode);
+            VNodeManager::PutVnode(toUnref);
         }
 
         #ifdef USE_TASKS
