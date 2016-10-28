@@ -228,7 +228,7 @@ int VFS::RelativePathToVnode(VNode *start, const char *_path, VNode **node, bool
 
         DEBUG_MSG("Resolving path component: %s\n", path);
 
-        if (!strcmp(path, "..") && tmpnode->mount->coversVNode){
+        if (!strcmp(path, "..") && (tmpnode->mount->fsRootVNode == tmpnode) && tmpnode->mount->coversVNode){
             DEBUG_MSG("Going back to the point where the filesystem has been mounted\n");
             VNodeManager::PutVnode(tmpnode);
             tmpnode = VNodeManager::ReferenceVnode(tmpnode->mount->coversVNode);
@@ -319,7 +319,7 @@ int VFS::GetDirPathFromVnode(VNode *node, char **pathFromVnode)
     
     VNodeManager::ReferenceVnode(node);
     do{
-        if (node->mount->coversVNode){
+        if ((node->mount->fsRootVNode == node) && (node->mount->coversVNode)){
             VNode *coveredVNode = node->mount->coversVNode;
             VNodeManager::ReferenceVnode(coveredVNode);
             VNodeManager::PutVnode(node);
