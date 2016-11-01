@@ -38,9 +38,17 @@
 
 #define CMDLINE_FILE_ID 1
 
+#define PID_SUBDIR_FILES_NUM 2
+
 using namespace FileSystem;
 
 FSCALLS(ProcFS::calls);
+
+const char *const ProcFS::pidSubdirFiles[] =
+{
+    ".",
+    "cmdline"
+};
 
 int ProcFS::Init()
 {
@@ -111,66 +119,51 @@ bool isNum(const char *s)
 
 int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntype)
 {
-	if ((node->vnid.id == 1) && (!strcmp("version", name))){
-		VNodeManager::GetVnode(node->mount->mountId, 2, vnd);
+    unsigned long long id;
 
-		VNode *tmp = *vnd;
-		tmp->mount = node->mount;
+    if (node->vnid.id == 1) {
+        if (!strcmp(".", name)) {
+            id = 1;
 
-		*vnd = tmp;
+	} else if (!strcmp("..", name)) {
+            id = 1;
 
-		return 0;
+        } else if (isNum(name)) {
+            int pid = atoi(name);
+            if (!Task::isValidPID(pid)) {
+                *vnd = 0;
+                return -ENOENT;
+            }
+            id = PID_TO_VNODE_ID(pid);
 
-	}else if ((node->vnid.id == 1) && (!strcmp(".", name))){
-		VNodeManager::GetVnode(node->mount->mountId, 1, vnd);
-
-		VNode *tmp = *vnd;
-		tmp->mount = node->mount;
-
-		*vnd = tmp;
-
-		return 0;
-
-	}else if ((node->vnid.id == 1) && (!strcmp("..", name))){
-		VNodeManager::GetVnode(node->mount->mountId, 1, vnd);
-
-		VNode *tmp = *vnd;
-		tmp->mount = node->mount;
-
-		*vnd = tmp;
-
-		return 0;
-    }else if ((node->vnid.id == 1) && (isNum(name))) {
-        int pid = atoi(name);
-        if (!Task::isValidPID(pid)) {
-            *vnd = 0;
+        } else {
             return -ENOENT;
         }
-        VNodeManager::GetVnode(node->mount->mountId, PID_TO_VNODE_ID(pid), vnd);
 
-        VNode *tmp = *vnd;
-        tmp->mount = node->mount;
+        *ntype = S_IFDIR;
 
-        *vnd = tmp;
-
-        return 0;
-    }else if (IS_PID(node->vnid.id)) {
+     } else if (IS_PID(node->vnid.id)) {
         if (!strcmp("cmdline", name)) {
-            VNodeManager::GetVnode(node->mount->mountId, node->vnid.id + CMDLINE_FILE_ID, vnd);
+            id = node->vnid.id + CMDLINE_FILE_ID;
+            *ntype = S_IFREG;
 
-            VNode *tmp = *vnd;
-            tmp->mount = node->mount;
+        } else if (!strcmp(".", name)) {
+            id = node->vnid.id;
+            *ntype = S_IFDIR;
 
-            *vnd = tmp;
-
-            return 0;
+        } else if (!strcmp("..", name)) {
+            id = 1;
+            *ntype = S_IFDIR;
         }
+
+    } else {
+        return -ENOTDIR;
     }
 
-	*vnd = 0;
+    VNodeManager::GetVnode(node->mount->mountId, id, vnd);
+    (*vnd)->mount = node->mount;
 
-	return -ENOENT;
-
+    return 0;
 }
 
 int ProcFS::closevnode(VNode *node)
@@ -180,29 +173,30 @@ int ProcFS::closevnode(VNode *node)
 
 int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
-	if (node->vnid.id == 2){
-		if (pos < sizeof("FluxOS Kernel 0.1\n") - 1){
-		    strncpy(buffer, "FluxOS Kernel 0.1\n" + pos, bufsize);
-		    return bufsize;
-		}else{
-		    return 0;
-		}
-    } else if (IS_PID_SUBDIR(node->vnid.id)) {
+    if (IS_PID_SUBDIR(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
         ProcessControlBlock *p = Task::process(pid);
         if (IS_NULL_PTR(p)) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;
         }
+
         switch (PID_SUBDIR(node->vnid.id)) {
-            case CMDLINE_FILE_ID:
+            case CMDLINE_FILE_ID: {
                 unsigned int buflen = ((bufsize + pos) > (unsigned int) p->cmdlineSize) ? (p->cmdlineSize - pos) : bufsize;
                 memcpy(buffer, p->cmdline + pos, buflen);
                 return buflen;
+            }
+
+            default: {
+                printk("ProcFS: warning: invalid open file for pid: %i\n", pid);
+                return -EINVAL;
+            }
         }
     }
 
-    return 0;
+    printk("ProcFS: warning: invalid open file\n");
+    return -EINVAL;
 }
 
 int ProcFS::readlink(VNode *node, char *buffer, size_t bufsize)
@@ -228,13 +222,6 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
 
 	strcpy(dirp->d_name, "..");
-	dirp->d_reclen = sizeof(dirent);
-	dirp->d_off = 268;
-    size += dirp->d_reclen;
-
-	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-
-	strcpy(dirp->d_name, "version");
 	dirp->d_reclen = sizeof(dirent);
 	dirp->d_off = 268;
     size += dirp->d_reclen;
@@ -335,7 +322,25 @@ int ProcFS::access(VNode *node, int aMode, int uid, int gid)
 
 int ProcFS::name(VNode *directory, VNode *node, char **name, int *len)
 {
-     return -EINVAL;
+    char buf[11];
+    if (node->vnid.id == 1){
+        *name = strdup(".");
+        *len = strlen(".");
+
+    } else if (IS_PID(node->vnid.id)) {
+        itoaz(VNODE_ID_TO_PID(node->vnid.id), buf, 10);
+        *name = strdup(buf);
+        *len = strlen(buf);
+
+    } else if (IS_PID_SUBDIR(node->vnid.id)) {
+        if (PID_SUBDIR(node->vnid.id) < PID_SUBDIR_FILES_NUM) {
+            *name = strdup(pidSubdirFiles[PID_SUBDIR(node->vnid.id)]);
+            *len = strlen(pidSubdirFiles[PID_SUBDIR(node->vnid.id)]);
+        } else {
+            return -ENOENT;
+        }
+    }
+    return 0;
 }
 
 
@@ -416,8 +421,23 @@ int ProcFS::size(VNode *node, int64_t *size)
 
 int ProcFS::type(VNode *node, int *type)
 {
-     //TODO: this makes impossible to cd into /proc
-     return -EINVAL;
+    if (node->vnid.id == 1){
+        *type = S_IFDIR;
+
+    } else if (IS_PID(node->vnid.id) || IS_PID_SUBDIR(node->vnid.id)) {
+        int pid = VNODE_ID_TO_PID(node->vnid.id);
+        ProcessControlBlock *p = Task::process(pid);
+        if (IS_NULL_PTR(p)) {
+            printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
+            return -ENOENT;
+        }
+        *type = IS_PID_SUBDIR(node->vnid.id) ? S_IFREG : S_IFDIR;
+    } else {
+        printk("warning: wrong ProcFS vnid\n");
+        return -ENOENT;
+    }
+
+    return 0;
 }
 
 int ProcFS::utime(VNode *node, const struct utimbuf *buf)

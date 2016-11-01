@@ -70,6 +70,7 @@ namespace FileSystem
         
         private:
             static FSModuleInfo calls;
+            static const char *const pidSubdirFiles[];
     };
 }
 
