@@ -236,21 +236,16 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
         size += dirp->d_reclen;
     }
     } else if (IS_PID(node->vnid.id)) {
-        strcpy(dirp->d_name, ".");
-        dirp->d_reclen = sizeof(dirent);
-        dirp->d_off = 268;
-        size += dirp->d_reclen;
+        for (int i = 0; i < PID_SUBDIR_FILES_NUM; i++) {
+            strcpy(dirp->d_name, pidSubdirFiles[i]);
+            dirp->d_reclen = sizeof(dirent);
+            dirp->d_off = 268;
+            size += dirp->d_reclen;
 
-        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+            dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+        }
 
         strcpy(dirp->d_name, "..");
-        dirp->d_reclen = sizeof(dirent);
-        dirp->d_off = 268;
-        size += dirp->d_reclen;
-
-        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-
-        strcpy(dirp->d_name, "cmdline");
         dirp->d_reclen = sizeof(dirent);
         dirp->d_off = 268;
         size += dirp->d_reclen;
@@ -261,34 +256,23 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
 
 int ProcFS::stat(VNode *node, struct stat *buf)
 {
-	if (node->vnid.id == 1){
-		buf->st_dev = 0;
-		buf->st_ino = 1;
-		buf->st_mode = S_IFDIR | S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
-		buf->st_nlink = 1;
-		buf->st_uid = 0;
-		buf->st_gid = 0;
-		buf->st_rdev = 0;
-		buf->st_size = 0;
-		buf->st_blksize = 0;
-		buf->st_blocks = 0;
-		buf->st_atime = 0;//time(0);
-		buf->st_mtime = 0;//time(0);
-		buf->st_ctime = 0;//time(0);
-	}else if (node->vnid.id == 2){
-		buf->st_dev = 0;
-		buf->st_ino = 1;
-		buf->st_mode = S_IRUSR | S_IRGRP | S_IROTH;
-		buf->st_nlink = 1;
-		buf->st_uid = 0;
-		buf->st_gid = 0;
-		buf->st_rdev = 0;
-		buf->st_size = 0;
-		buf->st_blksize = 0;
-		buf->st_blocks = 0;
-		buf->st_atime = 0;//time(0);
-		buf->st_mtime = 0;//time(0);
-		buf->st_ctime = 0;//time(0);
+    buf->st_dev = 0;
+    buf->st_nlink = 1;
+    buf->st_rdev = 0;
+    buf->st_size = 0;
+    buf->st_blksize = 0;
+    buf->st_blocks = 0;
+
+    if (node->vnid.id == 1){
+        buf->st_ino = 1;
+        buf->st_mode = S_IFDIR | S_IRUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH;
+        buf->st_uid = 0;
+        buf->st_gid = 0;
+        //TODO: system startup time
+        buf->st_atime = 0;//time(0);
+        buf->st_mtime = 0;//time(0);
+        buf->st_ctime = 0;//time(0);
+
     } else if (IS_PID(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
         ProcessControlBlock *p = Task::process(pid);
@@ -297,16 +281,11 @@ int ProcFS::stat(VNode *node, struct stat *buf)
             return -ENOENT;
         }
 
-        buf->st_dev = 0;
-        buf->st_ino = 1;
+        buf->st_ino = node->vnid.id;
         buf->st_mode = S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH | S_IXUSR | S_IXGRP | S_IXOTH;
-        buf->st_nlink = 1;
         buf->st_uid = p->uid;
         buf->st_gid = p->gid;
-        buf->st_rdev = 0;
-        buf->st_size = 0;
-        buf->st_blksize = 0;
-        buf->st_blocks = 0;
+        //TODO: process creation time
         buf->st_atime = 0;//time(0);
         buf->st_mtime = 0;//time(0);
         buf->st_ctime = 0;//time(0);
