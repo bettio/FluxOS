@@ -214,27 +214,28 @@ int ProcFS::getdents(VNode *node, dirent *dirp, unsigned int count)
     int size = 0;
 
     if ((node->vnid.id == 1)) {
-	strcpy(dirp->d_name, ".");
-	dirp->d_reclen = sizeof(dirent);
-	dirp->d_off = 268;
-    size += dirp->d_reclen;
-
-	dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-
-	strcpy(dirp->d_name, "..");
-	dirp->d_reclen = sizeof(dirent);
-	dirp->d_off = 268;
-    size += dirp->d_reclen;
-
-    for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
-        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
-        char buf[32];
-        itoaz(it.pid(), buf, 10);
-        strcpy(dirp->d_name, buf);
+        strcpy(dirp->d_name, ".");
         dirp->d_reclen = sizeof(dirent);
         dirp->d_off = 268;
         size += dirp->d_reclen;
-    }
+
+        dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+
+        strcpy(dirp->d_name, "..");
+        dirp->d_reclen = sizeof(dirent);
+        dirp->d_off = 268;
+        size += dirp->d_reclen;
+
+        for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
+            dirp = (struct dirent *) (((unsigned long) dirp) + dirp->d_reclen);
+            char buf[32];
+            itoaz(it.pid(), buf, 10);
+            strcpy(dirp->d_name, buf);
+            dirp->d_reclen = sizeof(dirent);
+            dirp->d_off = 268;
+            size += dirp->d_reclen;
+        }
+
     } else if (IS_PID(node->vnid.id)) {
         for (int i = 0; i < PID_SUBDIR_FILES_NUM; i++) {
             strcpy(dirp->d_name, pidSubdirFiles[i]);
