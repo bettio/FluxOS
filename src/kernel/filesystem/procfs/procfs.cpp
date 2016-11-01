@@ -297,7 +297,8 @@ int ProcFS::stat(VNode *node, struct stat *buf)
 
 int ProcFS::access(VNode *node, int aMode, int uid, int gid)
 {
-     return -EINVAL;
+    //TODO: implement this
+    return 0;
 }
 
 int ProcFS::name(VNode *directory, VNode *node, char **name, int *len)
