@@ -36,23 +36,21 @@ QHash<int, ProcessControlBlock *> *Task::processes;
 int Task::lastUsedPID;
 QMutex Task::processesTableMutex;
 
+ProcessControlBlock *Task::firstProcess;
+
 bool Task::ProcessIterator::operator!=(const ProcessIterator other) const
 {
-    QMutexLocker locker(&Task::processesTableMutex);
-    return other.hIt != hIt;
+    return (processPtr != other.processPtr);
 }
 
 bool Task::ProcessIterator::operator==(const ProcessIterator other) const
 {
-    QMutexLocker locker(&Task::processesTableMutex);
-    return other.hIt == hIt;
+    return (processPtr == other.processPtr);
 }
 
 Task::ProcessIterator &Task::ProcessIterator::operator++()
 {
-    QMutexLocker locker(&Task::processesTableMutex);
-    ++hIt;
-    return *this;
+    processPtr = processPtr->next;
 }
 
 void Task::init()
@@ -71,17 +69,15 @@ bool Task::isValidPID(int pid)
 
 Task::ProcessIterator Task::processEnumerationBegin()
 {
-    QMutexLocker locker(&processesTableMutex);
     ProcessIterator it;
-    it.hIt = processes->constBegin();
+    it.processPtr = firstProcess;
     return it;
 }
 
 Task::ProcessIterator Task::processEnumerationEnd()
 {
-    QMutexLocker locker(&processesTableMutex);
     ProcessIterator it;
-    it.hIt = processes->constEnd();
+    it.processPtr = NULL;
     return it;
 }
 
@@ -139,6 +135,11 @@ ProcessControlBlock *Task::CreateNewTask()
     process->cmdlineSize = 0;
     process->status = READY;
 
+    // we are going to create first process
+    process->prev = NULL;
+    process->next = NULL;
+    firstProcess = process;
+
     return process;
 }
 
@@ -178,6 +179,11 @@ ProcessControlBlock *Task::NewProcess()
     process->cmdline = NULL;
     process->cmdlineSize = 0;
     process->status = READY;
+
+    process->prev = NULL;
+    process->next = firstProcess;
+    firstProcess->prev = process;
+    firstProcess = process;
 
     return process;
 }
@@ -230,6 +236,18 @@ void Task::deleteProcess(int pid)
         printk("error: cannot find process %i\n", pid);
         return;
     }
+
+    if (firstProcess == p) {
+        firstProcess = p->next;
+        firstProcess->prev = NULL;
+
+    } else {
+        p->prev->next = p->next;
+        if (p->next) {
+            p->next->prev = p->prev;
+        }
+    }
+
     Task::processes->remove(pid);
     delete p->openFiles;
     delete p;

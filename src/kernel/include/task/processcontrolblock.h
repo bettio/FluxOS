@@ -71,6 +71,9 @@ class ProcessControlBlock
         const char *cmdline;
         int cmdlineSize;
 
+        ProcessControlBlock *prev;
+        ProcessControlBlock *next;
+
         inline mode_t calculateMode(mode_t mode)
         {
             return mode & (~umask);

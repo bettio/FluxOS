@@ -37,13 +37,13 @@ class Task{
             class ProcessIterator
             {
                 public:
-                    QHash<int, ProcessControlBlock *>::const_iterator hIt;
+                    ProcessControlBlock *processPtr;
 
                     bool operator!=(const ProcessIterator other) const;
                     bool operator==(const ProcessIterator other) const;
                     ProcessIterator &operator++();
-                    inline int pid() { return hIt.value()->pid; }
-                    inline ProcessControlBlock *process() { return hIt.value(); }
+                    inline int pid() { return processPtr->pid; }
+                    inline ProcessControlBlock *process() { return processPtr; }
             };
 
         static void init();
@@ -61,6 +61,8 @@ class Task{
             static int lastUsedPID;
             static QMutex processesTableMutex;
             static QHash<int, ProcessControlBlock *> *processes;
+            static ProcessControlBlock *firstProcess;
+            static ProcessControlBlock *lastProcess;
 };
 
 #endif
