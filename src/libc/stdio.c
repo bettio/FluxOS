@@ -311,6 +311,7 @@ int vsprintf(char *tmpStr, const char *s, va_list l)
 		}
 		++s;
 	}
+        *tmpStr = 0;
 
 	return strlen(tmpStr);
 }
