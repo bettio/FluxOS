@@ -234,7 +234,7 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
         return ret;
     }
 
-    Task::deleteProcess(pid);
+    Task::removePid(pid);
 
     return pid;
 }

@@ -56,13 +56,22 @@ class Task{
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static void notify(ProcessControlBlock *p);
         static ProcessControlBlock *process(int pid);
-        static void deleteProcess(int pid);
+
+        static ProcessControlBlock *getProcess(int pid);
+        static void putProcess(ProcessControlBlock *process);
+        static ProcessControlBlock *referenceProcess(ProcessControlBlock *process);
+
+
+        static void removePid(int pid);
+
         private:
             static int lastUsedPID;
             static QMutex processesTableMutex;
             static QHash<int, ProcessControlBlock *> *processes;
             static ProcessControlBlock *firstProcess;
             static ProcessControlBlock *lastProcess;
+
+        static void deleteProcess(ProcessControlBlock *);
 };
 
 #endif

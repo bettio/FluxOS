@@ -227,13 +227,11 @@ ProcessControlBlock *Task::process(int pid)
     return processes->value(pid);
 }
 
-
-void Task::deleteProcess(int pid)
+void Task::removePid(int pid)
 {
     QMutexLocker locker(&processesTableMutex);
     ProcessControlBlock *p = processes->value(pid);
     if (IS_NULL_PTR(p)) {
-        printk("error: cannot find process %i\n", pid);
         return;
     }
 
@@ -242,13 +240,35 @@ void Task::deleteProcess(int pid)
         firstProcess->prev = NULL;
 
     } else {
-        p->prev->next = p->next;
-        if (p->next) {
-            p->next->prev = p->prev;
+        if (p->prev) {
+            p->prev->next = p->next;
+            if (p->next) {
+                p->next->prev = p->prev;
+            }
         }
     }
 
     Task::processes->remove(pid);
-    delete p->openFiles;
-    delete p;
+}
+
+void Task::deleteProcess(ProcessControlBlock *process)
+{
+    delete process->openFiles;
+    delete process;
+}
+
+ProcessControlBlock *Task::getProcess(int pid)
+{
+    QMutexLocker locker(&processesTableMutex);
+    return processes->value(pid);
+}
+
+void Task::putProcess(ProcessControlBlock *process)
+{
+    //TODO: implement me
+}
+
+ProcessControlBlock *Task::referenceProcess(ProcessControlBlock *process)
+{
+    return process;
 }
