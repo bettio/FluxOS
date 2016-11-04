@@ -154,6 +154,8 @@ int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntyp
         } else if (!strcmp("..", name)) {
             id = 1;
             *ntype = S_IFDIR;
+        } else {
+            return -ENOENT;
         }
 
     } else {
@@ -195,7 +197,7 @@ int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
         }
     }
 
-    printk("ProcFS: warning: invalid open file\n");
+    printk("ProcFS: warning: invalid open file: %i\n", node->vnid.id);
     return -EINVAL;
 }
 
