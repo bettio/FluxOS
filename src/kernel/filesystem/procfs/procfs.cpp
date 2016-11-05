@@ -130,7 +130,7 @@ int ProcFS::lookup(VNode *node, const char *name,VNode **vnd, unsigned int *ntyp
 
         } else if (isNum(name)) {
             int pid = atoi(name);
-            if (!Task::isValidPID(pid)) {
+            if (UNLIKELY(!Task::isValidPID(pid))) {
                 *vnd = 0;
                 return -ENOENT;
             }
@@ -177,8 +177,8 @@ int ProcFS::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 {
     if (IS_PID_SUBDIR(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
-        ProcessControlBlock *p = Task::process(pid);
-        if (IS_NULL_PTR(p)) {
+        ProcessRef p = Task::getProcessRef(pid);
+        if (UNLIKELY(!p.isValid())) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;
         }
@@ -278,8 +278,8 @@ int ProcFS::stat(VNode *node, struct stat *buf)
 
     } else if (IS_PID(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
-        ProcessControlBlock *p = Task::process(pid);
-        if (IS_NULL_PTR(p)) {
+        ProcessRef p = Task::getProcessRef(pid);
+        if (UNLIKELY(!p.isValid())) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;
         }
@@ -409,8 +409,8 @@ int ProcFS::type(VNode *node, int *type)
 
     } else if (IS_PID(node->vnid.id) || IS_PID_SUBDIR(node->vnid.id)) {
         int pid = VNODE_ID_TO_PID(node->vnid.id);
-        ProcessControlBlock *p = Task::process(pid);
-        if (IS_NULL_PTR(p)) {
+        ProcessRef p = Task::getProcessRef(pid);
+        if (UNLIKELY(!p.isValid())) {
             printk("Warning: ProcFS: PID %i does not exists anymore.\n", pid);
             return -ENOENT;
         }
