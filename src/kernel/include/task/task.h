@@ -25,9 +25,12 @@
 #define SIGKILL 9
 #define SIGSEGV  11
 
+#include <task/ProcessRef.h>
 #include <task/processcontrolblock.h>
+
 #include <QHash>
 #include <QMutex>
+#include <SpinLock>
 #include <arch.h>
 
 class ThreadControlBlock;
@@ -37,6 +40,7 @@ class Task{
             class ProcessIterator
             {
                 public:
+                    ~ProcessIterator();
                     ProcessControlBlock *processPtr;
 
                     bool operator!=(const ProcessIterator other) const;
@@ -61,6 +65,7 @@ class Task{
         static void putProcess(ProcessControlBlock *process);
         static ProcessControlBlock *referenceProcess(ProcessControlBlock *process);
 
+        static ProcessRef getProcessRef(int pid);
 
         static void removePid(int pid);
 
@@ -73,5 +78,30 @@ class Task{
 
         static void deleteProcess(ProcessControlBlock *);
 };
+
+inline ProcessRef::ProcessRef(ProcessControlBlock *process)
+{
+    m_process = Task::referenceProcess(process);
+}
+
+inline ProcessRef::ProcessRef(const ProcessRef &procRef)
+{
+    m_process = Task::referenceProcess(procRef.m_process);
+}
+
+inline ProcessRef::~ProcessRef()
+{
+    Task::putProcess(m_process);
+}
+
+inline ProcessControlBlock *ProcessRef::operator->()
+{
+    return m_process;
+}
+
+inline bool ProcessRef::isValid() const
+{
+    return m_process != NULL;
+}
 
 #endif

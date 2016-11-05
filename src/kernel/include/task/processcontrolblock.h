@@ -27,6 +27,8 @@
 #include <filesystem/filedescriptor.h>
 #include <kdef.h>
 
+#include <SpinLock>
+
 #include <ListWithHoles>
 
 #define ROOT_UID 0
@@ -70,6 +72,9 @@ class ProcessControlBlock
 
         const char *cmdline;
         int cmdlineSize;
+
+        SpinLock refCountLock;
+        int refCount;
 
         ProcessControlBlock *prev;
         ProcessControlBlock *next;

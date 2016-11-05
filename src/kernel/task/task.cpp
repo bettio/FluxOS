@@ -50,7 +50,14 @@ bool Task::ProcessIterator::operator==(const ProcessIterator other) const
 
 Task::ProcessIterator &Task::ProcessIterator::operator++()
 {
-    processPtr = processPtr->next;
+    putProcess(processPtr);
+    processPtr = referenceProcess(processPtr->next);
+}
+
+
+Task::ProcessIterator::~ProcessIterator()
+{
+    putProcess(processPtr);
 }
 
 void Task::init()
@@ -70,7 +77,7 @@ bool Task::isValidPID(int pid)
 Task::ProcessIterator Task::processEnumerationBegin()
 {
     ProcessIterator it;
-    it.processPtr = firstProcess;
+    it.processPtr = referenceProcess(firstProcess);
     return it;
 }
 
@@ -140,6 +147,9 @@ ProcessControlBlock *Task::CreateNewTask()
     process->next = NULL;
     firstProcess = process;
 
+    process->refCountLock.init();
+    process->refCount = 2;
+
     return process;
 }
 
@@ -184,6 +194,9 @@ ProcessControlBlock *Task::NewProcess()
     process->next = firstProcess;
     firstProcess->prev = process;
     firstProcess = process;
+
+    process->refCountLock.init();
+    process->refCount = 3;
 
     return process;
 }
@@ -230,25 +243,31 @@ ProcessControlBlock *Task::process(int pid)
 void Task::removePid(int pid)
 {
     QMutexLocker locker(&processesTableMutex);
-    ProcessControlBlock *p = processes->value(pid);
+    ProcessControlBlock *p = referenceProcess(processes->value(pid));
     if (IS_NULL_PTR(p)) {
         return;
     }
 
     if (firstProcess == p) {
+        putProcess(firstProcess);
         firstProcess = p->next;
+        putProcess(firstProcess->prev);
         firstProcess->prev = NULL;
 
     } else {
         if (p->prev) {
+            putProcess(p->prev->next);
             p->prev->next = p->next;
             if (p->next) {
+                putProcess(p->next->prev);
                 p->next->prev = p->prev;
             }
         }
     }
 
     Task::processes->remove(pid);
+    putProcess(p);
+    putProcess(p);
 }
 
 void Task::deleteProcess(ProcessControlBlock *process)
@@ -260,15 +279,39 @@ void Task::deleteProcess(ProcessControlBlock *process)
 ProcessControlBlock *Task::getProcess(int pid)
 {
     QMutexLocker locker(&processesTableMutex);
-    return processes->value(pid);
+    ProcessControlBlock *p = processes->value(pid);
+    return referenceProcess(p);
 }
 
 void Task::putProcess(ProcessControlBlock *process)
 {
-    //TODO: implement me
+    if (IS_NULL_PTR(process)) {
+        return;
+    }
+
+    process->refCountLock.lock();
+    if (--process->refCount == 0) {
+        printk("we should delete: %i\n", process->pid);
+
+        process->refCountLock.unlock();
+        return;
+    }
+    process->refCountLock.unlock();
 }
 
 ProcessControlBlock *Task::referenceProcess(ProcessControlBlock *process)
 {
+    if (process) {
+        process->refCountLock.lock();
+        process->refCount++;
+        process->refCountLock.unlock();
+    }
     return process;
+}
+
+ProcessRef Task::getProcessRef(int pid)
+{
+    QMutexLocker locker(&processesTableMutex);
+    ProcessControlBlock *p = processes->value(pid);
+    return ProcessRef(p);
 }
