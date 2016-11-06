@@ -50,8 +50,9 @@ bool Task::ProcessIterator::operator==(const ProcessIterator other) const
 
 Task::ProcessIterator &Task::ProcessIterator::operator++()
 {
-    putProcess(processPtr);
-    processPtr = referenceProcess(processPtr->next);
+    ProcessControlBlock *prevProcessPtr = processPtr;
+    processPtr = referenceProcess(prevProcessPtr->next);
+    putProcess(prevProcessPtr);
 }
 
 
@@ -296,9 +297,8 @@ void Task::putProcess(ProcessControlBlock *process)
 
     process->refCountLock.lock();
     if (--process->refCount == 0) {
-        printk("we should delete: %i\n", process->pid);
+        deleteProcess(process);
 
-        process->refCountLock.unlock();
         return;
     }
     process->refCountLock.unlock();
