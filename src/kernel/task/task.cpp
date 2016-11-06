@@ -53,6 +53,8 @@ Task::ProcessIterator &Task::ProcessIterator::operator++()
     ProcessControlBlock *prevProcessPtr = processPtr;
     processPtr = referenceProcess(prevProcessPtr->next);
     putProcess(prevProcessPtr);
+
+    return *this;
 }
 
 
