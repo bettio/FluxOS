@@ -59,7 +59,6 @@ class Task{
         static void closeAllFiles(ProcessControlBlock *process, int conditionalFlag = 0);
         static int terminateProcess(ThreadControlBlock *thread, int exitStatus);
         static void notify(ProcessControlBlock *p);
-        static ProcessControlBlock *process(int pid);
 
         static ProcessControlBlock *getProcess(int pid);
         static void putProcess(ProcessControlBlock *process);

@@ -163,7 +163,7 @@ int ProcessUAPI::fork(void *stack)
         delete thread;
         return -ENOMEM;
     }
-    thread->parentProcess = process;
+    thread->parentProcess = Task::referenceProcess(process);
     process->mainThread = thread;
 
 #ifdef ARCH_IA32
@@ -203,17 +203,20 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
         return -EFAULT;
     }
 
-    ProcessControlBlock *p;
+    int exitStatus;
 
     if (pid != (pid_t) -1) {
-        p = Task::process(pid);
-        if (p == NULL || p->parent != Scheduler::currentThread()->parentProcess) {
+        ProcessRef p = Task::getProcessRef(pid);
+        if (!p.isValid() || p->parent != Scheduler::currentThread()->parentProcess) {
             return -ECHILD;
         }
 
         while (p->status != TERMINATED) Scheduler::waitForEvents();
+        exitStatus = p->exitStatus;
 
     } else {
+        ProcessControlBlock *p;
+
         while (true) {
             for (Task::ProcessIterator it = Task::processEnumerationBegin(); it != Task::processEnumerationEnd(); ++it) {
                 p = it.process();
@@ -227,9 +230,11 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
             }
             Scheduler::waitForEvents();
         }
+
+        exitStatus = p->exitStatus;
     }
 
-    int ret = putToUser(p->exitStatus, status);
+    int ret = putToUser(exitStatus, status);
     if (UNLIKELY(ret < 0)) {
         return ret;
     }
@@ -241,8 +246,10 @@ int ProcessUAPI::waitpid(pid_t pid, int *status, int options)
 
 int ProcessUAPI::kill(pid_t pid, int signal)
 {
-    ProcessControlBlock *target = Task::process(pid);
-    if (target == NULL) return -ESRCH;
+    ProcessRef target = Task::getProcessRef(pid);
+    if (!target.isValid()) {
+        return -ESRCH;
+    }
 
     ProcessControlBlock *currentProcess = Scheduler::currentThread()->parentProcess;
     if (currentProcess->uid != ROOT_UID){

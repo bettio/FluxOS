@@ -159,7 +159,7 @@ ProcessControlBlock *Task::NewProcess()
 
     lastUsedPID++;
 
-    ProcessControlBlock *parent = Scheduler::currentThread()->parentProcess;
+    ProcessControlBlock *parent = referenceProcess(Scheduler::currentThread()->parentProcess);
 
     ProcessControlBlock *process = new ProcessControlBlock;
     processes->insert(lastUsedPID, process);
@@ -217,7 +217,7 @@ int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
         kernelPanic("Killed init.");
     }
 
-    ProcessControlBlock *process = thread->parentProcess;
+    ProcessControlBlock *process = referenceProcess(thread->parentProcess);
     delete process->memoryContext;
     closeAllFiles(process);
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
@@ -226,18 +226,19 @@ int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
     notify(process->parent);
     thread->status = UWaiting;
     
+    putProcess(thread->parentProcess);
+
+    putProcess(thread->parentProcess);
+    thread->parentProcess = NULL;
+
+    //TODO: we should take care to terminate thread too
+
     return 0;
 }
 
 //TODO: implement notify as soon as waitForEvents is implemented.
 void Task::notify(ProcessControlBlock *p)
 {    
-}
-
-ProcessControlBlock *Task::process(int pid)
-{
-    QMutexLocker locker(&processesTableMutex);
-    return processes->value(pid);
 }
 
 void Task::removePid(int pid)
@@ -267,6 +268,10 @@ void Task::removePid(int pid)
 
     Task::processes->remove(pid);
     putProcess(p);
+
+    putProcess(p->parent);
+    p->parent = NULL;
+
     putProcess(p);
 }
 
