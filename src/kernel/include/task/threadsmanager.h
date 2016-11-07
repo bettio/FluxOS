@@ -31,6 +31,8 @@ class ThreadsManager
         static void createKernelThread(void (*fn)(), int flags = 0, void *args = 0);
         static ThreadControlBlock *createUserThread(int flags = 0);
         static void makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags = 0, void *args = 0);
+
+        static void terminateThread(ThreadControlBlock *thread, int exitStatus);
 };
 
 #endif

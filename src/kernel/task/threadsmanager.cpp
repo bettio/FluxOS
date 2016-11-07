@@ -24,6 +24,7 @@
 
 #include <task/scheduler.h>
 #include <task/archthreadsmanager.h>
+#include <task/task.h>
 
 void ThreadsManager::createKernelThread(void (*fn)(), int flags, void *args)
 {
@@ -41,4 +42,15 @@ ThreadControlBlock *ThreadsManager::createUserThread(int flags)
 void ThreadsManager::makeExecutable(ThreadControlBlock *tCB, void (*fn)(), int flags, void *args)
 {
     ArchThreadsManager::makeExecutable(tCB, fn, flags, args);
+}
+
+void ThreadsManager::terminateThread(ThreadControlBlock *thread, int exitStatus)
+{
+    Task::terminateProcess(thread, exitStatus);
+
+    //TODO: we shouldn't detach it, we should do this later
+    Task::putProcess(thread->parentProcess);
+    thread->parentProcess = NULL;
+
+    thread->status = UWaiting;
 }

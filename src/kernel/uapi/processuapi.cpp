@@ -31,6 +31,7 @@
 #include <mm/usermemoryops.h>
 #include <task/scheduler.h>
 #include <task/task.h>
+#include <task/threadsmanager.h>
 #include <task/userprocsmanager.h>
 #ifdef ARCH_IA32_NATIVE
 #include <arch/ia32/mm/pagingmanager.h>
@@ -273,8 +274,8 @@ int ProcessUAPI::kill(pid_t pid, int signal)
 
 void ProcessUAPI::exit(int exitStatus)
 {
-    Task::terminateProcess(Scheduler::currentThread(), exitStatus);
-    while (1);
+    ThreadsManager::terminateThread(Scheduler::currentThread(), exitStatus);
+    while(1);
 }
 
 #undef pid_t

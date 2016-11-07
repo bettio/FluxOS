@@ -216,25 +216,20 @@ void Task::closeAllFiles(ProcessControlBlock *process, int conditionalFlag)
 
 int Task::terminateProcess(ThreadControlBlock *thread, int exitStatus)
 {
-    if (thread->parentProcess && thread->parentProcess->pid == 1) {
+    ProcessControlBlock *process = referenceProcess(thread->parentProcess);
+
+    if (process && process->pid == 1) {
         kernelPanic("Killed init.");
     }
 
-    ProcessControlBlock *process = referenceProcess(thread->parentProcess);
     delete process->memoryContext;
     closeAllFiles(process);
     FileSystem::VNodeManager::PutVnode(process->currentWorkingDirNode);
     process->exitStatus = exitStatus;
     process->status = TERMINATED;
     notify(process->parent);
-    thread->status = UWaiting;
     
-    putProcess(thread->parentProcess);
-
-    putProcess(thread->parentProcess);
-    thread->parentProcess = NULL;
-
-    //TODO: we should take care to terminate thread too
+    putProcess(process);
 
     return 0;
 }
