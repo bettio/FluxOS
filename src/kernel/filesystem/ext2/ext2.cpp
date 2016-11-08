@@ -773,6 +773,7 @@ int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
 		if (dir->inode == node->vnid.id){
 			*name = strndup(dir->name, dir->name_len);
             *len = dir->name_len;
+            free(dir);
 			return 0;
 		}
 
@@ -782,6 +783,7 @@ int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
 
 	///printk("ENOENT: (node addr: %x)\n", node);
 
+    free(dir);
 	return -ENOENT;
 }
 
