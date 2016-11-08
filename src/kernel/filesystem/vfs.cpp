@@ -348,7 +348,7 @@ int VFS::GetDirPathFromVnode(VNode *node, char **pathFromVnode)
         node = tmpnode;
     }while (strcmp(".", dirName));
     VNodeManager::PutVnode(tmpnode);
-    pathStack.takeLast();
+    free(pathStack.takeLast()); // takeLast() = "."
     
     char *path = (char *) malloc(pathLen);
     path[0] = '/';
