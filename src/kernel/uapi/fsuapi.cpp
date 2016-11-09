@@ -128,9 +128,11 @@ int FSUAPI::getcwd(userptr char *buf, size_t size)
     if (size < pathLen + 1){
         if (size >= 1){
             if (putToUser8(0, (uint8_t *) buf)) {
+                free(path);
                 return -EINVAL;
             }
         }
+        free(path);
         return -ERANGE;
     }else{
         int ret = memcpyToUser(buf, path, pathLen + 1);
