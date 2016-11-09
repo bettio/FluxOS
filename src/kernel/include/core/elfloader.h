@@ -25,11 +25,14 @@
 
 #include <core/elf.h>
 #include <stddef.h>
+#include <KOOFCore>
 
 struct AuxData;
 
 class ElfLoader
 {
+    NO_HEAP
+
     enum LoadELFFlags {
         NoLoadELFFlags = 0,
         FailOnInterpreter = 1
