@@ -399,6 +399,8 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
 
     buildAuxVector(auxdata, thread->parentProcess, auxList, auxBlock);
 
+    free(tmpEnvBlock);
+
     if (UNLIKELY(thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
             MemoryContext::FixedHint) < 0))
