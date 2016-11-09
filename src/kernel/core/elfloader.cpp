@@ -45,6 +45,16 @@
 #define TARGET_MACHINE_TYPE EM_MIPS
 #endif
 
+ElfLoader::ElfLoader()
+{
+    elfHeader = NULL;
+}
+
+ElfLoader::~ElfLoader()
+{
+    delete elfHeader;
+}
+
 int ElfLoader::loadExecutableFile(const char *path, AuxData *auxData, LoadELFFlags flags)
 {
     interpEntryPoint = NULL;
@@ -143,6 +153,8 @@ int ElfLoader::loadExecutableFile(const char *path, AuxData *auxData, LoadELFFla
           break;
           case ELF_PT_INTERP: {
               if (flags & FailOnInterpreter) {
+                  free(pHeader);
+
                   return -ENOEXEC;
               }
 
@@ -154,9 +166,17 @@ int ElfLoader::loadExecutableFile(const char *path, AuxData *auxData, LoadELFFla
               res = loader.loadExecutableFile(programInterpreter, auxData, FailOnInterpreter);
               if (res < 0) {
                   printk("Cannot load executable interpreter: %s error: %i\n", programInterpreter, res);
+
+                  free(programInterpreter);
+                  free(pHeader);
+
                   return res;
               }
               interpEntryPoint = loader.entryPoint();
+
+              free(programInterpreter);
+              free(pHeader);
+
               return 0;
           }
           break;
@@ -167,6 +187,8 @@ int ElfLoader::loadExecutableFile(const char *path, AuxData *auxData, LoadELFFla
     }
 
     FileSystem::VNodeManager::PutVnode(node);
+
+    free(pHeader);
 
     return 0;
 }

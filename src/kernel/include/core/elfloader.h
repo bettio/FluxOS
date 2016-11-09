@@ -36,6 +36,9 @@ class ElfLoader
     };
 
     public:
+        ElfLoader();
+        ~ElfLoader();
+
         void load(void *elfBin);
         int loadExecutableFile(const char *path, AuxData *auxData, LoadELFFlags = NoLoadELFFlags);
         bool isValid() const;
