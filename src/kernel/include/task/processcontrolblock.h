@@ -70,7 +70,7 @@ class ProcessControlBlock
         VNode *currentWorkingDirNode;
         mode_t umask;
 
-        const char *cmdline;
+        char *cmdline;
         int cmdlineSize;
 
         SpinLock refCountLock;

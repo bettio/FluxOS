@@ -244,7 +244,7 @@ int UserProcessImage::setupInitProcessImage()
     int envBlockSize = strlen(initCWD) + 1;
     int auxc;
     int auxBlockSize;
-    thread->parentProcess->cmdline = initPath;
+    thread->parentProcess->cmdline = strdup(initPath);
     thread->parentProcess->cmdlineSize = argsBlockSize;
 
     auxVectorSizeAndCount(auxdata, &auxc, &auxBlockSize);
