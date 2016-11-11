@@ -71,6 +71,7 @@ class Task{
         private:
             static int lastUsedPID;
             static QMutex processesTableMutex;
+            static QMutex processesLinkedListMutex;
             static QHash<int, ProcessControlBlock *> *processes;
             static ProcessControlBlock *firstProcess;
             static ProcessControlBlock *lastProcess;

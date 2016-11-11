@@ -21,7 +21,7 @@
  ***************************************************************************/
 
 #ifndef _UAPI_PROCESSUAPI_H_
-#define _UAPI_PROCESSUPAI_H_
+#define _UAPI_PROCESSUAPI_H_
 
 #include <uapi/time.h>
 

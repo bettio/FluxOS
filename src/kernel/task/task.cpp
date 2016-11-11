@@ -36,6 +36,7 @@ QHash<int, ProcessControlBlock *> *Task::processes;
 int Task::lastUsedPID;
 QMutex Task::processesTableMutex;
 
+QMutex Task::processesLinkedListMutex;
 ProcessControlBlock *Task::firstProcess;
 
 bool Task::ProcessIterator::operator!=(const ProcessIterator other) const
@@ -50,6 +51,8 @@ bool Task::ProcessIterator::operator==(const ProcessIterator other) const
 
 Task::ProcessIterator &Task::ProcessIterator::operator++()
 {
+    QMutexLocker listLocker(&processesLinkedListMutex);
+
     ProcessControlBlock *prevProcessPtr = processPtr;
     processPtr = referenceProcess(prevProcessPtr->next);
     putProcess(prevProcessPtr);
@@ -79,6 +82,8 @@ bool Task::isValidPID(int pid)
 
 Task::ProcessIterator Task::processEnumerationBegin()
 {
+    QMutexLocker listLocker(&processesLinkedListMutex);
+
     ProcessIterator it;
     it.processPtr = referenceProcess(firstProcess);
     return it;
@@ -94,6 +99,8 @@ Task::ProcessIterator Task::processEnumerationEnd()
 ProcessControlBlock *Task::CreateNewTask()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
+    QMutexLocker locker(&processesTableMutex);
+    QMutexLocker listLocker(&processesLinkedListMutex);
 
     lastUsedPID++;
 
@@ -159,6 +166,8 @@ ProcessControlBlock *Task::CreateNewTask()
 ProcessControlBlock *Task::NewProcess()
 {
     DEBUG_MSG("Task::CreateNewTask(%s)\n");
+    QMutexLocker locker(&processesTableMutex);
+    QMutexLocker listLocker(&processesLinkedListMutex);
 
     lastUsedPID++;
 
@@ -242,6 +251,7 @@ void Task::notify(ProcessControlBlock *p)
 void Task::removePid(int pid)
 {
     QMutexLocker locker(&processesTableMutex);
+    QMutexLocker listLocker(&processesLinkedListMutex);
     ProcessControlBlock *p = referenceProcess(processes->value(pid));
     if (IS_NULL_PTR(p)) {
         return;
@@ -275,6 +285,14 @@ void Task::removePid(int pid)
 
 void Task::deleteProcess(ProcessControlBlock *process)
 {
+    //TODO: move this away
+    if (!process->mainThread) {
+        printk("main thread nullo\n");
+    }
+    free(process->mainThread->stack);
+    free(process->mainThread->addressSpaceTable);
+
+    free(process->cmdline);
     delete process->openFiles;
     delete process;
 }
