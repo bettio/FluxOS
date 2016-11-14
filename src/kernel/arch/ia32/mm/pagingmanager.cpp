@@ -332,7 +332,9 @@ void PagingManager::removePages(void *addr, unsigned long len)
        pageTable[ti] = 0;
 
        //TODO: we need to support somehow page ranges to avoid to waste time
-       PhysicalMM::freePage(physicalAddress);
+       if (physicalAddress) {
+           PhysicalMM::freePage(physicalAddress);
+       }
 
        if (previousDirIndex != di) {
            // TODO: here we check if the previous page table has been left completely empty
