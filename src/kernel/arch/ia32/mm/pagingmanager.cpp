@@ -348,6 +348,71 @@ void PagingManager::removePages(void *addr, unsigned long len)
 #define isMissingPageError(errorCode) ( !(errorCode & 1) )
 #define GET_FAULT_EIP() *((uint32_t *) ((char *) &faultAddress + 32))
 
+void *PagingManager::allocTemporaryWriteablePage(uint32_t *oldPE)
+{
+    void *tmpNewPage;
+
+    // TODO: replace allocator
+    posix_memalign(&tmpNewPage, 4096, 4096);
+
+    volatile uint32_t *tmpPageTable = (volatile uint32_t *) ((0x3FF << 22) | (PagingManager::addrToPageDirIndex((uint32_t) tmpNewPage & 0xFFFFF000) << 12));
+    *oldPE = tmpPageTable[PagingManager::addrToPageTableIndex((uint32_t) tmpNewPage & 0xFFFFF000)];
+
+    newPage((uint32_t) tmpNewPage | PagingManager::Write);
+
+    return tmpNewPage;
+}
+
+void PagingManager::freeTemporaryAccessiblePage(void *page, uint32_t oldPE)
+{
+    volatile uint32_t *tmpPageTable = (volatile uint32_t *) ((0x3FF << 22) | (PagingManager::addrToPageDirIndex((uint32_t) page & 0xFFFFF000) << 12));
+    tmpPageTable[PagingManager::addrToPageTableIndex((uint32_t) page & 0xFFFFF000)] = oldPE;
+    invalidateTLB();
+
+    free(page);
+}
+
+void PagingManager::makeWriteablePageCopy(uint32_t sourceAddress)
+{
+    int di = PagingManager::addrToPageDirIndex(sourceAddress & 0xFFFFF000);
+    int ti = PagingManager::addrToPageTableIndex(sourceAddress & 0xFFFFF000);
+
+    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+    volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+    uint32_t tmpDirOldPE;
+    void *newPageDir = NULL;
+    if (!(pageDir[di] & PagingManager::Write)){
+        newPageDir = allocTemporaryWriteablePage(&tmpDirOldPE);
+
+        memcpy(newPageDir, (const void *) pageTable, 4096);
+        pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPageDir), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
+        invalidateTLB();
+        pageTable = (volatile uint32_t *) newPageDir;
+   }
+
+   if (!(pageTable[ti] & PagingManager::Write)){
+       uint32_t tmpPagePE;
+       void *newWrPage = allocTemporaryWriteablePage(&tmpPagePE);
+       if (!newWrPage) {
+           printk("PagingManager::makeWriteablePageCopy: cannot allocate new pages. addr: 0x%x\n", sourceAddress);
+       }
+
+       memcpy(newWrPage, (const void *) (sourceAddress & 0xFFFFF000), 4096);
+       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newWrPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
+       invalidateTLB();
+       freeTemporaryAccessiblePage(newWrPage, tmpPagePE);
+   }
+
+   pageDir[di] |= (PagingManager::User);
+   pageTable[ti] |= (PagingManager::User);
+
+   if (newPageDir) {
+       freeTemporaryAccessiblePage(newPageDir, tmpDirOldPE);
+   }
+   invalidateTLB();
+}
+
 extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
     //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
@@ -364,36 +429,9 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
         }
 
     }else{
-   int di = PagingManager::addrToPageDirIndex(faultAddress & 0xFFFFF000);
-   int ti = PagingManager::addrToPageTableIndex(faultAddress & 0xFFFFF000);
-
-   volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
-   volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
-
-   if (!(pageDir[di] & PagingManager::Write)){
-       //while (1);
-       void *newPage;
-       posix_memalign(&newPage, 4096, 4096);
-       //PagingManager::newPage((uint32_t) newPage);
-       memcpy(newPage, (const void *) pageTable, 4096);
-       pageDir[di] = PagingManager::pageDirectoryEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
-       pageTable = (volatile uint32_t *) newPage;
-       //while (1);
-   }
-
-   if (!(pageTable[ti] & PagingManager::Write)){
-       //while (1);
-       void *newPage;
-       posix_memalign(&newPage, 4096, 4096);
-       //PagingManager::newPage((uint32_t) newPage);
-       memcpy(newPage, (const void *) (faultAddress & 0xFFFFF000), 4096);
-       pageTable[ti] = PagingManager::pageTableEntry(PagingManager::physicalAddressOf(newPage), KERNEL_STD_PAGE | PagingManager::User | PagingManager::Write);
-   }
-
-   pageDir[di] |= (PagingManager::User);
-   pageTable[ti] |= (PagingManager::User);
-   invalidateTLB();
+        PagingManager::makeWriteablePageCopy(faultAddress);
     }
+
     } else {
         printk("Kernel page fault: Address 0x%x, EIP 0x%x\n", faultAddress, GET_FAULT_EIP());
         printk("just not implemented, it might be a page miss or anything else\n");

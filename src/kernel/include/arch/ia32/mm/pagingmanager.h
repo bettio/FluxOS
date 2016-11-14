@@ -72,7 +72,12 @@ class PagingManager
         static void cleanUserspace();
 
         static void removePages(void *addr, unsigned long len);
-   private:
+
+        static void *allocTemporaryWriteablePage(uint32_t *tmpHandle);
+        static void freeTemporaryAccessiblePage(void *page, uint32_t handle);
+        static void makeWriteablePageCopy(uint32_t sourceAddress);
+
+    private:
         static void enable();
 };
 
