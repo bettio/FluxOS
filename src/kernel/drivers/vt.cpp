@@ -50,7 +50,7 @@ ConsoleDevice *Vt::console;
 
 volatile char keysBuffer[256];
 volatile int kbPos;
-int readPos;
+unsigned int readPos;
 int inputAreaX; //HACK to avoid too much chars with backspace
 
 CharDevice Vt::ttyDev =
@@ -115,8 +115,8 @@ int Vt::Read(CharDevice *cd, char *buffer, int count)
     while (1){
         while (kbPos == readPos);
         while (readPos < kbPos){
-            char tmp = keysBuffer[readPos];
-            readPos = (readPos + 1) % 256;
+            char tmp = keysBuffer[readPos & 0xFF];
+            readPos++;
 
             if (tmp == '\b'){
                 if (buffCounter > 0){
@@ -179,8 +179,8 @@ void *Vt::mmap(VNode *node, void *start, size_t length, int prot, int flags, int
 
 void Vt::notifyKeyPress(int code)
 {
-    keysBuffer[kbPos] = code;
-    kbPos = (kbPos + 1) % 256;
+    keysBuffer[kbPos & 0xFF] = code;
+    kbPos++;
 
     if ((code == '\b')){
         //HACK
