@@ -23,8 +23,10 @@
 #include <arch/ia32/mm/physicalmm.h>
 
 #include <core/printk.h>
+#include <core/systemerrors.h>
 #include <cstring.h>
 #include <cstdlib.h>
+#include <gccbuiltins.h>
 
 #define BITMAP_SIZE 0x20000
 
@@ -63,7 +65,12 @@ uint32_t PhysicalMM::allocPage()
 
 void PhysicalMM::freePage(uint32_t addr)
 {
+    uint32_t old = pageBitmap[addr / 4096 / 32];
     pageBitmap[addr / 4096 / 32] &= ~(1 << ((addr / 4096) % 32));
+    if (UNLIKELY(old == pageBitmap[addr / 4096 / 32])) {
+        printk("attempted double physical page free: 0x%x", addr);
+        kernelPanic("Halting.\n");
+    }
     freePagesNum++;
 }
 
