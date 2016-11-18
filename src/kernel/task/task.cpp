@@ -290,6 +290,7 @@ void Task::deleteProcess(ProcessControlBlock *process)
         printk("main thread nullo\n");
     }
     free(process->mainThread->stack);
+    free(process->mainThread->stack2);
     free(process->mainThread->addressSpaceTable);
 
     free(process->cmdline);

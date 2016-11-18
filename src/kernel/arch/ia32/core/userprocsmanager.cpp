@@ -132,7 +132,7 @@ void UserProcsManager::makeUserThread(ThreadControlBlock *thread)
 {
     Scheduler::inhibitPreemption();
     void *tmpStack;
-    ArchThreadsManager::allocateKernelStack((void **) &tmpStack);
+    thread->stack = ArchThreadsManager::allocateKernelStack((void **) &tmpStack);
     thread->kernelStack = tmpStack;
     TSS::setKernelStack(thread->kernelStack);
     Scheduler::restorePreemption();

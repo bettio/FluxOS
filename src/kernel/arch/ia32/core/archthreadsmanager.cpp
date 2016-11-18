@@ -58,7 +58,7 @@ ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
 {
     ThreadControlBlock *tmpCB = new ThreadControlBlock;
     void *tmpStack;
-    allocateKernelStack((void **) &tmpStack);
+    tmpCB->stack = allocateKernelStack((void **) &tmpStack);
     tmpCB->kernelStack = tmpStack;
 
     return tmpCB;
@@ -67,7 +67,7 @@ ThreadControlBlock *ArchThreadsManager::createUserThread(int flags)
 void ArchThreadsManager::makeExecutable(ThreadControlBlock *CB, void (*fn)(), int flags, void *args, int size)
 {
     void *tmpStack;
-    CB->stack = allocateKernelStack((void **) &tmpStack);
+    CB->stack2 = allocateKernelStack((void **) &tmpStack);
     CB->currentStackPtr = (char *) tmpStack - size - sizeof(RegistersFrame);
     RegistersFrame *registers = (RegistersFrame *) CB->currentStackPtr;
     registers->eip = (uint32_t) fn;

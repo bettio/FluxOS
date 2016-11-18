@@ -36,6 +36,7 @@ enum ThreadStatus
 struct ThreadControlBlock
 {
     void *stack;
+    void *stack2;
     void *currentStackPtr;
     void *kernelStack;
     ProcessControlBlock *parentProcess;
