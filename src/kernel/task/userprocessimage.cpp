@@ -400,6 +400,7 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     buildAuxVector(auxdata, thread->parentProcess, auxList, auxBlock);
 
     free(tmpEnvBlock);
+    free(auxdata);
 
     if (UNLIKELY(thread->parentProcess->memoryContext->allocateAnonymousMemory(&thread->parentProcess->dataSegmentStart, 4096*128,
             (MemoryDescriptor::Permissions) (MemoryDescriptor::ReadPermission | MemoryDescriptor::WritePermission),
@@ -421,6 +422,10 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     }
     thread->parentProcess->cmdline = tmpArgsBlock;
     thread->parentProcess->cmdlineSize = argsBlockSize;
+
+    //TODO: change this
+    free(previousAddressSpace);
+    //TODO: we should remove previous memory context too
 
     //Close all O_CLOEXEC marked files
     Task::closeAllFiles(thread->parentProcess, O_CLOEXEC);
