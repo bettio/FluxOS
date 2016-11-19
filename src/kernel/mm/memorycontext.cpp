@@ -88,8 +88,8 @@ MemoryContext::MemoryContext()
 
 MemoryContext::~MemoryContext()
 {
-    for (int i = 0; i < m_descriptors->count(); i++) {
-        releaseDescriptor(m_descriptors->at(i));
+    while (m_descriptors->count()) {
+        releaseDescriptor(m_descriptors->at(m_descriptors->count() - 1));
     }
     delete m_descriptors;
 }
