@@ -40,6 +40,15 @@ class FreeChunk
 
 BuddyAllocator::~BuddyAllocator()
 {
+    for (int i = 0; i < m_orders; i++) {
+        FreeChunk *fc = m_lists[i];
+        while (fc) {
+            FreeChunk *next = fc->next;
+            releaseNode(fc);
+            fc = next;
+        }
+    }
+    delete m_lists;
 }
 
 inline int log2i(int n, int maxLog)
