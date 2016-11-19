@@ -274,10 +274,12 @@ void *MemoryContext::findEmptyMemoryExtent(void *baseAddress, unsigned long leng
         QList<MemoryDescriptor *> *descriptors = findMemoryDescriptorsByRange(baseAddress, (char *) baseAddress + length);
         if (!descriptors->isEmpty() && (hints & FixedHint)) {
             printk("WARNING: Tried to allocate already used memory region\n");
+            delete descriptors;
             return NULL;
         } else if (descriptors->isEmpty()) {
             allocVirtualMemory(baseAddress, roundToPageMultiples(length));
         }
+        delete descriptors;
     }
     if (baseAddress == NULL) {
         newAddress = allocVirtualMemory(roundToPageMultiples(length));
