@@ -417,6 +417,19 @@ int UserProcessImage::execve(userptr const char *filename, userptr char *const a
     thread->parentProcess->dataSegmentEnd = (void *) (((unsigned long ) thread->parentProcess->dataSegmentStart) + 4096);
 
     //Here begins no return point, if something goes wrong it would be better to crash instead
+
+    // switch to previous address space so we can delete stuff
+    thread->addressSpaceTable = previousAddressSpace;
+    thread->parentProcess->memoryContext = previousMemoryContext;
+    #ifndef NO_MMU
+        PagingManager::changeAddressSpace((volatile uint32_t *) thread->addressSpaceTable);
+    #endif
+    delete thread->parentProcess->memoryContext;
+    // switch to the new address space
+    thread->addressSpaceTable = newAddressSpace;
+    thread->parentProcess->memoryContext = newMemoryContext;
+    PagingManager::changeAddressSpace((volatile uint32_t *) thread->addressSpaceTable);
+
     if (thread->parentProcess->cmdline) {
         free((void *) thread->parentProcess->cmdline);
     }
