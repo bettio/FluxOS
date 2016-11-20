@@ -62,7 +62,7 @@ const char *memoryOperationToString(UserspaceMemoryManager::MemoryOperation op)
      }
 }
 
-void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags, const char *memoryDescriptorTypeString)
+void MemoryContext::segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags, const char *memoryDescriptorTypeString)
 {
     int pid = 0;
     if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {

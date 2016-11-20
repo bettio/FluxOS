@@ -26,6 +26,7 @@
 #include <arch.h>
 #include <arch/ia32/core/idt.h>
 #include <core/printk.h>
+#include <core/systemerrors.h>
 #include <cstdlib.h>
 #include <defs.h>
 #include <mm/memorycontext.h>
@@ -417,25 +418,32 @@ extern "C" void managePageFault(uint32_t faultAddress, uint32_t errorCode)
 {
     //printk("Page Fault at 0x%x (error: %x)\n", faultAddress, errorCode);
  
-    if (LIKELY(faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR)) {
+    //TODO: remove (faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR)
+    // as soon as all kernel writes to user space are properly made using write to userspace functions
+    if (!(errorCode & 0x4) || ((faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR))) {
+        UserspaceMemoryManager::MemoryOperation op = (errorCode & 2) ? UserspaceMemoryManager::WriteOperation : UserspaceMemoryManager::ReadOperation;
 
-    if (isMissingPageError(errorCode)){
-        if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {
-            //TODO: make sure that it's not a kernel space fault
-            MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
+        if (LIKELY(faultAddress >= USERSPACE_LOW_ADDR) && (faultAddress <= USERSPACE_HI_ADDR)) {
 
-            UserspaceMemoryManager::MemoryOperation op = (errorCode & 2) ? UserspaceMemoryManager::WriteOperation : UserspaceMemoryManager::ReadOperation;
-            memoryContext->handlePageFault((void *) faultAddress, (void *) GET_FAULT_EIP(), op, UserspaceMemoryManager::MissingPageFault);
+            if (isMissingPageError(errorCode)){
+                if (LIKELY(Scheduler::currentThread() && Scheduler::currentThread()->parentProcess)) {
+                    //TODO: make sure that it's not a kernel space fault
+                    MemoryContext *memoryContext = Scheduler::currentThread()->parentProcess->memoryContext;
+
+                    memoryContext->handlePageFault((void *) faultAddress, (void *) GET_FAULT_EIP(), op, UserspaceMemoryManager::MissingPageFault);
+                }
+
+            } else {
+                PagingManager::makeWriteablePageCopy(faultAddress);
+            }
+        } else {
+            MemoryContext::segmentationFault((void *) faultAddress, (void *) GET_FAULT_EIP(), op, UserspaceMemoryManager::InvalidAccess, "invalid access to kernel memory");
+            // page fault
         }
-
-    }else{
-        PagingManager::makeWriteablePageCopy(faultAddress);
-    }
 
     } else {
         printk("Kernel page fault: Address 0x%x, EIP 0x%x\n", faultAddress, GET_FAULT_EIP());
-        printk("just not implemented, it might be a page miss or anything else\n");
-        while(1);
+        kernelPanic("just not implemented, it might be a page miss or anything else\n");
     }
 }
 

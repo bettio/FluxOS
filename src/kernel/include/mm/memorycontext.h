@@ -123,6 +123,8 @@ class MemoryContext
         int releaseDescriptor(MemoryDescriptor *d);
         MemoryDescriptor *makeCOWAnonymousMemory(MemoryDescriptor *descriptor);
 
+        static void segmentationFault(void *faultAddress, void *faultPC, UserspaceMemoryManager::MemoryOperation op, UserspaceMemoryManager::PageFaultFlags flags, const char *memoryDescriptorTypeString);
+
     private:
         void *allocVirtualMemory(unsigned long size);
         void allocVirtualMemory(void *address, unsigned long size);

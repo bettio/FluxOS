@@ -14,7 +14,8 @@ class UserspaceMemoryManager
         enum PageFaultFlags
         {
             NoFlags = 0,
-            MissingPageFault = 1
+            MissingPageFault = 1,
+            InvalidAccess = 2
         };
 };
 
