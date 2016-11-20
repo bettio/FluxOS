@@ -756,7 +756,8 @@ int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
 		return -ENOTDIR;
 	}
 
-	ext2_dir_entry_2 *dir = (ext2_dir_entry_2 *) malloc(inode->i_size);
+        void *dirData = malloc(inode->i_size);
+	ext2_dir_entry_2 *dir = (ext2_dir_entry_2 *) dirData;
 	if (dir == NULL) return -ENOMEM;
 	ReadData(inode, node, 0, (char *) dir, inode->i_size); 
 
@@ -773,7 +774,7 @@ int Ext2::Name(VNode *directory, VNode *node, char **name, int *len)
 		if (dir->inode == node->vnid.id){
 			*name = strndup(dir->name, dir->name_len);
             *len = dir->name_len;
-            free(dir);
+            free(dirData);
 			return 0;
 		}
 
