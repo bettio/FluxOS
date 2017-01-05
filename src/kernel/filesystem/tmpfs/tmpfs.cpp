@@ -447,7 +447,7 @@ int TmpFS::creat(VNode *directory, const char *name, mode_t mode, TmpInode **tmp
 int TmpFS::creat(VNode *directory, const char *name, mode_t mode)
 {
     TmpInode *tmpInode;
-    int retVal = creat(directory, name, mode, &tmpInode);
+    int retVal = creat(directory, name, mode | S_IFREG, &tmpInode);
     if (retVal) return retVal;
     
     tmpInode->FileData = (uint8_t *) malloc(4);
