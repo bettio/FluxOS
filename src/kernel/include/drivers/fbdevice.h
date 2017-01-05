@@ -35,6 +35,7 @@ struct FBDevice
     int width;
     int height;
     int bpp;
+    int fbMemLen;
     void *framebuffer;
     void (*clear)(FBDevice *fbdev, uint32_t bg);
     void (*drawMonoPixmap)(FBDevice *fbdev, uint8_t *pixmap, int w, int h, int x, int y, uint32_t bg, uint32_t fg);

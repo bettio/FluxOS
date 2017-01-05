@@ -39,6 +39,7 @@ int GenericFBDevice::ioctl(FBDevice *dev, VNode *node, int request, long arg)
         }
         case FBIOGET_FSCREENINFO: {
             fb_fix_screeninfo *fixScreenInfo = (fb_fix_screeninfo *) arg;
+            fixScreenInfo->smem_len = dev->fbMemLen;
             break;
         }
     }
