@@ -31,6 +31,9 @@
 #endif
 #include <core/syscallsmanager.h>
 
+
+#include <arch/ia32/mm/pagingmanager.h>
+
 #define PROT_READ       0x1
 #define PROT_WRITE      0x2
 #define PROT_EXEC       0x4
@@ -186,7 +189,9 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
         }
         void *ret = FS_CALL(fdesc->node, mmap)(fdesc->node, addr, length, prot, flags, fd, offset);
         if (ret != 0) {
-            return (unsigned long) ret;
+            //FIXME: WORKAROUND: TODO: KILL THIS AWFUL workaround, added to get some framebuffer to userspace
+            PagingManager::mapPhysicalMemoryRegion((volatile uint32_t *) Scheduler::currentThread()->addressSpaceTable, (uint32_t) ret, 0xB0000000, length);
+            return (unsigned long) 0xB0000000;
         }
 
         return (unsigned long) process->memoryContext->mapFileSegmentToMemory(fdesc->node, addr, length, offset, permissions);
