@@ -24,6 +24,7 @@
 #include <arch/ia32/io.h>
 #include <core/printk.h>
 
+#include <arch/ia32/drivers/bochsfb.h>
 #include <arch/ia32/drivers/rtl8139.h>
 
 void PCI::init()
@@ -35,6 +36,10 @@ void PCI::init()
                 switch (id){
                     case 0x813910EC:
                         rtl8139::init(bus, slot);
+                        break;
+
+                    case 0x11111234:
+                        BochsFB::init(bus, slot);
                         break;
 
                     default:
