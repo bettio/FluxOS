@@ -380,7 +380,7 @@ int TmpFS::truncate(VNode *node, uint64_t length)
     if (tmpPtr == NULL) return -ENOSPC;
     inode->FileData = tmpPtr;
     if (length > inode->Size){
-        int startOfNewArea = (inode->Size > 0) ? inode->Size - 1 : 0;
+        int startOfNewArea = (inode->Size > 0) ? inode->Size : 0;
         memset(tmpPtr + startOfNewArea, 0, length - inode->Size);
     }
     inode->Size = length;
