@@ -57,6 +57,8 @@ class PagingManager
         static volatile uint32_t *clonePageDir();
         static volatile uint32_t *createEmptyPageTable();
         static volatile uint32_t *createPageDir();
+
+        static void mapPage(uint32_t physicalAddress, uint32_t virtualAddress, unsigned long flags);
         static void newPage(uint32_t addr, unsigned long flags = 0);
         static void changeAddressSpace(volatile uint32_t *pageDir, bool forceUpdate = false);
         static void cloneKernelSpace(volatile uint32_t *pageDir);

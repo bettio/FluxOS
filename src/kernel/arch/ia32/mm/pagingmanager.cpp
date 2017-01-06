@@ -223,25 +223,31 @@ void flushTLBEntry(volatile void *m)
     invalidateTLB();
 }
 
+void PagingManager::mapPage(uint32_t physicalAddress, uint32_t virtualAddress, unsigned long flags)
+{
+    int di = addrToPageDirIndex(virtualAddress);
+    int ti = addrToPageTableIndex(virtualAddress);
+
+    volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
+    volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
+
+    if (!(pageDir[di] & Present)){
+        pageDir[di] = pageDirectoryEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE | User);
+        flushTLBEntry(pageTable);
+        for (int i = 0; i < 1024; i++){
+            pageTable[i] = MISSING_PAGE;
+        }
+    }
+
+    pageTable[ti] = pageTableEntry(physicalAddress, Present | User | flags);
+    invalidateTLB();
+}
+
 void PagingManager::newPage(uint32_t addr, unsigned long flags)
 {
-   int di = addrToPageDirIndex(addr);
-   int ti = addrToPageTableIndex(addr);
-
-   volatile uint32_t *pageDir = (volatile uint32_t *) 0xFFFFF000;
-   volatile uint32_t *pageTable = (volatile uint32_t *) ((0x3FF << 22) | (di << 12));
-
-   if (!(pageDir[di] & Present)){
-       pageDir[di] = pageDirectoryEntry(PhysicalMM::allocPage(), KERNEL_STD_PAGE | User);
-       flushTLBEntry(pageTable);
-       for (int i = 0; i < 1024; i++){
-           pageTable[i] = MISSING_PAGE;
-       }
-   }
-
-  pageTable[ti] = pageTableEntry(PhysicalMM::allocPage(), Present | User | flags);
-  invalidateTLB();
-  memset((void *) (addr & 0xFFFFF000), 0, 4096);
+    mapPage(PhysicalMM::allocPage(), addr, Present | User | flags);
+    invalidateTLB();
+    memset((void *) (addr & 0xFFFFF000), 0, 4096);
 }
 
 void PagingManager::enable()
