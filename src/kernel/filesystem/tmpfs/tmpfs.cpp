@@ -527,11 +527,7 @@ int TmpFS::ioctl(VNode *node, int request, long arg)
     return -EIOCTLNOTSUPPORTED;
 }
 
-//HACK: it should map memory!
 void *TmpFS::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    TmpInode *inode = Inode(node);
-    if (S_ISDIR(inode->Mode)) return (void *) -EISDIR;
-
-    return inode->FileData;
+    return NULL;
 }
