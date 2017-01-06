@@ -75,8 +75,6 @@ void ArchManager::InitArch()
     IRQ::init();
     SyscallsManager::init();
     
-    PCI::init();
-
     asm("sti");
     
     Timer::init();
@@ -92,6 +90,8 @@ void ArchManager::InitMultitasking()
 
 void ArchManager::InitHardware()
 {
+    PCI::init();
+
     Vt::ReInit();
     Keyboard::init();
 #if ENABLE_EXPERIMENTAL_DRIVERS
