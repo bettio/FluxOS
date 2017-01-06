@@ -233,7 +233,7 @@ void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, Userspace
        PagingManager::newPage((uint32_t) faultAddress, npFlags);
 
        unsigned long virtualPageAddress = (((unsigned long) faultAddress) & 0xFFFFF000);
-       unsigned long offset = virtualPageAddress - ((unsigned long) mfDesc->baseAddress);
+       unsigned long offset = (virtualPageAddress - ((unsigned long) mfDesc->baseAddress)) + mfDesc->offset;
        int res = FS_CALL(mfDesc->node, read)(mfDesc->node, offset, (char *) virtualPageAddress, 4096);
        if (res < 0) {
            printk("I/O error while loading page (read bytes: %i)\n", res);
@@ -400,6 +400,7 @@ void *MemoryContext::mapFileSegmentToMemory(VNode *node, void *virtualAddress, u
     mappedFileDesc->permissions = permissions;
     mappedFileDesc->flags = MemoryDescriptor::MemoryMappedFile;
     mappedFileDesc->node = FileSystem::VNodeManager::ReferenceVnode(node);
+    mappedFileDesc->offset = fileOffset;
 
     insertMemoryDescriptor(mappedFileDesc);
 
