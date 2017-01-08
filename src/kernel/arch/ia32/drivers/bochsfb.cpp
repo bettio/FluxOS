@@ -133,13 +133,13 @@ int BochsFB::read(VNode *node, uint64_t pos, char *buffer, unsigned int bufsize)
 
 int BochsFB::ioctl(VNode *node, int request, long arg)
 {
+    setVideoMode(1024, 768, 32, 1,  0);
     return GenericFBDevice::ioctl(&fbDev, node, request, arg);
 }
 
 void *BochsFB::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    setVideoMode(1024, 768, 32, 1,  0);
-    return GenericFBDevice::mmap(&fbDev, node, start, length, prot, flags, fd, offset);
+    return ((char *) fbDev.framebuffer) + offset;
 }
 
 bool BochsFB::registerDevice()
