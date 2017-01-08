@@ -230,10 +230,17 @@ void MemoryContext::handlePageFault(void *faultAddress, void *faultPC, Userspace
        MemoryMappedFileDescriptor *mfDesc = (MemoryMappedFileDescriptor *) mDesc;
 
        unsigned long npFlags = (mfDesc->permissions & MemoryDescriptor::WritePermission) ? PagingManager::Write : 0;
-       PagingManager::newPage((uint32_t) faultAddress, npFlags);
 
        unsigned long virtualPageAddress = (((unsigned long) faultAddress) & 0xFFFFF000);
        unsigned long offset = (virtualPageAddress - ((unsigned long) mfDesc->baseAddress)) + mfDesc->offset;
+
+       void *ret = FS_CALL(mfDesc->node, mmap)(mfDesc->node, NULL, 4096, 0, 0, 0, offset);
+       if (ret) {
+           PagingManager::mapPage((uint32_t) ret, (uint32_t) faultAddress, npFlags);
+           return;
+       }
+
+       PagingManager::newPage((uint32_t) faultAddress, npFlags);
        int res = FS_CALL(mfDesc->node, read)(mfDesc->node, offset, (char *) virtualPageAddress, 4096);
        if (res < 0) {
            printk("I/O error while loading page (read bytes: %i)\n", res);
@@ -416,11 +423,13 @@ int MemoryContext::releaseDescriptor(MemoryDescriptor *descriptor)
         }
     }
 
-    PagingManager::removePages(descriptor->baseAddress, roundToPageMultiples(descriptor->length));
-
     if (descriptor->flags == MemoryDescriptor::MemoryMappedFile) {
         MemoryMappedFileDescriptor *mappedFileDescriptor = (MemoryMappedFileDescriptor *) descriptor;
         FileSystem::VNodeManager::PutVnode(mappedFileDescriptor->node);
+
+        //TODO: release page here
+    } else {
+        PagingManager::removePages(descriptor->baseAddress, roundToPageMultiples(descriptor->length));
     }
 
     delete descriptor;

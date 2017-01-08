@@ -187,12 +187,6 @@ unsigned long MemoryUAPI::mmap(void *addr, unsigned long length, unsigned long p
         if (fdesc == NULL) {
             return (unsigned long) -EBADF;
         }
-        void *ret = FS_CALL(fdesc->node, mmap)(fdesc->node, addr, length, prot, flags, fd, offset);
-        if (ret != 0) {
-            //FIXME: WORKAROUND: TODO: KILL THIS AWFUL workaround, added to get some framebuffer to userspace
-            PagingManager::mapPhysicalMemoryRegion((volatile uint32_t *) Scheduler::currentThread()->addressSpaceTable, (uint32_t) ret, 0xB0000000, length);
-            return (unsigned long) 0xB0000000;
-        }
 
         return (unsigned long) process->memoryContext->mapFileSegmentToMemory(fdesc->node, addr, length, offset, permissions);
     }
