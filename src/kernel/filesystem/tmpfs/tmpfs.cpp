@@ -22,6 +22,8 @@
 
 #include <filesystem/tmpfs/tmpfs.h>
 
+#include <arch/ia32/mm/pagingmanager.h>
+
 #ifdef USE_GLIBC
 #include <stdlib.h>
 #endif
@@ -376,8 +378,11 @@ int TmpFS::truncate(VNode *node, uint64_t length)
 {
     TmpInode *inode = Inode(node);
 
-    uint8_t *tmpPtr = (uint8_t *) realloc(inode->FileData, length);
+    uint8_t *tmpPtr;
+    posix_memalign((void **) &tmpPtr, 4096, length);
     if (tmpPtr == NULL) return -ENOSPC;
+    memcpy(tmpPtr, inode->FileData, inode->Size);
+    free(inode->FileData);
     inode->FileData = tmpPtr;
     if (length > inode->Size){
         int startOfNewArea = (inode->Size > 0) ? inode->Size : 0;
@@ -529,5 +534,7 @@ int TmpFS::ioctl(VNode *node, int request, long arg)
 
 void *TmpFS::mmap(VNode *node, void *start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-    return NULL;
+    TmpInode *inode = Inode(node);
+    void *physicalAddress = (void *) PagingManager::physicalAddressOf(inode->FileData + offset);
+    return physicalAddress;
 }
